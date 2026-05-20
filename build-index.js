@@ -5,7 +5,6 @@ const path = require("path");
 
 const QUIZ_DIR = path.join(__dirname, "quizzes");
 
-// Map prefixes → full names
 const PREFIXES = {
   sge: "Sistemas de Gestión Empresarial",
   psp: "Programación de Servicios y Procesos",
@@ -16,25 +15,79 @@ const PREFIXES = {
   di: "Desarrollo de Interfaces"
 };
 
-// Skip these prefixes
 const SKIP = ["ffe", "proyecto"];
 
-// Read quiz files
 const files = fs.readdirSync(QUIZ_DIR)
   .filter(f => f.endsWith(".html"))
   .filter(f => !SKIP.some(skip => f.startsWith(skip)));
 
 const groups = {};
-
 files.forEach(file => {
   const prefix = file.split("-")[0];
   if (!PREFIXES[prefix]) return;
-
   if (!groups[prefix]) groups[prefix] = [];
   groups[prefix].push(file);
 });
-
 Object.values(groups).forEach(list => list.sort());
+
+// Shared dark mode CSS + toggle (injected into every page)
+const DARK_MODE_CSS = `
+  [data-theme="dark"] {
+    --bg: #1a1612;
+    --bg-deep: #141210;
+    --ink: #f0ebe0;
+    --muted: #9a9080;
+    --accent: #e8673a;
+    --accent-light: #ff9a6a;
+    --accent-dark: #c45528;
+    --teal: #2a9aa8;
+    --card: #221e18;
+    --stroke: #3a3028;
+    --shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+  }`;
+
+const DARK_MODE_TOGGLE_CSS = `
+  #theme-toggle {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    background: var(--card);
+    border: 1px solid var(--stroke);
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    z-index: 100;
+  }
+  #theme-toggle:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  }`;
+
+const DARK_MODE_SCRIPT = `
+  <button id="theme-toggle" title="Cambiar tema">🌙</button>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-toggle').textContent = '☀️';
+      }
+      document.getElementById('theme-toggle').addEventListener('click', function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        this.textContent = isDark ? '🌙' : '☀️';
+      });
+    })();
+  <\/script>`;
 
 const html = `<!DOCTYPE html>
 <html lang="es">
@@ -66,6 +119,8 @@ const html = `<!DOCTYPE html>
     --font-display: 'Space Grotesk', sans-serif;
     --font-body: 'IBM Plex Sans', sans-serif;
   }
+${DARK_MODE_CSS}
+${DARK_MODE_TOGGLE_CSS}
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -78,12 +133,17 @@ const html = `<!DOCTYPE html>
     color: var(--ink);
     min-height: 100vh;
     padding: 48px 20px;
+    transition: background 0.3s ease, color 0.3s ease;
   }
 
-  .container {
-    max-width: 720px;
-    margin: 0 auto;
+  [data-theme="dark"] body {
+    background:
+      radial-gradient(240px 140px at 10% -10%, #3a1a08 0%, transparent 70%),
+      radial-gradient(220px 160px at 90% 0%, #0a2a2e 0%, transparent 65%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
   }
+
+  .container { max-width: 720px; margin: 0 auto; }
 
   h1 {
     font-family: var(--font-display);
@@ -127,23 +187,20 @@ const html = `<!DOCTYPE html>
     font-size: 1em;
     border-radius: var(--radius-lg);
     border: 1px solid var(--stroke);
-    background: #fff;
+    background: var(--card);
     color: var(--ink);
     outline: none;
     box-shadow: 0 4px 16px rgba(23,23,23,0.07);
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
   }
 
-  #search::placeholder { color: #aaa; }
-
+  #search::placeholder { color: var(--muted); }
   #search:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(211, 84, 44, 0.12);
   }
 
-  .section {
-    margin-bottom: 44px;
-  }
+  .section { margin-bottom: 44px; }
 
   .section-header {
     display: flex;
@@ -223,10 +280,7 @@ const html = `<!DOCTYPE html>
     transition: opacity 0.2s, transform 0.2s;
   }
 
-  .quiz-item:hover a::after {
-    opacity: 1;
-    transform: translateX(3px);
-  }
+  .quiz-item:hover a::after { opacity: 1; transform: translateX(3px); }
 
   .no-results {
     text-align: center;
@@ -244,9 +298,10 @@ const html = `<!DOCTYPE html>
 </head>
 
 <body>
+${DARK_MODE_SCRIPT}
 <div class="container">
 
-  <h1>📚 Índice de Quizzes</h1>
+  <h1>🎯 Índice de Quizzes</h1>
   <p class="subtitle">Selecciona un quiz para comenzar a practicar</p>
   <p class="badge-row"><span class="badge">DAM · 2º año</span><span class="badge">Temas 8 – 15</span></p>
 
@@ -297,7 +352,6 @@ const html = `<!DOCTYPE html>
       if (show) visible++;
     });
 
-    // Hide sections where all items are hidden
     document.querySelectorAll(".section").forEach(section => {
       const anyVisible = [...section.querySelectorAll(".quiz-item")]
         .some(li => li.style.display !== "none");
@@ -317,9 +371,9 @@ const html = `<!DOCTYPE html>
 </html>`;
 
 fs.writeFileSync(path.join(__dirname, "index.html"), html, "utf8");
-
 console.log("index.html actualizado ✔️");
-// Translate hardcoded English strings in quiz files
+
+// Translations
 const TRANSLATIONS = [
   [/\bHint\b/g,                                "Pista"],
   [/✓ Right answer/g,                          "✓ Correcto"],
@@ -340,6 +394,91 @@ const TRANSLATIONS = [
   [/No hint available for this question\./g,   "No hay pista disponible para esta pregunta."],
 ];
 
+// Dark mode CSS to inject into quiz files
+const QUIZ_DARK_CSS = `
+    [data-theme="dark"] {
+      --bg: #1a1612;
+      --bg-deep: #141210;
+      --ink: #f0ebe0;
+      --muted: #9a9080;
+      --accent: #e8673a;
+      --accent-light: #ff9a6a;
+      --accent-dark: #c45528;
+      --teal: #2a9aa8;
+      --card: #221e18;
+      --stroke: #3a3028;
+      --shadow: 0 18px 40px rgba(0,0,0,0.4);
+      --error: #e06050;
+    }
+    [data-theme="dark"] body {
+      background:
+        radial-gradient(240px 140px at 10% -10%, #3a1a08 0%, transparent 70%),
+        radial-gradient(220px 160px at 90% 0%, #0a2a2e 0%, transparent 65%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    }
+    [data-theme="dark"] .option-item { background-color: var(--card); }
+    [data-theme="dark"] .hint-toggle,
+    [data-theme="dark"] .hint-content,
+    [data-theme="dark"] .btn-prev { background-color: var(--card); color: var(--ink); }
+    [data-theme="dark"] .result-card { background: var(--card); }
+    [data-theme="dark"] .btn-next {
+      background: linear-gradient(90deg, #e8673a, #f28c5e);
+      box-shadow: none;
+      color: #fff;
+    }
+    [data-theme="dark"] .btn-next:hover:not(:disabled) {
+      box-shadow: none;
+    }
+    .btn-prev:hover:not(:disabled),
+    .btn-next:hover:not(:disabled),
+    .option-item:hover:not(.selected),
+    .hint-toggle:hover {
+      box-shadow: none;
+    }`;
+
+// Mobile: flex column layout — quiz-content scrolls, .navigation pinned at bottom (quiz-mobile-v3)
+const QUIZ_MOBILE_CSS = `
+    @media (max-width: 640px) {
+      body {
+        height: 100dvh;
+        overflow: hidden;
+        align-items: flex-start;
+        padding: 0;
+      }
+      .quiz-container {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        margin: 0;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+        padding-bottom: 0;
+      }
+      #quiz-content,
+      #results-content {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        min-height: 0;
+        padding-bottom: 8px;
+      }
+      #hint-box { flex-shrink: 0; }
+      .navigation {
+        flex-shrink: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        margin-top: 0;
+        background: var(--card);
+        border-top: 1px solid var(--stroke);
+      }
+    }`;
+
 const quizFiles = fs.readdirSync(QUIZ_DIR).filter(f => f.endsWith(".html"));
 let translated = 0;
 
@@ -348,24 +487,67 @@ quizFiles.forEach(file => {
   let content = fs.readFileSync(filePath, "utf8");
   const original = content;
 
-  // Build heading label: "Programación de Servicios y Procesos · Quiz 4"
   const prefix = file.split("-")[0];
   const fullName = PREFIXES[prefix] || prefix.toUpperCase();
   const num = (file.match(/(\d+)/) || [])[1];
   const quizLabel = num ? `${fullName} · Quiz ${num}` : fullName;
 
-  const heading = `
+  // Inject heading before quiz-content if not present
+  if (!content.includes('class="quiz-heading"')) {
+    const heading = `
     <div class="quiz-heading" style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
       <a href="../index.html" style="font-size:0.82em;color:var(--muted);text-decoration:none;font-family:var(--font-body)">← Índice</a>
-      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px">${quizLabel}</h1>
+      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">${quizLabel}</h1>
     </div>`;
-
-  // Always inject heading if not already present
-  if (!content.includes('class="quiz-heading"')) {
-    content = content.replace('<div id="quiz-content">', `${heading}<div id="quiz-content">`);
+    content = content.replace('<div class="quiz-container">', `<div class="quiz-container">\n${heading}`);
   }
 
-  // Translate if not already done
+  // Inject dark mode CSS into <style> block if not present
+  if (!content.includes('[data-theme="dark"]')) {
+    content = content.replace('</style>', `${QUIZ_DARK_CSS}\n    </style>`);
+  }
+
+  // Inject mobile layout CSS if not present (guard: quiz-mobile-v3)
+  if (!content.includes('quiz-mobile-v3')) {
+    content = content.replace('</style>', `${QUIZ_MOBILE_CSS}\n    </style>`);
+  }
+
+  // Inject dark mode toggle button + script before </body> if not present
+  if (!content.includes('id="theme-toggle"')) {
+    const toggleScript = `
+  <button id="theme-toggle" title="Cambiar tema" style="position:fixed;top:8px;right:8px;background:var(--card);border:1px solid var(--stroke);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:transform 0.2s ease;z-index:100;">🌙</button>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-toggle').textContent = '☀️';
+      }
+      document.getElementById('theme-toggle').addEventListener('click', function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        this.textContent = isDark ? '🌙' : '☀️';
+      });
+    })();
+  <\/script>`;
+    content = content.replace('</body>', `${toggleScript}\n</body>`);
+  }
+
+  // Patch quiz heading h1 padding if missing
+  content = content.replace(
+    /font-weight:700;color:var\(--ink\);margin-top:8px">/g,
+    'font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">'
+  );
+
+  // Patch toggle button position if old offset is still present
+  content = content.replace(
+    /position:fixed;top:16px;right:16px;(background:var\(--card\);border:1px solid var\(--stroke\);border-radius:50%;width:)38px;height:38px;cursor:pointer;font-size:16px/,
+    'position:fixed;top:8px;right:8px;$134px;height:34px;cursor:pointer;font-size:15px'
+  );
+
+
   if (!content.includes("Pista") && !content.includes("Siguiente")) {
     TRANSLATIONS.forEach(([pattern, replacement]) => {
       content = content.replace(pattern, replacement);
@@ -381,4 +563,4 @@ quizFiles.forEach(file => {
   }
 });
 
-console.log(`Traducidos ${translated} archivo(s) ✔️`);
+console.log(`Procesados ${translated} archivo(s) ✔️`);

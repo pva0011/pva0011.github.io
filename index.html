@@ -29,6 +29,43 @@
     --font-body: 'IBM Plex Sans', sans-serif;
   }
 
+  [data-theme="dark"] {
+    --bg: #1a1612;
+    --bg-deep: #141210;
+    --ink: #f0ebe0;
+    --muted: #9a9080;
+    --accent: #e8673a;
+    --accent-light: #ff9a6a;
+    --accent-dark: #c45528;
+    --teal: #2a9aa8;
+    --card: #221e18;
+    --stroke: #3a3028;
+    --shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  #theme-toggle {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    background: var(--card);
+    border: 1px solid var(--stroke);
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    z-index: 100;
+  }
+  #theme-toggle:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
@@ -40,12 +77,17 @@
     color: var(--ink);
     min-height: 100vh;
     padding: 48px 20px;
+    transition: background 0.3s ease, color 0.3s ease;
   }
 
-  .container {
-    max-width: 720px;
-    margin: 0 auto;
+  [data-theme="dark"] body {
+    background:
+      radial-gradient(240px 140px at 10% -10%, #3a1a08 0%, transparent 70%),
+      radial-gradient(220px 160px at 90% 0%, #0a2a2e 0%, transparent 65%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
   }
+
+  .container { max-width: 720px; margin: 0 auto; }
 
   h1 {
     font-family: var(--font-display);
@@ -89,23 +131,20 @@
     font-size: 1em;
     border-radius: var(--radius-lg);
     border: 1px solid var(--stroke);
-    background: #fff;
+    background: var(--card);
     color: var(--ink);
     outline: none;
     box-shadow: 0 4px 16px rgba(23,23,23,0.07);
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
   }
 
-  #search::placeholder { color: #aaa; }
-
+  #search::placeholder { color: var(--muted); }
   #search:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(211, 84, 44, 0.12);
   }
 
-  .section {
-    margin-bottom: 44px;
-  }
+  .section { margin-bottom: 44px; }
 
   .section-header {
     display: flex;
@@ -185,10 +224,7 @@
     transition: opacity 0.2s, transform 0.2s;
   }
 
-  .quiz-item:hover a::after {
-    opacity: 1;
-    transform: translateX(3px);
-  }
+  .quiz-item:hover a::after { opacity: 1; transform: translateX(3px); }
 
   .no-results {
     text-align: center;
@@ -206,9 +242,27 @@
 </head>
 
 <body>
+
+  <button id="theme-toggle" title="Cambiar tema">🌙</button>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-toggle').textContent = '☀️';
+      }
+      document.getElementById('theme-toggle').addEventListener('click', function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        this.textContent = isDark ? '🌙' : '☀️';
+      });
+    })();
+  </script>
 <div class="container">
 
-  <h1>📚 Índice de Quizzes</h1>
+  <h1>🎯 Índice de Quizzes</h1>
   <p class="subtitle">Selecciona un quiz para comenzar a practicar</p>
   <p class="badge-row"><span class="badge">DAM · 2º año</span><span class="badge">Temas 8 – 15</span></p>
 
@@ -269,7 +323,6 @@
       if (show) visible++;
     });
 
-    // Hide sections where all items are hidden
     document.querySelectorAll(".section").forEach(section => {
       const anyVisible = [...section.querySelectorAll(".quiz-item")]
         .some(li => li.style.display !== "none");

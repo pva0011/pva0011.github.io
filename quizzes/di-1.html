@@ -396,6 +396,87 @@
                 flex-direction: column;
             }
         }
+    
+    [data-theme="dark"] {
+      --bg: #1a1612;
+      --bg-deep: #141210;
+      --ink: #f0ebe0;
+      --muted: #9a9080;
+      --accent: #e8673a;
+      --accent-light: #ff9a6a;
+      --accent-dark: #c45528;
+      --teal: #2a9aa8;
+      --card: #221e18;
+      --stroke: #3a3028;
+      --shadow: 0 18px 40px rgba(0,0,0,0.4);
+      --error: #e06050;
+    }
+    [data-theme="dark"] body {
+      background:
+        radial-gradient(240px 140px at 10% -10%, #3a1a08 0%, transparent 70%),
+        radial-gradient(220px 160px at 90% 0%, #0a2a2e 0%, transparent 65%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    }
+    [data-theme="dark"] .option-item { background-color: var(--card); }
+    [data-theme="dark"] .hint-toggle,
+    [data-theme="dark"] .hint-content,
+    [data-theme="dark"] .btn-prev { background-color: var(--card); color: var(--ink); }
+    [data-theme="dark"] .result-card { background: var(--card); }
+    [data-theme="dark"] .btn-next {
+      background: linear-gradient(90deg, #e8673a, #f28c5e);
+      box-shadow: none;
+      color: #fff;
+    }
+    [data-theme="dark"] .btn-next:hover:not(:disabled) {
+      box-shadow: none;
+    }
+    .btn-prev:hover:not(:disabled),
+    .btn-next:hover:not(:disabled),
+    .option-item:hover:not(.selected),
+    .hint-toggle:hover {
+      box-shadow: none;
+    }
+    
+    @media (max-width: 640px) {
+      body {
+        height: 100dvh;
+        overflow: hidden;
+        align-items: flex-start;
+        padding: 0;
+      }
+      .quiz-container {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        margin: 0;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+        padding-bottom: 0;
+      }
+      #quiz-content,
+      #results-content {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        min-height: 0;
+        padding-bottom: 8px;
+      }
+      #hint-box { flex-shrink: 0; }
+      .navigation {
+        flex-shrink: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        margin-top: 0;
+        background: var(--card);
+        border-top: 1px solid var(--stroke);
+      }
+    }
     </style>
 </head>
 <body>
@@ -403,11 +484,11 @@
         
     <div class="quiz-heading" style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
       <a href="../index.html" style="font-size:0.82em;color:var(--muted);text-decoration:none;font-family:var(--font-body)">← Índice</a>
-      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px">Desarrollo de Interfaces · Quiz 1</h1>
+      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">Desarrollo de Interfaces · Quiz 1</h1>
     </div><div id="quiz-content">
     <div style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
       <a href="../index.html" style="font-size:0.82em;color:var(--muted);text-decoration:none;font-family:var(--font-body)">← Índice</a>
-      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px">Desarrollo de Interfaces · Quiz 1</h1>
+      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">Desarrollo de Interfaces · Quiz 1</h1>
     </div>
             <!-- Dynamic Content -->
         </div>
@@ -650,5 +731,23 @@
 
         renderQuestion();
     </script>
+
+  <button id="theme-toggle" title="Cambiar tema" style="position:fixed;top:8px;right:8px;background:var(--card);border:1px solid var(--stroke);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:transform 0.2s ease;z-index:100;">🌙</button>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-toggle').textContent = '☀️';
+      }
+      document.getElementById('theme-toggle').addEventListener('click', function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        this.textContent = isDark ? '🌙' : '☀️';
+      });
+    })();
+  </script>
 </body>
 </html>
