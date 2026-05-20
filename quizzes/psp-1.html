@@ -1,1878 +1,646 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Redes Cuestionario</title>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh; padding: 20px; color: #333;
-}
-.container { max-width: 700px; margin: 0 auto; }
-.header { text-align: center; color: #fff; padding: 30px 20px; }
-.header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
-.header .meta { font-size: 14px; opacity: 0.9; }
-.progress-bar { background: rgba(255,255,255,0.3); border-radius: 10px; height: 8px; margin: 20px 0; overflow: hidden; }
-.progress-fill { background: #fff; height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 10px; }
-.question { background: #fff; border-radius: 16px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
-.question.active { display: block; }
-.q-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: #888; }
-.q-number { font-weight: 600; color: #667eea; }
-.q-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 25px; color: #222; }
-.options { display: flex; flex-direction: column; gap: 12px; }
-.option-wrapper { display: flex; flex-direction: column; }
-.option {
-  display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
-  border: 2px solid #e8e8e8; border-radius: 12px; background: #fafafa;
-  cursor: pointer; transition: all 0.2s; text-align: left; font-size: 15px; width: 100%;
-}
-[dir="rtl"] .option { text-align: right; flex-direction: row-reverse; }
-.option:hover:not(.disabled) { border-color: #667eea; background: #f5f3ff; }
-.option.selected { border-color: #667eea; background: #ede9fe; }
-.option.correct { border-color: #22c55e; background: #dcfce7; }
-.option.incorrect { border-color: #ef4444; background: #fee2e2; }
-.option.disabled { cursor: default; }
-.option.show-correct { border-color: #22c55e; background: #dcfce7; }
-.opt-label {
-  display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; border-radius: 50%; background: #e8e8e8;
-  font-weight: 700; font-size: 14px; flex-shrink: 0;
-}
-.option.selected .opt-label { background: #667eea; color: #fff; }
-.option.correct .opt-label { background: #22c55e; color: #fff; }
-.option.incorrect .opt-label { background: #ef4444; color: #fff; }
-.option.show-correct .opt-label { background: #22c55e; color: #fff; }
-.opt-text { padding-top: 5px; line-height: 1.5; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSP - 8 a 15 - NotebookLM - Quiz Export</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
-/* Individual option feedback */
-.option-feedback {
-  margin: 8px 0 4px 46px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-[dir="rtl"] .option-feedback { margin-left: 0; margin-right: 46px; }
-.option-feedback.correct-feedback {
-  background: #dcfce7;
-  border-left: 3px solid #22c55e;
-}
-.option-feedback.incorrect-feedback {
-  background: #fef3f2;
-  border-left: 3px solid #fca5a5;
-}
-[dir="rtl"] .option-feedback.correct-feedback,
-[dir="rtl"] .option-feedback.incorrect-feedback {
-  border-left: none;
-  border-right: 3px solid;
-}
-[dir="rtl"] .option-feedback.correct-feedback { border-right-color: #22c55e; }
-[dir="rtl"] .option-feedback.incorrect-feedback { border-right-color: #fca5a5; }
-.feedback-status {
-  font-weight: 600;
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.feedback-status.correct { color: #166534; }
-.feedback-status.incorrect { color: #991b1b; }
-.feedback-rationale { color: #444; }
+        :root {
+            --bg: #f6f1e7;
+            --bg-deep: #efe4d6;
+            --ink: #171717;
+            --muted: #5b5b5b;
+            --accent: #d3542c;
+            --accent-light: #ff8f5a;
+            --accent-dark: #b14320;
+            --teal: #1f6f78;
+            --card: #fff7ef;
+            --stroke: #e3d6c5;
+            --shadow: 0 18px 40px rgba(23, 23, 23, 0.12);
+            --radius-sm: 10px;
+            --radius-md: 12px;
+            --radius-lg: 14px;
+            --radius-xl: 18px;
+            --radius-2xl: 22px;
+            --space-1: 6px;
+            --space-2: 8px;
+            --space-3: 10px;
+            --space-4: 12px;
+            --space-5: 14px;
+            --space-6: 16px;
+            --space-7: 18px;
+            --space-8: 20px;
+            --space-9: 24px;
+            --space-10: 32px;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --error: #b54832;
+        }
 
-/* Pista box */
-.hint-box {
-  margin: 12px 0;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #fffbeb;
-  border: 1px solid #fcd34d;
-}
-.hint-toggle {
-  width: 100%;
-  padding: 10px 16px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  color: #92400e;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.hint-toggle:hover { background: #fef3c7; }
-.hint-content {
-  padding: 0 16px;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s, padding 0.3s;
-  font-size: 14px;
-  color: #78350f;
-  line-height: 1.5;
-}
-.hint-box.show .hint-content {
-  padding: 0 16px 12px;
-  max-height: 200px;
-}
+        body {
+            font-family: var(--font-body);
+            background:
+                radial-gradient(240px 140px at 10% -10%, #ffd2b9 0%, transparent 70%),
+                radial-gradient(220px 160px at 90% 0%, #cfe7e6 0%, transparent 65%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+            color: var(--ink);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-.next-btn {
-  margin-top: 20px; width: 100%; padding: 14px;
-  background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none;
-  border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.next-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
-.hidden { display: none !important; }
-.results { background: #fff; border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
-.results.active { display: block; }
-.results h2 { font-size: 28px; margin-bottom: 10px; color: #333; }
-.results .score { font-size: 64px; font-weight: 700; color: #667eea; margin: 20px 0; }
-.results .score-text { font-size: 18px; color: #666; margin-bottom: 30px; }
-.restart-btn {
-  padding: 14px 40px; background: linear-gradient(135deg, #667eea, #764ba2);
-  color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
-}
+        .quiz-container {
+            width: 100%;
+            max-width: 800px;
+            padding: var(--space-10) var(--space-8);
+            box-sizing: border-box;
+            background: var(--card);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+        }
 
-/* Math CSS */
-.math, .math-block { font-family: "Cambria Math", "Times New Roman", Times, serif; font-style: italic; }
-.math-block { display: block; text-align: center; margin: 10px 0; font-size: 110%; }
-.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 3px; font-size: 0.9em; }
-.frac-num { border-bottom: 1px solid currentColor; padding: 0 4px 2px; line-height: 1.2; }
-.frac-den { padding: 2px 4px 0; line-height: 1.2; }
-.sqrt { white-space: nowrap; }
-.sqrt-content { border-top: 1px solid currentColor; padding: 0 3px; margin-left: 2px; }
-sup, sub { font-size: 0.75em; }
-sup { vertical-align: super; }
-sub { vertical-align: sub; }
-</style>
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .progress-text {
+            color: var(--muted);
+            font-size: 0.9em;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-correct { color: var(--teal); }
+        .status-wrong { color: var(--error); }
+
+        .question-text {
+            font-family: var(--font-display);
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-item:hover:not(.selected) {
+            background-color: var(--card);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .option-item.selected.correct {
+            background-color: rgba(31, 111, 120, 0.12);
+            border-color: var(--teal);
+        }
+
+        .option-item.selected.incorrect {
+            background-color: rgba(181, 72, 50, 0.12);
+            border-color: var(--error);
+        }
+
+        .option-item.revealed-correct {
+            border-color: rgba(31, 111, 120, 0.5);
+            box-shadow: inset 0 0 0 1px rgba(31, 111, 120, 0.16);
+        }
+
+        .option-label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feedback-state {
+            font-weight: bold;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .selected .feedback-state {
+            display: block;
+        }
+
+        .revealed-correct .feedback-state {
+            display: block;
+        }
+
+        .correct .feedback-state { color: var(--teal); }
+        .incorrect .feedback-state { color: var(--error); }
+        .revealed-correct .feedback-state { color: var(--teal); }
+
+        .rationale {
+            font-size: 0.95em;
+            color: var(--muted);
+            margin-top: 4px;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .selected .rationale {
+            display: block;
+        }
+
+        .revealed-correct .rationale {
+            display: block;
+        }
+        .hint-toggle {
+            border: 1px solid var(--stroke);
+            color: var(--muted);
+            cursor: pointer;
+            padding: var(--space-2) var(--space-6);
+            border-radius: var(--radius-md);
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hint-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .hint-content {
+            margin-top: 32px;
+            padding: var(--space-6);
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-lg);
+            font-size: 0.95em;
+            color: var(--muted);
+            display: none;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .hint-content.active {
+            display: flex;
+        }
+
+        .hint-icon-box {
+            color: var(--accent-dark);
+            font-size: 1.2em;
+            margin-top: -2px;
+        }
+
+        .navigation {
+            margin-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-7);
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-prev {
+            background-color: #fff;
+            color: var(--ink);
+            border-color: var(--stroke);
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn-next {
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            color: #fff;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .results-screen {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+        }
+
+        .results-title {
+            font-family: var(--font-display);
+            font-size: 2.1em;
+            margin: 0;
+        }
+
+        .results-subtitle {
+            color: var(--muted);
+            margin: 0;
+            font-size: 1em;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .result-card {
+            padding: var(--space-6);
+            border-radius: var(--radius-xl);
+            background: #fff;
+            border: 1px solid var(--stroke);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .result-label {
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-family: var(--font-display);
+        }
+
+        .result-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            border: 1px solid var(--stroke);
+            color: var(--ink);
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 900px) {
+            .quiz-container {
+                margin: var(--space-8);
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .quiz-container {
+                padding: var(--space-8) var(--space-6);
+            }
+
+            .question-text {
+                font-size: 1.3em;
+            }
+
+            .option-item {
+                padding: var(--space-4);
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .quiz-container {
+                margin: var(--space-6);
+                padding: var(--space-7) var(--space-5);
+            }
+
+            .progress-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+
+            .navigation {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-4);
+            }
+
+            .nav-buttons {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .hint-toggle {
+                justify-content: space-between;
+            }
+
+            .results-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <h1>Redes Cuestionario</h1>
-    <div class="meta">26 questions</div>
-    <div class="progress-bar"><div class="progress-fill"></div></div>
-  </div>
-  <div id="quiz-container">
-        <div class="question" data-index="0">
-          <div class="q-header">
-            <span class="q-number">Question 1</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">¿Cuál es la función primordial de la clase ServerSocket en una arquitectura de red basada en el protocolo TCP?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en el rol de 'escucha' que asume la aplicación antes de establecer el canal bidireccional.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="La gestión de hilos es una lógica de programación concurrente adicional y no es una función intrínseca de esta clase específica.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Gestionar exclusivamente el flujo de datos mediante hilos independientes.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La gestión de hilos es una lógica de programación concurrente adicional y no es una función intrínseca de esta clase específica.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="El manejo de datagramas es propio del protocolo UDP, mientras que esta clase opera bajo el modelo de flujos de bytes de TCP.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Encapsular datagramas para su envío a través de una red no orientada a conexión.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El manejo de datagramas es propio del protocolo UDP, mientras que esta clase opera bajo el modelo de flujos de bytes de TCP.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Esta es la función del protocolo DNS, no de un socket de servidor que opera a nivel de transporte.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Traducir nombres de dominio en direcciones IP de forma automática.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esta es la función del protocolo DNS, no de un socket de servidor que opera a nivel de transporte.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="Esta clase está diseñada específicamente para escuchar en un puerto determinado y bloquear la ejecución hasta que se detecte una petición de conexión entrante.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Implementar el servidor y esperar activamente a que un cliente solicite una conexión.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esta clase está diseñada específicamente para escuchar en un puerto determinado y bloquear la ejecución hasta que se detecte una petición de conexión entrante.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="1">
-          <div class="q-header">
-            <span class="q-number">Question 2</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">En el contexto de la programación con Sockets UDP, ¿por qué es necesario un array de tipo byte al trabajar con la clase DatagramPacket?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Considere el formato de bajo nivel en el que se empaqueta la información en protocolos rápidos y ligeros.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="ServerSocket es una clase de TCP y no tiene relación técnica con la estructura de datos de un paquete UDP.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Para permitir que el servidor ServerSocket acepte múltiples clientes simultáneamente.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">ServerSocket es una clase de TCP y no tiene relación técnica con la estructura de datos de un paquete UDP.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="A diferencia de TCP que usa flujos de datos, UDP requiere que el programador defina el contenedor de bytes específico para el paquete antes de su envío o recepción.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Debido a que los datagramas transportan la información como una secuencia de bytes en crudo.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">A diferencia de TCP que usa flujos de datos, UDP requiere que el programador defina el contenedor de bytes específico para el paquete antes de su envío o recepción.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="UDP es un protocolo no orientado a conexión, por lo que no se mantiene un estado de enlace abierto entre mensajes.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Para garantizar que la conexión se mantenga abierta durante toda la transferencia.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">UDP es un protocolo no orientado a conexión, por lo que no se mantiene un estado de enlace abierto entre mensajes.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="El uso de arrays de bytes no implica cifrado; la seguridad debe implementarse en capas superiores o mediante protocolos específicos como SFTP.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Para encriptar automáticamente el contenido del mensaje antes de salir a la red.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El uso de arrays de bytes no implica cifrado; la seguridad debe implementarse en capas superiores o mediante protocolos específicos como SFTP.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="2">
-          <div class="q-header">
-            <span class="q-number">Question 3</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">Al implementar un servidor concurrente, ¿cuál es el beneficio principal de que el servidor lance una 'hebra' tras aceptar una conexión?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en qué sucede con el bucle principal de aceptación de clientes mientras se procesa una lógica compleja.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="La concurrencia mediante hilos gestiona la disponibilidad del servicio, pero no añade capas de cifrado a la comunicación por sí sola.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Aumentar la seguridad de la transmisión mediante el uso de SSH.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La concurrencia mediante hilos gestiona la disponibilidad del servicio, pero no añade capas de cifrado a la comunicación por sí sola.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="El uso de hilos en el servidor no altera la cantidad de datos enviados o recibidos a través del canal físico.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Reducir el tráfico de red total generado por la aplicación.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El uso de hilos en el servidor no altera la cantidad de datos enviados o recibidos a través del canal físico.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="Delegar la tarea a un hilo independiente libera al hilo principal del servidor para que no quede bloqueado atendiendo a un solo usuario.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Permitir que el servidor vuelva inmediatamente a escuchar nuevas peticiones de otros clientes.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Delegar la tarea a un hilo independiente libera al hilo principal del servidor para que no quede bloqueado atendiendo a un solo usuario.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Toda operación de red es susceptible de errores, y el uso de hilos requiere un control de excepciones aún más riguroso.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Eliminar la necesidad de gestionar excepciones mediante bloques try-catch.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Toda operación de red es susceptible de errores, y el uso de hilos requiere un control de excepciones aún más riguroso.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="3">
-          <div class="q-header">
-            <span class="q-number">Question 4</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">¿Cuál es la diferencia fundamental entre los protocolos de recepción de correo electrónico POP3 e IMAP?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Considere la ubicación física del mensaje mientras el usuario interactúa con él desde diferentes dispositivos.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="IMAP mantiene una sesión activa para reflejar cambios en las carpetas y el estado de los correos en tiempo real.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">IMAP es un protocolo sin estado similar al HTTP.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">IMAP mantiene una sesión activa para reflejar cambios en las carpetas y el estado de los correos en tiempo real.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="IMAP mantiene la sincronización con el servidor, mientras que el comportamiento tradicional de POP3 implica la descarga y eliminación del mensaje en el servidor.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">IMAP permite consultar los mensajes directamente en el servidor sin necesidad de descargarlos localmente.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">IMAP mantiene la sincronización con el servidor, mientras que el comportamiento tradicional de POP3 implica la descarga y eliminación del mensaje en el servidor.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Ambos son protocolos de acceso/recepción; el envío es responsabilidad del protocolo SMTP.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">POP3 permite enviar correos mientras que IMAP solo permite leerlos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Ambos son protocolos de acceso/recepción; el envío es responsabilidad del protocolo SMTP.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="El puerto 25 es el estándar para SMTP, no para los protocolos de acceso a buzones de correo.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">POP3 utiliza el puerto 25 para la comunicación cifrada.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El puerto 25 es el estándar para SMTP, no para los protocolos de acceso a buzones de correo.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="4">
-          <div class="q-header">
-            <span class="q-number">Question 5</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">Dentro de la biblioteca Apache Commons Net para FTP, ¿qué función cumple la clase FTPReply?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en la necesidad del cliente de entender si el servidor aceptó o rechazó un comando.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="El cierre del socket debe ser gestionado explícitamente por el programador o mediante el manejo de excepciones de E/S.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Cerrar automáticamente el socket cuando se detecta un error de red.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El cierre del socket debe ser gestionado explícitamente por el programador o mediante el manejo de excepciones de E/S.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="La seguridad SSL es gestionada por la clase FTPSClient, que hereda de FTPClient.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Proporcionar cifrado SSL para convertir FTP en FTPS.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La seguridad SSL es gestionada por la clase FTPSClient, que hereda de FTPClient.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Dicha funcionalidad suele recaer en la clase FTPClientConfig o métodos específicos del cliente.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Establecer los parámetros de configuración del cliente como el modo pasivo.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Dicha funcionalidad suele recaer en la clase FTPClientConfig o métodos específicos del cliente.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="Esta clase facilita la interpretación de si una operación (como un login o una transferencia) fue exitosa según los estándares del protocolo FTP.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Gestionar los códigos numéricos de respuesta enviados por el servidor tras una orden.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esta clase facilita la interpretación de si una operación (como un login o una transferencia) fue exitosa según los estándares del protocolo FTP.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="5">
-          <div class="q-header">
-            <span class="q-number">Question 6</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">¿Por qué se afirma que el protocolo HTTP 'no tiene estado' (stateless)?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Reflexione sobre si el servidor reconoce automáticamente a un usuario que acaba de recargar la página sin usar mecanismos extra.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="El número de puerto es una dirección de la capa de transporte y no determina las capacidades de memoria del protocolo de aplicación.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Porque utiliza el puerto 80, que no admite el almacenamiento de variables.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El número de puerto es una dirección de la capa de transporte y no determina las capacidades de memoria del protocolo de aplicación.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="El diseño original del protocolo trata cada ciclo de petición-respuesta como una transacción aislada, sin memoria intrínseca de la identidad del cliente.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Porque cada petición es independiente y el servidor no recuerda conexiones anteriores por defecto.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El diseño original del protocolo trata cada ciclo de petición-respuesta como una transacción aislada, sin memoria intrínseca de la identidad del cliente.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Aunque nació para HTML, HTTP transporta imágenes, videos y datos en diversos formatos mediante tipos MIME.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Porque solo puede enviar documentos en formato HTML plano.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Aunque nació para HTML, HTTP transporta imágenes, videos y datos en diversos formatos mediante tipos MIME.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="HTTP es capaz de transferir cualquier recurso identificado por una URL, independientemente de su tamaño.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Porque no permite la transferencia de archivos de gran tamaño.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">HTTP es capaz de transferir cualquier recurso identificado por una URL, independientemente de su tamaño.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="6">
-          <div class="q-header">
-            <span class="q-number">Question 7</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">En Java, al programar un cliente HTTP de alto nivel, ¿cuál es la relación técnica entre las clases URL y URLConnection?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Diferencie entre la representación de una dirección y el mecanismo para abrir un canal hacia ella.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Ambas pueden manejar diversos protocolos dependiendo del prefijo de la cadena de texto utilizada.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">URL es exclusiva para protocolos seguros HTTPS, mientras que URLConnection es para HTTP.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Ambas pueden manejar diversos protocolos dependiendo del prefijo de la cadena de texto utilizada.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Ambas coexisten en la JDK y tienen responsabilidades distintas y complementarias en la gestión de redes.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Son clases idénticas que se utilizan según la versión de la JDK instalada.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Ambas coexisten en la JDK y tienen responsabilidades distintas y complementarias en la gestión de redes.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="La clase URL actúa como un identificador, mientras que URLConnection es el enlace de comunicación que permite interactuar con el servidor.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">URL define la dirección del recurso y URLConnection ejecuta las operaciones sobre dicha dirección.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La clase URL actúa como un identificador, mientras que URLConnection es el enlace de comunicación que permite interactuar con el servidor.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Representa una abstracción de alto nivel que oculta los detalles de los sockets subyacentes al programador.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">URLConnection hereda directamente de Socket para mostrar el tráfico de bajo nivel.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Representa una abstracción de alto nivel que oculta los detalles de los sockets subyacentes al programador.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="7">
-          <div class="q-header">
-            <span class="q-number">Question 8</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">Para realizar una administración remota de un servidor sin interfaz gráfica, ¿cuál es la principal desventaja de usar el protocolo Telnet frente a SSH?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en el riesgo que corre un administrador al escribir su clave en una red pública usando este servicio.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="Al no aplicar encriptación, cualquier interceptor en la red puede leer la información sensible que viaja por el puerto 23.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">La transmisión de datos, incluyendo contraseñas, se realiza en texto plano sin cifrar.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Al no aplicar encriptación, cualquier interceptor en la red puede leer la información sensible que viaja por el puerto 23.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Debido a la ausencia de cifrado y protocolos de seguridad complejos, Telnet suele ser muy ligero en términos de datos.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Telnet requiere un ancho de banda mucho mayor que el protocolo SSH.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Debido a la ausencia de cifrado y protocolos de seguridad complejos, Telnet suele ser muy ligero en términos de datos.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Telnet está basado enteramente en comandos de texto, siendo esta su forma principal de operación.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Telnet no permite la ejecución de comandos en modo texto.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Telnet está basado enteramente en comandos de texto, siendo esta su forma principal de operación.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Ambos protocolos siguen el modelo arquitectónico cliente/servidor para la administración remota.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">SSH es un modelo punto a punto, mientras que Telnet es exclusivamente cliente/servidor.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Ambos protocolos siguen el modelo arquitectónico cliente/servidor para la administración remota.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="8">
-          <div class="q-header">
-            <span class="q-number">Question 9</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">En la API javax.mail de Java, ¿qué objeto es responsable de agrupar la configuración por defecto necesaria para la gestión de correos?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Busque el elemento que representa el 'contexto' de trabajo del usuario dentro de la aplicación de correo.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Su función específica es el mecanismo de envío físico de los mensajes a través de la red.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Transport</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Su función específica es el mecanismo de envío físico de los mensajes a través de la red.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Este objeto se centra en el contenido del correo, como el emisor, el asunto y el cuerpo del mensaje.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Message</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este objeto se centra en el contenido del correo, como el emisor, el asunto y el cuerpo del mensaje.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="La clase Session establece el entorno y las propiedades de conexión que utilizarán los demás objetos de la API.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Session</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La clase Session establece el entorno y las propiedades de conexión que utilizarán los demás objetos de la API.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Esta es una clase base de otras bibliotecas de red (como Apache Commons), pero no es el núcleo configurador de javax.mail.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">SocketClient</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esta es una clase base de otras bibliotecas de red (como Apache Commons), pero no es el núcleo configurador de javax.mail.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="9">
-          <div class="q-header">
-            <span class="q-number">Question 10</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">¿Qué método de la clase DatagramSocket se utiliza para finalizar la escucha en un puerto y liberar el recurso?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Es el término común en Java para liberar cualquier recurso de flujo o conexión.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Este comando suele finalizar la ejecución de un programa completo, no solo el recurso específico de comunicación.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">exit()</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este comando suele finalizar la ejecución de un programa completo, no solo el recurso específico de comunicación.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Aunque existe en algunos contextos, el estándar para liberar el socket y el puerto asociado es el cierre del mismo.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">disconnect()</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Aunque existe en algunos contextos, el estándar para liberar el socket y el puerto asociado es el cierre del mismo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="Invocando este método se cierran las comunicaciones y se permite que otras aplicaciones puedan volver a usar el puerto.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">close()</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Invocando este método se cierran las comunicaciones y se permite que otras aplicaciones puedan volver a usar el puerto.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Este término suele asociarse al control de hilos, pero no es el método estándar para cerrar recursos de sockets de red.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">stop()</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este término suele asociarse al control de hilos, pero no es el método estándar para cerrar recursos de sockets de red.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="10">
-          <div class="q-header">
-            <span class="q-number">Question 11</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">En el desarrollo de un servidor concurrente, ¿qué parámetros son esenciales pasar a la clase que implementa el hilo (ServidorHebra)?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Considere qué herramientas necesita el hilo para poder 'hablar' y 'escuchar' al usuario que acaba de entrar.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="La comunicación ya se ha establecido en un puerto acordado; pasar el número de puerto no permite interactuar con los datos del cliente.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">El número de puerto 80 por defecto para garantizar compatibilidad web.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La comunicación ya se ha establecido en un puerto acordado; pasar el número de puerto no permite interactuar con los datos del cliente.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="Sin estos flujos, la hebra no puede leer las peticiones del cliente ni enviarle los resultados del servicio.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Los flujos de entrada y salida del socket del cliente conectado.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Sin estos flujos, la hebra no puede leer las peticiones del cliente ni enviarle los resultados del servicio.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="El ServerSocket debe permanecer en el hilo principal para seguir aceptando otros clientes; la hebra solo gestiona al cliente ya aceptado.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">El objeto ServerSocket completo para gestionar nuevas conexiones.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El ServerSocket debe permanecer en el hilo principal para seguir aceptando otros clientes; la hebra solo gestiona al cliente ya aceptado.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="El hilo ya se está ejecutando en el servidor; lo que necesita es la vía de comunicación con el cliente específico.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Únicamente la dirección IP del servidor.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El hilo ya se está ejecutando en el servidor; lo que necesita es la vía de comunicación con el cliente específico.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="11">
-          <div class="q-header">
-            <span class="q-number">Question 12</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">¿Cuál es la función principal del protocolo DNS en una red informática?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Recuerde cómo accede usted a Google sin necesidad de escribir su dirección IP exacta.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Esa es la función del protocolo DHCP (Protocolo de Configuración Dinámica de Host).">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Asignar automáticamente una dirección IP a cada ordenador que se conecta.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esa es la función del protocolo DHCP (Protocolo de Configuración Dinámica de Host).</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="La segmentación de datos es una función de la capa de transporte (TCP) y de red (IP), no de un servicio de nombres.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Dividir los archivos en paquetes pequeños para una transferencia más veloz.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La segmentación de datos es una función de la capa de transporte (TCP) y de red (IP), no de un servicio de nombres.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="Actúa como un directorio que permite localizar servidores usando nombres en lugar de memorizar secuencias de números.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Traducir nombres de dominio legibles por humanos en direcciones IP numéricas.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Actúa como un directorio que permite localizar servidores usando nombres en lugar de memorizar secuencias de números.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="El control de flujo y orden es una característica del protocolo TCP, no del sistema de nombres de dominio.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Garantizar que los datos lleguen en el orden correcto al destinatario.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El control de flujo y orden es una característica del protocolo TCP, no del sistema de nombres de dominio.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="12">
-          <div class="q-header">
-            <span class="q-number">Question 13</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">En una arquitectura Cliente/Servidor, ¿qué término define la unidad básica de interacción compuesta por una petición y su respuesta?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Es una palabra común en banca y bases de datos para describir una operación completa.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Un datagrama es una unidad de datos de protocolo independiente en UDP, pero no describe la interacción lógica completa.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Datagrama</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Un datagrama es una unidad de datos de protocolo independiente en UDP, pero no describe la interacción lógica completa.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="Representa el ciclo completo desde que el cliente solicita un recurso hasta que el servidor entrega el resultado y se cierra o procesa la operación.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Transacción</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Representa el ciclo completo desde que el cliente solicita un recurso hasta que el servidor entrega el resultado y se cierra o procesa la operación.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="El socket es el punto final o extremo de la conexión, no la secuencia lógica de intercambio de mensajes.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Socket</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El socket es el punto final o extremo de la conexión, no la secuencia lógica de intercambio de mensajes.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Una hebra es una unidad de ejecución del procesador, no un concepto de protocolo de comunicación.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Hebra</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Una hebra es una unidad de ejecución del procesador, no un concepto de protocolo de comunicación.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="13">
-          <div class="q-header">
-            <span class="q-number">Question 14</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">Para el envío de un correo electrónico en Java mediante SMTP, ¿qué método de la clase Message se utiliza para definir el asunto?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">El nombre del método es la traducción directa al inglés de la palabra 'Asunto'.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Este método identifica al remitente o la dirección desde la que se envía el correo.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">setFrom()</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este método identifica al remitente o la dirección desde la que se envía el correo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Este método se utiliza para definir el cuerpo o contenido principal del mensaje de texto.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">setText()</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este método se utiliza para definir el cuerpo o contenido principal del mensaje de texto.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Aunque el asunto es parte de la cabecera, existe un método especializado y más directo para el campo 'Subject'.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">setHeader()</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Aunque el asunto es parte de la cabecera, existe un método especializado y más directo para el campo 'Subject'.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="Es el método específico diseñado para asignar la cadena de texto que aparecerá en el campo de asunto del e-mail.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">setSubject()</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es el método específico diseñado para asignar la cadena de texto que aparecerá en el campo de asunto del e-mail.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="14">
-          <div class="q-header">
-            <span class="q-number">Question 15</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">En el protocolo FTP, ¿para qué se utiliza específicamente el puerto 21?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Diferencie entre 'dar instrucciones' y 'mover la carga'.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="Este puerto establece el canal de control donde se envían comandos como el login, la creación de directorios o la petición de archivos.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Para el intercambio de órdenes y comandos de control.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este puerto establece el canal de control donde se envían comandos como el login, la creación de directorios o la petición de archivos.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="La transferencia de datos se realiza habitualmente por el puerto 20 o puertos dinámicos en modo pasivo.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Para la transmisión física de los bytes que componen los archivos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La transferencia de datos se realiza habitualmente por el puerto 20 o puertos dinámicos en modo pasivo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="FTP estándar en el puerto 21 no aplica cifrado; para ello se requieren protocolos adicionales sobre otros puertos.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Para encriptar la sesión mediante el uso de certificados digitales.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">FTP estándar en el puerto 21 no aplica cifrado; para ello se requieren protocolos adicionales sobre otros puertos.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Esa tarea la realiza el puerto 53 mediante el protocolo DNS.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Para resolver el nombre del servidor FTP en una dirección IP.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esa tarea la realiza el puerto 53 mediante el protocolo DNS.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="15">
-          <div class="q-header">
-            <span class="q-number">Question 16</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">¿Cuál es la principal ventaja de utilizar Sockets UDP en aplicaciones de streaming o juegos en línea?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en por qué preferimos fluidez en un video aunque se pierda un píxel momentáneamente.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="UDP no retransmite paquetes perdidos, lo cual es una característica de TCP.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Garantiza que todos los paquetes lleguen al destino sin pérdidas.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">UDP no retransmite paquetes perdidos, lo cual es una característica de TCP.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="En UDP, los paquetes pueden llegar en cualquier orden y es la aplicación la que debe gestionarlos.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Ordena automáticamente los paquetes recibidos antes de entregarlos a la aplicación.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">En UDP, los paquetes pueden llegar en cualquier orden y es la aplicación la que debe gestionarlos.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="La seguridad de UDP es menor que la de TCP al no verificar la integridad ni el origen de forma robusta.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Permite el envío de archivos de texto plano con mayor seguridad que TCP.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La seguridad de UDP es menor que la de TCP al no verificar la integridad ni el origen de forma robusta.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="Al eliminar el 'saludo' inicial y el control de errores constante, la latencia disminuye considerablemente.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Es mucho más rápido al no requerir el establecimiento de una conexión previa.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Al eliminar el 'saludo' inicial y el control de errores constante, la latencia disminuye considerablemente.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="16">
-          <div class="q-header">
-            <span class="q-number">Question 17</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">En una implementación de red en Java, ¿qué excepción suele lanzarse si intentamos conectar un Socket a una IP inexistente o puerto cerrado?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Es la excepción más común cuando algo falla al leer o escribir datos fuera del programa.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="Es la excepción base para todos los errores de entrada/salida, incluyendo fallos de conexión de red.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">IOException</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es la excepción base para todos los errores de entrada/salida, incluyendo fallos de conexión de red.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Esta excepción ocurre al intentar acceder a un objeto no inicializado, no por errores de comunicación externa.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">NullPointerException</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esta excepción ocurre al intentar acceder a un objeto no inicializado, no por errores de comunicación externa.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Se produce por errores matemáticos (como división por cero) y no tiene relación con las interfaces de red.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">ArithmeticException</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Se produce por errores matemáticos (como división por cero) y no tiene relación con las interfaces de red.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Suele ocurrir por restricciones del gestor de seguridad de Java, no necesariamente por la disponibilidad física del host remoto.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">SecurityException</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Suele ocurrir por restricciones del gestor de seguridad de Java, no necesariamente por la disponibilidad física del host remoto.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="17">
-          <div class="q-header">
-            <span class="q-number">Question 18</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">¿Qué característica define al 'User Agent' en el protocolo HTTP?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en quién actúa como 'representante' del humano ante el servidor web.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="El User Agent reside en la parte del cliente, no en la infraestructura central del servidor.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Es el servidor que almacena las bases de datos de los usuarios.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El User Agent reside en la parte del cliente, no en la infraestructura central del servidor.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="Identifica al software (como Chrome, Firefox o un programa Java) que está realizando la solicitud al servidor web.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Es la aplicación o navegador que inicia la petición en nombre del usuario.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Identifica al software (como Chrome, Firefox o un programa Java) que está realizando la solicitud al servidor web.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="No es un protocolo en sí, sino un identificador dentro de las cabeceras del protocolo HTTP.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Es un protocolo de seguridad que reemplaza al SSL.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">No es un protocolo en sí, sino un identificador dentro de las cabeceras del protocolo HTTP.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="El término se refiere a una entidad de software dentro del protocolo, no a una persona física.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Es el administrador de red encargado de configurar el puerto 80.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El término se refiere a una entidad de software dentro del protocolo, no a una persona física.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="18">
-          <div class="q-header">
-            <span class="q-number">Question 19</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">Para enviar datos a través de un DatagramSocket, ¿qué información debe incluirse obligatoriamente en el constructor del DatagramPacket de salida?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Imagine que está enviando una carta física: ¿qué necesita poner en el sobre para que llegue?</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Los flujos (Streams) son propios de TCP; UDP utiliza paquetes discretos con su propia cabecera de dirección.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">El flujo de salida OutputStream obtenido del cliente.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Los flujos (Streams) son propios de TCP; UDP utiliza paquetes discretos con su propia cabecera de dirección.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Al no haber conexión previa, el paquete 'suelto' no sabría a dónde dirigirse sin una dirección destino.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Solo el array de bytes con el mensaje.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Al no haber conexión previa, el paquete 'suelto' no sabría a dónde dirigirse sin una dirección destino.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="UDP requiere que cada paquete individual contenga toda la información necesaria para el enrutamiento.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Los datos, la longitud, la dirección IP destino y el puerto destino.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">UDP requiere que cada paquete individual contenga toda la información necesaria para el enrutamiento.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="El socket necesita una InetAddress y un puerto numérico, no solo una cadena de texto de dominio.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Únicamente el nombre de dominio resuelto por el servidor DNS.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El socket necesita una InetAddress y un puerto numérico, no solo una cadena de texto de dominio.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="19">
-          <div class="q-header">
-            <span class="q-number">Question 20</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">En el contexto de la seguridad informática, ¿cuál de estos conceptos se refiere a que un usuario no pueda negar haber enviado un mensaje?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Es un término legal aplicado a la tecnología para evitar excusas sobre la autoría.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="Este principio garantiza que el emisor no pueda desvincularse legal o técnicamente de una acción o comunicación realizada.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">No repudio</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este principio garantiza que el emisor no pueda desvincularse legal o técnicamente de una acción o comunicación realizada.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="La integridad asegura que el mensaje no ha sido modificado, pero no garantiza quién lo envió originalmente.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Integridad</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La integridad asegura que el mensaje no ha sido modificado, pero no garantiza quién lo envió originalmente.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="La confidencialidad asegura que solo las personas autorizadas lean el mensaje, sin importar si el emisor admite el envío.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Confidencialidad</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La confidencialidad asegura que solo las personas autorizadas lean el mensaje, sin importar si el emisor admite el envío.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Se refiere a que el sistema esté accesible cuando se necesite, no a la autoría de los mensajes.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Disponibilidad</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Se refiere a que el sistema esté accesible cuando se necesite, no a la autoría de los mensajes.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="20">
-          <div class="q-header">
-            <span class="q-number">Question 21</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">¿Qué método de la clase Socket en Java se utiliza para obtener el canal de recepción de datos del servidor?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Busque el flujo que representa la 'entrada' de información al programa local.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Este método inicia el enlace físico, pero no proporciona por sí mismo la vía para leer los datos.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">connect()</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este método inicia el enlace físico, pero no proporciona por sí mismo la vía para leer los datos.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Este método devuelve el flujo para enviar datos desde el cliente hacia el servidor.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">getOutputStream()</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este método devuelve el flujo para enviar datos desde el cliente hacia el servidor.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="Permite al cliente leer los bytes que el servidor está enviando como respuesta o información.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">getInputStream()</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Permite al cliente leer los bytes que el servidor está enviando como respuesta o información.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Es un método de ServerSocket, no de la clase Socket que utiliza el cliente para comunicarse.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">accept()</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es un método de ServerSocket, no de la clase Socket que utiliza el cliente para comunicarse.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="21">
-          <div class="q-header">
-            <span class="q-number">Question 22</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">Al programar un cliente SMTP, ¿cuál es el comando estándar utilizado para iniciar la sesión con el servidor de correo?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Es una variación corta de la palabra 'Hola' en inglés.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Aunque se requiere autenticación después, el saludo de protocolo obligatorio es previo a las credenciales de usuario.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">LOGIN</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Aunque se requiere autenticación después, el saludo de protocolo obligatorio es previo a las credenciales de usuario.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Este comando se envía después de establecer la sesión para indicar el remitente del mensaje específico.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">MAIL FROM</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este comando se envía después de establecer la sesión para indicar el remitente del mensaje específico.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="Es el comando de saludo inicial definido en el protocolo para identificarse ante el servidor de correo.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">HELO</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es el comando de saludo inicial definido en el protocolo para identificarse ante el servidor de correo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="No es un comando estándar de inicio de protocolo SMTP, aunque existen extensiones como STARTTLS para seguridad.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">START</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">No es un comando estándar de inicio de protocolo SMTP, aunque existen extensiones como STARTTLS para seguridad.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="22">
-          <div class="q-header">
-            <span class="q-number">Question 23</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">¿Qué indica el 'Tiempo de respuesta' en la monitorización de una aplicación servidor?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en cuánto tiempo espera un usuario desde que hace clic hasta que ve el dato.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Eso se conoce como tiempo de carga o inicialización, no respuesta al servicio.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">El tiempo que tarda el servidor en arrancar desde cero.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Eso se conoce como tiempo de carga o inicialización, no respuesta al servicio.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="Incluye tanto el tiempo de transmisión por la red como el tiempo que tarda la CPU del servidor en procesar la lógica.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">El tiempo transcurrido entre la petición del cliente y la recepción del resultado final.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Incluye tanto el tiempo de transmisión por la red como el tiempo que tarda la CPU del servidor en procesar la lógica.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="La capacidad del hardware del cliente es solo uno de los muchos factores y no define la métrica de respuesta del servicio.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">La velocidad máxima de la tarjeta de red del cliente.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La capacidad del hardware del cliente es solo uno de los muchos factores y no define la métrica de respuesta del servicio.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Esto define el rendimiento o caudal (throughput), no la latencia de una petición individual.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">El número de clientes que pueden conectarse por segundo.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esto define el rendimiento o caudal (throughput), no la latencia de una petición individual.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="23">
-          <div class="q-header">
-            <span class="q-number">Question 24</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">En Java, ¿qué diferencia existe entre usar la interfaz Runnable o heredar de Thread para crear el hilo de un servidor?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Recuerde las limitaciones de la herencia simple en el lenguaje Java.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="Java no admite herencia múltiple; usar la interfaz Runnable es más flexible para la arquitectura de clases.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Runnable permite que la clase herede de otra si es necesario, mientras que Thread no.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Java no admite herencia múltiple; usar la interfaz Runnable es más flexible para la arquitectura de clases.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="La forma de crear hilos es independiente del protocolo de red utilizado.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Thread es obligatorio para servidores TCP y Runnable para UDP.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La forma de crear hilos es independiente del protocolo de red utilizado.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="El consumo de recursos depende de la lógica interna del hilo, no de la sintaxis elegida para declararlo.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Runnable consume mucha más memoria RAM al ejecutarse.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El consumo de recursos depende de la lógica interna del hilo, no de la sintaxis elegida para declararlo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="En ambas opciones se pueden pasar parámetros a través del constructor de la clase.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Heredar de Thread es la única forma de pasar parámetros al hilo.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">En ambas opciones se pueden pasar parámetros a través del constructor de la clase.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="24">
-          <div class="q-header">
-            <span class="q-number">Question 25</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">Dentro de un datagrama UDP, ¿qué campo permite al receptor saber cuántos bytes de datos útiles contiene el paquete?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Es un valor numérico que acompaña a los datos para delimitar su final.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Identifica la aplicación emisora para posibles respuestas, pero es independiente del tamaño de la carga útil.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Puerto origen</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Identifica la aplicación emisora para posibles respuestas, pero es independiente del tamaño de la carga útil.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Es el contenedor de los datos en sí, pero no el campo de control que indica su medida exacta.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Array de bytes</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es el contenedor de los datos en sí, pero no el campo de control que indica su medida exacta.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="Este campo especifica el tamaño total del datagrama (cabecera más datos) para su correcto procesamiento.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Longitud</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este campo especifica el tamaño total del datagrama (cabecera más datos) para su correcto procesamiento.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="La IP solo sirve para el enrutamiento hacia el equipo correcto, no indica el tamaño del mensaje.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">IP destino</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La IP solo sirve para el enrutamiento hacia el equipo correcto, no indica el tamaño del mensaje.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="25">
-          <div class="q-header">
-            <span class="q-number">Question 26</span>
-            <span class="q-of">/ 26</span>
-          </div>
-          <div class="q-text">¿Cuál es la principal razón por la que se recomienda establecer un 'máximo de clientes' en un servidor concurrente?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en qué sucedería si mil personas intentaran entrar por una puerta diseñada para diez.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Java puede manejar miles de hilos, el límite lo marca el hardware y la eficiencia del código.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Porque Java solo permite un máximo de 10 hilos simultáneos por defecto.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Java puede manejar miles de hilos, el límite lo marca el hardware y la eficiencia del código.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="El límite de usuarios es una gestión de rendimiento, no una imposición de protocolos de seguridad.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Para obligar a los clientes a utilizar conexiones cifradas HTTPS.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El límite de usuarios es una gestión de rendimiento, no una imposición de protocolos de seguridad.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Los protocolos son fijos según la implementación y no cambian por la carga de usuarios.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Para evitar que el protocolo TCP cambie automáticamente a UDP.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Los protocolos son fijos según la implementación y no cambian por la carga de usuarios.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="Cada hilo consume recursos; un número excesivo de ellos podría degradar el rendimiento o provocar la caída del sistema.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Para prevenir la saturación de los recursos de CPU y memoria RAM del servidor.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Cada hilo consume recursos; un número excesivo de ellos podría degradar el rendimiento o provocar la caída del sistema.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      </div>
-  <div class="results" id="results">
-    <h2>Quiz Complete!</h2>
-    <div class="score" id="score">0%</div>
-    <div class="score-text" id="score-text"></div>
-    <button class="restart-btn" onclick="restart()">Try Again</button>
-  </div>
-</div>
-<script>
-const quizData = [{"question":"¿Cuál es la función primordial de la clase ServerSocket en una arquitectura de red basada en el protocolo TCP?","hint":"Piense en el rol de 'escucha' que asume la aplicación antes de establecer el canal bidireccional.","options":[{"label":"A","text":"Gestionar exclusivamente el flujo de datos mediante hilos independientes.","isCorrect":false,"rationale":"La gestión de hilos es una lógica de programación concurrente adicional y no es una función intrínseca de esta clase específica."},{"label":"B","text":"Encapsular datagramas para su envío a través de una red no orientada a conexión.","isCorrect":false,"rationale":"El manejo de datagramas es propio del protocolo UDP, mientras que esta clase opera bajo el modelo de flujos de bytes de TCP."},{"label":"C","text":"Traducir nombres de dominio en direcciones IP de forma automática.","isCorrect":false,"rationale":"Esta es la función del protocolo DNS, no de un socket de servidor que opera a nivel de transporte."},{"label":"D","text":"Implementar el servidor y esperar activamente a que un cliente solicite una conexión.","isCorrect":true,"rationale":"Esta clase está diseñada específicamente para escuchar en un puerto determinado y bloquear la ejecución hasta que se detecte una petición de conexión entrante."}]},{"question":"En el contexto de la programación con Sockets UDP, ¿por qué es necesario un array de tipo byte al trabajar con la clase DatagramPacket?","hint":"Considere el formato de bajo nivel en el que se empaqueta la información en protocolos rápidos y ligeros.","options":[{"label":"A","text":"Para permitir que el servidor ServerSocket acepte múltiples clientes simultáneamente.","isCorrect":false,"rationale":"ServerSocket es una clase de TCP y no tiene relación técnica con la estructura de datos de un paquete UDP."},{"label":"B","text":"Debido a que los datagramas transportan la información como una secuencia de bytes en crudo.","isCorrect":true,"rationale":"A diferencia de TCP que usa flujos de datos, UDP requiere que el programador defina el contenedor de bytes específico para el paquete antes de su envío o recepción."},{"label":"C","text":"Para garantizar que la conexión se mantenga abierta durante toda la transferencia.","isCorrect":false,"rationale":"UDP es un protocolo no orientado a conexión, por lo que no se mantiene un estado de enlace abierto entre mensajes."},{"label":"D","text":"Para encriptar automáticamente el contenido del mensaje antes de salir a la red.","isCorrect":false,"rationale":"El uso de arrays de bytes no implica cifrado; la seguridad debe implementarse en capas superiores o mediante protocolos específicos como SFTP."}]},{"question":"Al implementar un servidor concurrente, ¿cuál es el beneficio principal de que el servidor lance una 'hebra' tras aceptar una conexión?","hint":"Piense en qué sucede con el bucle principal de aceptación de clientes mientras se procesa una lógica compleja.","options":[{"label":"A","text":"Aumentar la seguridad de la transmisión mediante el uso de SSH.","isCorrect":false,"rationale":"La concurrencia mediante hilos gestiona la disponibilidad del servicio, pero no añade capas de cifrado a la comunicación por sí sola."},{"label":"B","text":"Reducir el tráfico de red total generado por la aplicación.","isCorrect":false,"rationale":"El uso de hilos en el servidor no altera la cantidad de datos enviados o recibidos a través del canal físico."},{"label":"C","text":"Permitir que el servidor vuelva inmediatamente a escuchar nuevas peticiones de otros clientes.","isCorrect":true,"rationale":"Delegar la tarea a un hilo independiente libera al hilo principal del servidor para que no quede bloqueado atendiendo a un solo usuario."},{"label":"D","text":"Eliminar la necesidad de gestionar excepciones mediante bloques try-catch.","isCorrect":false,"rationale":"Toda operación de red es susceptible de errores, y el uso de hilos requiere un control de excepciones aún más riguroso."}]},{"question":"¿Cuál es la diferencia fundamental entre los protocolos de recepción de correo electrónico POP3 e IMAP?","hint":"Considere la ubicación física del mensaje mientras el usuario interactúa con él desde diferentes dispositivos.","options":[{"label":"A","text":"IMAP es un protocolo sin estado similar al HTTP.","isCorrect":false,"rationale":"IMAP mantiene una sesión activa para reflejar cambios en las carpetas y el estado de los correos en tiempo real."},{"label":"B","text":"IMAP permite consultar los mensajes directamente en el servidor sin necesidad de descargarlos localmente.","isCorrect":true,"rationale":"IMAP mantiene la sincronización con el servidor, mientras que el comportamiento tradicional de POP3 implica la descarga y eliminación del mensaje en el servidor."},{"label":"C","text":"POP3 permite enviar correos mientras que IMAP solo permite leerlos.","isCorrect":false,"rationale":"Ambos son protocolos de acceso/recepción; el envío es responsabilidad del protocolo SMTP."},{"label":"D","text":"POP3 utiliza el puerto 25 para la comunicación cifrada.","isCorrect":false,"rationale":"El puerto 25 es el estándar para SMTP, no para los protocolos de acceso a buzones de correo."}]},{"question":"Dentro de la biblioteca Apache Commons Net para FTP, ¿qué función cumple la clase FTPReply?","hint":"Piense en la necesidad del cliente de entender si el servidor aceptó o rechazó un comando.","options":[{"label":"A","text":"Cerrar automáticamente el socket cuando se detecta un error de red.","isCorrect":false,"rationale":"El cierre del socket debe ser gestionado explícitamente por el programador o mediante el manejo de excepciones de E/S."},{"label":"B","text":"Proporcionar cifrado SSL para convertir FTP en FTPS.","isCorrect":false,"rationale":"La seguridad SSL es gestionada por la clase FTPSClient, que hereda de FTPClient."},{"label":"C","text":"Establecer los parámetros de configuración del cliente como el modo pasivo.","isCorrect":false,"rationale":"Dicha funcionalidad suele recaer en la clase FTPClientConfig o métodos específicos del cliente."},{"label":"D","text":"Gestionar los códigos numéricos de respuesta enviados por el servidor tras una orden.","isCorrect":true,"rationale":"Esta clase facilita la interpretación de si una operación (como un login o una transferencia) fue exitosa según los estándares del protocolo FTP."}]},{"question":"¿Por qué se afirma que el protocolo HTTP 'no tiene estado' (stateless)?","hint":"Reflexione sobre si el servidor reconoce automáticamente a un usuario que acaba de recargar la página sin usar mecanismos extra.","options":[{"label":"A","text":"Porque utiliza el puerto 80, que no admite el almacenamiento de variables.","isCorrect":false,"rationale":"El número de puerto es una dirección de la capa de transporte y no determina las capacidades de memoria del protocolo de aplicación."},{"label":"B","text":"Porque cada petición es independiente y el servidor no recuerda conexiones anteriores por defecto.","isCorrect":true,"rationale":"El diseño original del protocolo trata cada ciclo de petición-respuesta como una transacción aislada, sin memoria intrínseca de la identidad del cliente."},{"label":"C","text":"Porque solo puede enviar documentos en formato HTML plano.","isCorrect":false,"rationale":"Aunque nació para HTML, HTTP transporta imágenes, videos y datos en diversos formatos mediante tipos MIME."},{"label":"D","text":"Porque no permite la transferencia de archivos de gran tamaño.","isCorrect":false,"rationale":"HTTP es capaz de transferir cualquier recurso identificado por una URL, independientemente de su tamaño."}]},{"question":"En Java, al programar un cliente HTTP de alto nivel, ¿cuál es la relación técnica entre las clases URL y URLConnection?","hint":"Diferencie entre la representación de una dirección y el mecanismo para abrir un canal hacia ella.","options":[{"label":"A","text":"URL es exclusiva para protocolos seguros HTTPS, mientras que URLConnection es para HTTP.","isCorrect":false,"rationale":"Ambas pueden manejar diversos protocolos dependiendo del prefijo de la cadena de texto utilizada."},{"label":"B","text":"Son clases idénticas que se utilizan según la versión de la JDK instalada.","isCorrect":false,"rationale":"Ambas coexisten en la JDK y tienen responsabilidades distintas y complementarias en la gestión de redes."},{"label":"C","text":"URL define la dirección del recurso y URLConnection ejecuta las operaciones sobre dicha dirección.","isCorrect":true,"rationale":"La clase URL actúa como un identificador, mientras que URLConnection es el enlace de comunicación que permite interactuar con el servidor."},{"label":"D","text":"URLConnection hereda directamente de Socket para mostrar el tráfico de bajo nivel.","isCorrect":false,"rationale":"Representa una abstracción de alto nivel que oculta los detalles de los sockets subyacentes al programador."}]},{"question":"Para realizar una administración remota de un servidor sin interfaz gráfica, ¿cuál es la principal desventaja de usar el protocolo Telnet frente a SSH?","hint":"Piense en el riesgo que corre un administrador al escribir su clave en una red pública usando este servicio.","options":[{"label":"A","text":"La transmisión de datos, incluyendo contraseñas, se realiza en texto plano sin cifrar.","isCorrect":true,"rationale":"Al no aplicar encriptación, cualquier interceptor en la red puede leer la información sensible que viaja por el puerto 23."},{"label":"B","text":"Telnet requiere un ancho de banda mucho mayor que el protocolo SSH.","isCorrect":false,"rationale":"Debido a la ausencia de cifrado y protocolos de seguridad complejos, Telnet suele ser muy ligero en términos de datos."},{"label":"C","text":"Telnet no permite la ejecución de comandos en modo texto.","isCorrect":false,"rationale":"Telnet está basado enteramente en comandos de texto, siendo esta su forma principal de operación."},{"label":"D","text":"SSH es un modelo punto a punto, mientras que Telnet es exclusivamente cliente/servidor.","isCorrect":false,"rationale":"Ambos protocolos siguen el modelo arquitectónico cliente/servidor para la administración remota."}]},{"question":"En la API javax.mail de Java, ¿qué objeto es responsable de agrupar la configuración por defecto necesaria para la gestión de correos?","hint":"Busque el elemento que representa el 'contexto' de trabajo del usuario dentro de la aplicación de correo.","options":[{"label":"A","text":"Transport","isCorrect":false,"rationale":"Su función específica es el mecanismo de envío físico de los mensajes a través de la red."},{"label":"B","text":"Message","isCorrect":false,"rationale":"Este objeto se centra en el contenido del correo, como el emisor, el asunto y el cuerpo del mensaje."},{"label":"C","text":"Session","isCorrect":true,"rationale":"La clase Session establece el entorno y las propiedades de conexión que utilizarán los demás objetos de la API."},{"label":"D","text":"SocketClient","isCorrect":false,"rationale":"Esta es una clase base de otras bibliotecas de red (como Apache Commons), pero no es el núcleo configurador de javax.mail."}]},{"question":"¿Qué método de la clase DatagramSocket se utiliza para finalizar la escucha en un puerto y liberar el recurso?","hint":"Es el término común en Java para liberar cualquier recurso de flujo o conexión.","options":[{"label":"A","text":"exit()","isCorrect":false,"rationale":"Este comando suele finalizar la ejecución de un programa completo, no solo el recurso específico de comunicación."},{"label":"B","text":"disconnect()","isCorrect":false,"rationale":"Aunque existe en algunos contextos, el estándar para liberar el socket y el puerto asociado es el cierre del mismo."},{"label":"C","text":"close()","isCorrect":true,"rationale":"Invocando este método se cierran las comunicaciones y se permite que otras aplicaciones puedan volver a usar el puerto."},{"label":"D","text":"stop()","isCorrect":false,"rationale":"Este término suele asociarse al control de hilos, pero no es el método estándar para cerrar recursos de sockets de red."}]},{"question":"En el desarrollo de un servidor concurrente, ¿qué parámetros son esenciales pasar a la clase que implementa el hilo (ServidorHebra)?","hint":"Considere qué herramientas necesita el hilo para poder 'hablar' y 'escuchar' al usuario que acaba de entrar.","options":[{"label":"A","text":"El número de puerto 80 por defecto para garantizar compatibilidad web.","isCorrect":false,"rationale":"La comunicación ya se ha establecido en un puerto acordado; pasar el número de puerto no permite interactuar con los datos del cliente."},{"label":"B","text":"Los flujos de entrada y salida del socket del cliente conectado.","isCorrect":true,"rationale":"Sin estos flujos, la hebra no puede leer las peticiones del cliente ni enviarle los resultados del servicio."},{"label":"C","text":"El objeto ServerSocket completo para gestionar nuevas conexiones.","isCorrect":false,"rationale":"El ServerSocket debe permanecer en el hilo principal para seguir aceptando otros clientes; la hebra solo gestiona al cliente ya aceptado."},{"label":"D","text":"Únicamente la dirección IP del servidor.","isCorrect":false,"rationale":"El hilo ya se está ejecutando en el servidor; lo que necesita es la vía de comunicación con el cliente específico."}]},{"question":"¿Cuál es la función principal del protocolo DNS en una red informática?","hint":"Recuerde cómo accede usted a Google sin necesidad de escribir su dirección IP exacta.","options":[{"label":"A","text":"Asignar automáticamente una dirección IP a cada ordenador que se conecta.","isCorrect":false,"rationale":"Esa es la función del protocolo DHCP (Protocolo de Configuración Dinámica de Host)."},{"label":"B","text":"Dividir los archivos en paquetes pequeños para una transferencia más veloz.","isCorrect":false,"rationale":"La segmentación de datos es una función de la capa de transporte (TCP) y de red (IP), no de un servicio de nombres."},{"label":"C","text":"Traducir nombres de dominio legibles por humanos en direcciones IP numéricas.","isCorrect":true,"rationale":"Actúa como un directorio que permite localizar servidores usando nombres en lugar de memorizar secuencias de números."},{"label":"D","text":"Garantizar que los datos lleguen en el orden correcto al destinatario.","isCorrect":false,"rationale":"El control de flujo y orden es una característica del protocolo TCP, no del sistema de nombres de dominio."}]},{"question":"En una arquitectura Cliente/Servidor, ¿qué término define la unidad básica de interacción compuesta por una petición y su respuesta?","hint":"Es una palabra común en banca y bases de datos para describir una operación completa.","options":[{"label":"A","text":"Datagrama","isCorrect":false,"rationale":"Un datagrama es una unidad de datos de protocolo independiente en UDP, pero no describe la interacción lógica completa."},{"label":"B","text":"Transacción","isCorrect":true,"rationale":"Representa el ciclo completo desde que el cliente solicita un recurso hasta que el servidor entrega el resultado y se cierra o procesa la operación."},{"label":"C","text":"Socket","isCorrect":false,"rationale":"El socket es el punto final o extremo de la conexión, no la secuencia lógica de intercambio de mensajes."},{"label":"D","text":"Hebra","isCorrect":false,"rationale":"Una hebra es una unidad de ejecución del procesador, no un concepto de protocolo de comunicación."}]},{"question":"Para el envío de un correo electrónico en Java mediante SMTP, ¿qué método de la clase Message se utiliza para definir el asunto?","hint":"El nombre del método es la traducción directa al inglés de la palabra 'Asunto'.","options":[{"label":"A","text":"setFrom()","isCorrect":false,"rationale":"Este método identifica al remitente o la dirección desde la que se envía el correo."},{"label":"B","text":"setText()","isCorrect":false,"rationale":"Este método se utiliza para definir el cuerpo o contenido principal del mensaje de texto."},{"label":"C","text":"setHeader()","isCorrect":false,"rationale":"Aunque el asunto es parte de la cabecera, existe un método especializado y más directo para el campo 'Subject'."},{"label":"D","text":"setSubject()","isCorrect":true,"rationale":"Es el método específico diseñado para asignar la cadena de texto que aparecerá en el campo de asunto del e-mail."}]},{"question":"En el protocolo FTP, ¿para qué se utiliza específicamente el puerto 21?","hint":"Diferencie entre 'dar instrucciones' y 'mover la carga'.","options":[{"label":"A","text":"Para el intercambio de órdenes y comandos de control.","isCorrect":true,"rationale":"Este puerto establece el canal de control donde se envían comandos como el login, la creación de directorios o la petición de archivos."},{"label":"B","text":"Para la transmisión física de los bytes que componen los archivos.","isCorrect":false,"rationale":"La transferencia de datos se realiza habitualmente por el puerto 20 o puertos dinámicos en modo pasivo."},{"label":"C","text":"Para encriptar la sesión mediante el uso de certificados digitales.","isCorrect":false,"rationale":"FTP estándar en el puerto 21 no aplica cifrado; para ello se requieren protocolos adicionales sobre otros puertos."},{"label":"D","text":"Para resolver el nombre del servidor FTP en una dirección IP.","isCorrect":false,"rationale":"Esa tarea la realiza el puerto 53 mediante el protocolo DNS."}]},{"question":"¿Cuál es la principal ventaja de utilizar Sockets UDP en aplicaciones de streaming o juegos en línea?","hint":"Piense en por qué preferimos fluidez en un video aunque se pierda un píxel momentáneamente.","options":[{"label":"A","text":"Garantiza que todos los paquetes lleguen al destino sin pérdidas.","isCorrect":false,"rationale":"UDP no retransmite paquetes perdidos, lo cual es una característica de TCP."},{"label":"B","text":"Ordena automáticamente los paquetes recibidos antes de entregarlos a la aplicación.","isCorrect":false,"rationale":"En UDP, los paquetes pueden llegar en cualquier orden y es la aplicación la que debe gestionarlos."},{"label":"C","text":"Permite el envío de archivos de texto plano con mayor seguridad que TCP.","isCorrect":false,"rationale":"La seguridad de UDP es menor que la de TCP al no verificar la integridad ni el origen de forma robusta."},{"label":"D","text":"Es mucho más rápido al no requerir el establecimiento de una conexión previa.","isCorrect":true,"rationale":"Al eliminar el 'saludo' inicial y el control de errores constante, la latencia disminuye considerablemente."}]},{"question":"En una implementación de red en Java, ¿qué excepción suele lanzarse si intentamos conectar un Socket a una IP inexistente o puerto cerrado?","hint":"Es la excepción más común cuando algo falla al leer o escribir datos fuera del programa.","options":[{"label":"A","text":"IOException","isCorrect":true,"rationale":"Es la excepción base para todos los errores de entrada/salida, incluyendo fallos de conexión de red."},{"label":"B","text":"NullPointerException","isCorrect":false,"rationale":"Esta excepción ocurre al intentar acceder a un objeto no inicializado, no por errores de comunicación externa."},{"label":"C","text":"ArithmeticException","isCorrect":false,"rationale":"Se produce por errores matemáticos (como división por cero) y no tiene relación con las interfaces de red."},{"label":"D","text":"SecurityException","isCorrect":false,"rationale":"Suele ocurrir por restricciones del gestor de seguridad de Java, no necesariamente por la disponibilidad física del host remoto."}]},{"question":"¿Qué característica define al 'User Agent' en el protocolo HTTP?","hint":"Piense en quién actúa como 'representante' del humano ante el servidor web.","options":[{"label":"A","text":"Es el servidor que almacena las bases de datos de los usuarios.","isCorrect":false,"rationale":"El User Agent reside en la parte del cliente, no en la infraestructura central del servidor."},{"label":"B","text":"Es la aplicación o navegador que inicia la petición en nombre del usuario.","isCorrect":true,"rationale":"Identifica al software (como Chrome, Firefox o un programa Java) que está realizando la solicitud al servidor web."},{"label":"C","text":"Es un protocolo de seguridad que reemplaza al SSL.","isCorrect":false,"rationale":"No es un protocolo en sí, sino un identificador dentro de las cabeceras del protocolo HTTP."},{"label":"D","text":"Es el administrador de red encargado de configurar el puerto 80.","isCorrect":false,"rationale":"El término se refiere a una entidad de software dentro del protocolo, no a una persona física."}]},{"question":"Para enviar datos a través de un DatagramSocket, ¿qué información debe incluirse obligatoriamente en el constructor del DatagramPacket de salida?","hint":"Imagine que está enviando una carta física: ¿qué necesita poner en el sobre para que llegue?","options":[{"label":"A","text":"El flujo de salida OutputStream obtenido del cliente.","isCorrect":false,"rationale":"Los flujos (Streams) son propios de TCP; UDP utiliza paquetes discretos con su propia cabecera de dirección."},{"label":"B","text":"Solo el array de bytes con el mensaje.","isCorrect":false,"rationale":"Al no haber conexión previa, el paquete 'suelto' no sabría a dónde dirigirse sin una dirección destino."},{"label":"C","text":"Los datos, la longitud, la dirección IP destino y el puerto destino.","isCorrect":true,"rationale":"UDP requiere que cada paquete individual contenga toda la información necesaria para el enrutamiento."},{"label":"D","text":"Únicamente el nombre de dominio resuelto por el servidor DNS.","isCorrect":false,"rationale":"El socket necesita una InetAddress y un puerto numérico, no solo una cadena de texto de dominio."}]},{"question":"En el contexto de la seguridad informática, ¿cuál de estos conceptos se refiere a que un usuario no pueda negar haber enviado un mensaje?","hint":"Es un término legal aplicado a la tecnología para evitar excusas sobre la autoría.","options":[{"label":"A","text":"No repudio","isCorrect":true,"rationale":"Este principio garantiza que el emisor no pueda desvincularse legal o técnicamente de una acción o comunicación realizada."},{"label":"B","text":"Integridad","isCorrect":false,"rationale":"La integridad asegura que el mensaje no ha sido modificado, pero no garantiza quién lo envió originalmente."},{"label":"C","text":"Confidencialidad","isCorrect":false,"rationale":"La confidencialidad asegura que solo las personas autorizadas lean el mensaje, sin importar si el emisor admite el envío."},{"label":"D","text":"Disponibilidad","isCorrect":false,"rationale":"Se refiere a que el sistema esté accesible cuando se necesite, no a la autoría de los mensajes."}]},{"question":"¿Qué método de la clase Socket en Java se utiliza para obtener el canal de recepción de datos del servidor?","hint":"Busque el flujo que representa la 'entrada' de información al programa local.","options":[{"label":"A","text":"connect()","isCorrect":false,"rationale":"Este método inicia el enlace físico, pero no proporciona por sí mismo la vía para leer los datos."},{"label":"B","text":"getOutputStream()","isCorrect":false,"rationale":"Este método devuelve el flujo para enviar datos desde el cliente hacia el servidor."},{"label":"C","text":"getInputStream()","isCorrect":true,"rationale":"Permite al cliente leer los bytes que el servidor está enviando como respuesta o información."},{"label":"D","text":"accept()","isCorrect":false,"rationale":"Es un método de ServerSocket, no de la clase Socket que utiliza el cliente para comunicarse."}]},{"question":"Al programar un cliente SMTP, ¿cuál es el comando estándar utilizado para iniciar la sesión con el servidor de correo?","hint":"Es una variación corta de la palabra 'Hola' en inglés.","options":[{"label":"A","text":"LOGIN","isCorrect":false,"rationale":"Aunque se requiere autenticación después, el saludo de protocolo obligatorio es previo a las credenciales de usuario."},{"label":"B","text":"MAIL FROM","isCorrect":false,"rationale":"Este comando se envía después de establecer la sesión para indicar el remitente del mensaje específico."},{"label":"C","text":"HELO","isCorrect":true,"rationale":"Es el comando de saludo inicial definido en el protocolo para identificarse ante el servidor de correo."},{"label":"D","text":"START","isCorrect":false,"rationale":"No es un comando estándar de inicio de protocolo SMTP, aunque existen extensiones como STARTTLS para seguridad."}]},{"question":"¿Qué indica el 'Tiempo de respuesta' en la monitorización de una aplicación servidor?","hint":"Piense en cuánto tiempo espera un usuario desde que hace clic hasta que ve el dato.","options":[{"label":"A","text":"El tiempo que tarda el servidor en arrancar desde cero.","isCorrect":false,"rationale":"Eso se conoce como tiempo de carga o inicialización, no respuesta al servicio."},{"label":"B","text":"El tiempo transcurrido entre la petición del cliente y la recepción del resultado final.","isCorrect":true,"rationale":"Incluye tanto el tiempo de transmisión por la red como el tiempo que tarda la CPU del servidor en procesar la lógica."},{"label":"C","text":"La velocidad máxima de la tarjeta de red del cliente.","isCorrect":false,"rationale":"La capacidad del hardware del cliente es solo uno de los muchos factores y no define la métrica de respuesta del servicio."},{"label":"D","text":"El número de clientes que pueden conectarse por segundo.","isCorrect":false,"rationale":"Esto define el rendimiento o caudal (throughput), no la latencia de una petición individual."}]},{"question":"En Java, ¿qué diferencia existe entre usar la interfaz Runnable o heredar de Thread para crear el hilo de un servidor?","hint":"Recuerde las limitaciones de la herencia simple en el lenguaje Java.","options":[{"label":"A","text":"Runnable permite que la clase herede de otra si es necesario, mientras que Thread no.","isCorrect":true,"rationale":"Java no admite herencia múltiple; usar la interfaz Runnable es más flexible para la arquitectura de clases."},{"label":"B","text":"Thread es obligatorio para servidores TCP y Runnable para UDP.","isCorrect":false,"rationale":"La forma de crear hilos es independiente del protocolo de red utilizado."},{"label":"C","text":"Runnable consume mucha más memoria RAM al ejecutarse.","isCorrect":false,"rationale":"El consumo de recursos depende de la lógica interna del hilo, no de la sintaxis elegida para declararlo."},{"label":"D","text":"Heredar de Thread es la única forma de pasar parámetros al hilo.","isCorrect":false,"rationale":"En ambas opciones se pueden pasar parámetros a través del constructor de la clase."}]},{"question":"Dentro de un datagrama UDP, ¿qué campo permite al receptor saber cuántos bytes de datos útiles contiene el paquete?","hint":"Es un valor numérico que acompaña a los datos para delimitar su final.","options":[{"label":"A","text":"Puerto origen","isCorrect":false,"rationale":"Identifica la aplicación emisora para posibles respuestas, pero es independiente del tamaño de la carga útil."},{"label":"B","text":"Array de bytes","isCorrect":false,"rationale":"Es el contenedor de los datos en sí, pero no el campo de control que indica su medida exacta."},{"label":"C","text":"Longitud","isCorrect":true,"rationale":"Este campo especifica el tamaño total del datagrama (cabecera más datos) para su correcto procesamiento."},{"label":"D","text":"IP destino","isCorrect":false,"rationale":"La IP solo sirve para el enrutamiento hacia el equipo correcto, no indica el tamaño del mensaje."}]},{"question":"¿Cuál es la principal razón por la que se recomienda establecer un 'máximo de clientes' en un servidor concurrente?","hint":"Piense en qué sucedería si mil personas intentaran entrar por una puerta diseñada para diez.","options":[{"label":"A","text":"Porque Java solo permite un máximo de 10 hilos simultáneos por defecto.","isCorrect":false,"rationale":"Java puede manejar miles de hilos, el límite lo marca el hardware y la eficiencia del código."},{"label":"B","text":"Para obligar a los clientes a utilizar conexiones cifradas HTTPS.","isCorrect":false,"rationale":"El límite de usuarios es una gestión de rendimiento, no una imposición de protocolos de seguridad."},{"label":"C","text":"Para evitar que el protocolo TCP cambie automáticamente a UDP.","isCorrect":false,"rationale":"Los protocolos son fijos según la implementación y no cambian por la carga de usuarios."},{"label":"D","text":"Para prevenir la saturación de los recursos de CPU y memoria RAM del servidor.","isCorrect":true,"rationale":"Cada hilo consume recursos; un número excesivo de ellos podría degradar el rendimiento o provocar la caída del sistema."}]}];
-const tr = {"correct":"Correct!","incorrect":"Incorrect","next":"Siguiente Question →","seeResults":"See Results","complete":"Quiz Complete!","scoreText":"You got {correct} out of {total} correct","tryAgain":"Try Again","rightAnswer":"Correctas answer","notQuite":"Not quite"};
-let currentQ = 0, correctCount = 0, answered = false;
+    <div class="quiz-container">
+        <div id="quiz-content">
+            <!-- Dynamic Content -->
+        </div>
+        <div id="results-content" class="hidden"></div>
 
-function init() {
-  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === 0));
-  updateProgress();
-  document.querySelectorAll('.option').forEach(opt => opt.addEventListener('click', () => selectOption(opt)));
-  document.querySelectorAll('.next-btn').forEach(btn => btn.addEventListener('click', nextQuestion));
-}
+        <div id="hint-box" class="hint-content">
+            <div class="hint-icon-box">💡</div>
+            <div id="hint-text"></div>
+        </div>
 
-function selectOption(opt) {
-  if (answered) return;
-  answered = true;
-  const q = opt.closest('.question');
-  const options = q.querySelectorAll('.option');
-  const nextBtn = q.querySelector('.next-btn');
-  const isCorrect = opt.dataset.correct === 'true';
-  
-  // Mark all options as disabled
-  options.forEach(o => o.classList.add('disabled'));
-  
-  // Style selected option
-  opt.classList.add('selected', isCorrect ? 'correct' : 'incorrect');
-  
-  // Show correct answer if wrong
-  if (!isCorrect) {
-    const correctOpt = [...options].find(o => o.dataset.correct === 'true');
-    if (correctOpt) correctOpt.classList.add('show-correct');
-  }
-  
-  if (isCorrect) correctCount++;
-  
-  // Show feedback for ALL options that have rationale
-  options.forEach(o => {
-    const wrapper = o.closest('.option-wrapper');
-    const feedback = wrapper.querySelector('.option-feedback');
-    const rationale = o.dataset.rationale;
-    const isThisCorrect = o.dataset.correct === 'true';
-    
-    if (rationale && rationale.trim()) {
-      feedback.classList.remove('hidden');
-      feedback.classList.add(isThisCorrect ? 'correct-feedback' : 'incorrect-feedback');
-      
-      const statusEl = feedback.querySelector('.feedback-status');
-      statusEl.className = 'feedback-status ' + (isThisCorrect ? 'correct' : 'incorrect');
-      statusEl.innerHTML = isThisCorrect 
-        ? '✓ ' + tr.rightAnswer
-        : '✗ ' + tr.notQuite;
-    }
-  });
-  
-  nextBtn.classList.remove('hidden');
-  if (currentQ === quizData.length - 1) nextBtn.textContent = tr.seeResults;
-}
+        <div class="navigation">
+            <button id="hint-toggle" class="hint-toggle">
+                <span>Hint</span>
+                <span id="hint-icon-arrow">▼</span>
+            </button>
+            <div class="nav-buttons">
+                <button id="prev-btn" class="btn btn-prev">Previous</button>
+                <button id="next-btn" class="btn btn-next">Next</button>
+            </div>
+        </div>
+    </div>
 
-function nextQuestion() {
-  answered = false;
-  currentQ++;
-  if (currentQ >= quizData.length) { showResults(); return; }
-  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === currentQ));
-  updateProgress();
-}
+    <script>
+        const quizData = [{"answerOptions":[{"isCorrect":false,"rationale":"La gestión de hilos es una lógica de programación concurrente adicional y no es una función intrínseca de esta clase específica.","text":"Gestionar exclusivamente el flujo de datos mediante hilos independientes."},{"isCorrect":false,"rationale":"Esta es la función del protocolo DNS, no de un socket de servidor que opera a nivel de transporte.","text":"Traducir nombres de dominio en direcciones IP de forma automática."},{"isCorrect":false,"rationale":"El manejo de datagramas es propio del protocolo UDP, mientras que esta clase opera bajo el modelo de flujos de bytes de TCP.","text":"Encapsular datagramas para su envío a través de una red no orientada a conexión."},{"isCorrect":true,"rationale":"Esta clase está diseñada específicamente para escuchar en un puerto determinado y bloquear la ejecución hasta que se detecte una petición de conexión entrante.","text":"Implementar el servidor y esperar activamente a que un cliente solicite una conexión."}],"hint":"Piense en el rol de 'escucha' que asume la aplicación antes de establecer el canal bidireccional.","question":"¿Cuál es la función primordial de la clase ServerSocket en una arquitectura de red basada en el protocolo TCP?"},{"answerOptions":[{"isCorrect":false,"rationale":"ServerSocket es una clase de TCP y no tiene relación técnica con la estructura de datos de un paquete UDP.","text":"Para permitir que el servidor ServerSocket acepte múltiples clientes simultáneamente."},{"isCorrect":true,"rationale":"A diferencia de TCP que usa flujos de datos, UDP requiere que el programador defina el contenedor de bytes específico para el paquete antes de su envío o recepción.","text":"Debido a que los datagramas transportan la información como una secuencia de bytes en crudo."},{"isCorrect":false,"rationale":"UDP es un protocolo no orientado a conexión, por lo que no se mantiene un estado de enlace abierto entre mensajes.","text":"Para garantizar que la conexión se mantenga abierta durante toda la transferencia."},{"isCorrect":false,"rationale":"El uso de arrays de bytes no implica cifrado; la seguridad debe implementarse en capas superiores o mediante protocolos específicos como SFTP.","text":"Para encriptar automáticamente el contenido del mensaje antes de salir a la red."}],"hint":"Considere el formato de bajo nivel en el que se empaqueta la información en protocolos rápidos y ligeros.","question":"En el contexto de la programación con Sockets UDP, ¿por qué es necesario un array de tipo byte al trabajar con la clase DatagramPacket?"},{"answerOptions":[{"isCorrect":false,"rationale":"La concurrencia mediante hilos gestiona la disponibilidad del servicio, pero no añade capas de cifrado a la comunicación por sí sola.","text":"Aumentar la seguridad de la transmisión mediante el uso de SSH."},{"isCorrect":true,"rationale":"Delegar la tarea a un hilo independiente libera al hilo principal del servidor para que no quede bloqueado atendiendo a un solo usuario.","text":"Permitir que el servidor vuelva inmediatamente a escuchar nuevas peticiones de otros clientes."},{"isCorrect":false,"rationale":"El uso de hilos en el servidor no altera la cantidad de datos enviados o recibidos a través del canal físico.","text":"Reducir el tráfico de red total generado por la aplicación."},{"isCorrect":false,"rationale":"Toda operación de red es susceptible de errores, y el uso de hilos requiere un control de excepciones aún más riguroso.","text":"Eliminar la necesidad de gestionar excepciones mediante bloques try-catch."}],"hint":"Piense en qué sucede con el bucle principal de aceptación de clientes mientras se procesa una lógica compleja.","question":"Al implementar un servidor concurrente, ¿cuál es el beneficio principal de que el servidor lance una 'hebra' tras aceptar una conexión?"},{"answerOptions":[{"isCorrect":false,"rationale":"Ambos son protocolos de acceso/recepción; el envío es responsabilidad del protocolo SMTP.","text":"POP3 permite enviar correos mientras que IMAP solo permite leerlos."},{"isCorrect":true,"rationale":"IMAP mantiene la sincronización con el servidor, mientras que el comportamiento tradicional de POP3 implica la descarga y eliminación del mensaje en el servidor.","text":"IMAP permite consultar los mensajes directamente en el servidor sin necesidad de descargarlos localmente."},{"isCorrect":false,"rationale":"El puerto 25 es el estándar para SMTP, no para los protocolos de acceso a buzones de correo.","text":"POP3 utiliza el puerto 25 para la comunicación cifrada."},{"isCorrect":false,"rationale":"IMAP mantiene una sesión activa para reflejar cambios en las carpetas y el estado de los correos en tiempo real.","text":"IMAP es un protocolo sin estado similar al HTTP."}],"hint":"Considere la ubicación física del mensaje mientras el usuario interactúa con él desde diferentes dispositivos.","question":"¿Cuál es la diferencia fundamental entre los protocolos de recepción de correo electrónico POP3 e IMAP?"},{"answerOptions":[{"isCorrect":false,"rationale":"La seguridad SSL es gestionada por la clase FTPSClient, que hereda de FTPClient.","text":"Proporcionar cifrado SSL para convertir FTP en FTPS."},{"isCorrect":true,"rationale":"Esta clase facilita la interpretación de si una operación (como un login o una transferencia) fue exitosa según los estándares del protocolo FTP.","text":"Gestionar los códigos numéricos de respuesta enviados por el servidor tras una orden."},{"isCorrect":false,"rationale":"Dicha funcionalidad suele recaer en la clase FTPClientConfig o métodos específicos del cliente.","text":"Establecer los parámetros de configuración del cliente como el modo pasivo."},{"isCorrect":false,"rationale":"El cierre del socket debe ser gestionado explícitamente por el programador o mediante el manejo de excepciones de E/S.","text":"Cerrar automáticamente el socket cuando se detecta un error de red."}],"hint":"Piense en la necesidad del cliente de entender si el servidor aceptó o rechazó un comando.","question":"Dentro de la biblioteca Apache Commons Net para FTP, ¿qué función cumple la clase FTPReply?"},{"answerOptions":[{"isCorrect":false,"rationale":"El número de puerto es una dirección de la capa de transporte y no determina las capacidades de memoria del protocolo de aplicación.","text":"Porque utiliza el puerto 80, que no admite el almacenamiento de variables."},{"isCorrect":false,"rationale":"Aunque nació para HTML, HTTP transporta imágenes, videos y datos en diversos formatos mediante tipos MIME.","text":"Porque solo puede enviar documentos en formato HTML plano."},{"isCorrect":false,"rationale":"HTTP es capaz de transferir cualquier recurso identificado por una URL, independientemente de su tamaño.","text":"Porque no permite la transferencia de archivos de gran tamaño."},{"isCorrect":true,"rationale":"El diseño original del protocolo trata cada ciclo de petición-respuesta como una transacción aislada, sin memoria intrínseca de la identidad del cliente.","text":"Porque cada petición es independiente y el servidor no recuerda conexiones anteriores por defecto."}],"hint":"Reflexione sobre si el servidor reconoce automáticamente a un usuario que acaba de recargar la página sin usar mecanismos extra.","question":"¿Por qué se afirma que el protocolo HTTP 'no tiene estado' (stateless)?"},{"answerOptions":[{"isCorrect":false,"rationale":"Ambas coexisten en la JDK y tienen responsabilidades distintas y complementarias en la gestión de redes.","text":"Son clases idénticas que se utilizan según la versión de la JDK instalada."},{"isCorrect":true,"rationale":"La clase URL actúa como un identificador, mientras que URLConnection es el enlace de comunicación que permite interactuar con el servidor.","text":"URL define la dirección del recurso y URLConnection ejecuta las operaciones sobre dicha dirección."},{"isCorrect":false,"rationale":"Representa una abstracción de alto nivel que oculta los detalles de los sockets subyacentes al programador.","text":"URLConnection hereda directamente de Socket para mostrar el tráfico de bajo nivel."},{"isCorrect":false,"rationale":"Ambas pueden manejar diversos protocolos dependiendo del prefijo de la cadena de texto utilizada.","text":"URL es exclusiva para protocolos seguros HTTPS, mientras que URLConnection es para HTTP."}],"hint":"Diferencie entre la representación de una dirección y el mecanismo para abrir un canal hacia ella.","question":"En Java, al programar un cliente HTTP de alto nivel, ¿cuál es la relación técnica entre las clases URL y URLConnection?"},{"answerOptions":[{"isCorrect":false,"rationale":"Ambos protocolos siguen el modelo arquitectónico cliente/servidor para la administración remota.","text":"SSH es un modelo punto a punto, mientras que Telnet es exclusivamente cliente/servidor."},{"isCorrect":false,"rationale":"Debido a la ausencia de cifrado y protocolos de seguridad complejos, Telnet suele ser muy ligero en términos de datos.","text":"Telnet requiere un ancho de banda mucho mayor que el protocolo SSH."},{"isCorrect":false,"rationale":"Telnet está basado enteramente en comandos de texto, siendo esta su forma principal de operación.","text":"Telnet no permite la ejecución de comandos en modo texto."},{"isCorrect":true,"rationale":"Al no aplicar encriptación, cualquier interceptor en la red puede leer la información sensible que viaja por el puerto 23.","text":"La transmisión de datos, incluyendo contraseñas, se realiza en texto plano sin cifrar."}],"hint":"Piense en el riesgo que corre un administrador al escribir su clave en una red pública usando este servicio.","question":"Para realizar una administración remota de un servidor sin interfaz gráfica, ¿cuál es la principal desventaja de usar el protocolo Telnet frente a SSH?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este objeto se centra en el contenido del correo, como el emisor, el asunto y el cuerpo del mensaje.","text":"Message"},{"isCorrect":false,"rationale":"Su función específica es el mecanismo de envío físico de los mensajes a través de la red.","text":"Transport"},{"isCorrect":true,"rationale":"La clase Session establece el entorno y las propiedades de conexión que utilizarán los demás objetos de la API.","text":"Session"},{"isCorrect":false,"rationale":"Esta es una clase base de otras bibliotecas de red (como Apache Commons), pero no es el núcleo configurador de javax.mail.","text":"SocketClient"}],"hint":"Busque el elemento que representa el 'contexto' de trabajo del usuario dentro de la aplicación de correo.","question":"En la API javax.mail de Java, ¿qué objeto es responsable de agrupar la configuración por defecto necesaria para la gestión de correos?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este comando suele finalizar la ejecución de un programa completo, no solo el recurso específico de comunicación.","text":"exit()"},{"isCorrect":false,"rationale":"Aunque existe en algunos contextos, el estándar para liberar el socket y el puerto asociado es el cierre del mismo.","text":"disconnect()"},{"isCorrect":false,"rationale":"Este término suele asociarse al control de hilos, pero no es el método estándar para cerrar recursos de sockets de red.","text":"stop()"},{"isCorrect":true,"rationale":"Invocando este método se cierran las comunicaciones y se permite que otras aplicaciones puedan volver a usar el puerto.","text":"close()"}],"hint":"Es el término común en Java para liberar cualquier recurso de flujo o conexión.","question":"¿Qué método de la clase DatagramSocket se utiliza para finalizar la escucha en un puerto y liberar el recurso?"},{"answerOptions":[{"isCorrect":true,"rationale":"Sin estos flujos, la hebra no puede leer las peticiones del cliente ni enviarle los resultados del servicio.","text":"Los flujos de entrada y salida del socket del cliente conectado."},{"isCorrect":false,"rationale":"La comunicación ya se ha establecido en un puerto acordado; pasar el número de puerto no permite interactuar con los datos del cliente.","text":"El número de puerto 80 por defecto para garantizar compatibilidad web."},{"isCorrect":false,"rationale":"El ServerSocket debe permanecer en el hilo principal para seguir aceptando otros clientes; la hebra solo gestiona al cliente ya aceptado.","text":"El objeto ServerSocket completo para gestionar nuevas conexiones."},{"isCorrect":false,"rationale":"El hilo ya se está ejecutando en el servidor; lo que necesita es la vía de comunicación con el cliente específico.","text":"Únicamente la dirección IP del servidor."}],"hint":"Considere qué herramientas necesita el hilo para poder 'hablar' y 'escuchar' al usuario que acaba de entrar.","question":"En el desarrollo de un servidor concurrente, ¿qué parámetros son esenciales pasar a la clase que implementa el hilo (ServidorHebra)?"},{"answerOptions":[{"isCorrect":false,"rationale":"La segmentación de datos es una función de la capa de transporte (TCP) y de red (IP), no de un servicio de nombres.","text":"Dividir los archivos en paquetes pequeños para una transferencia más veloz."},{"isCorrect":false,"rationale":"Esa es la función del protocolo DHCP (Protocolo de Configuración Dinámica de Host).","text":"Asignar automáticamente una dirección IP a cada ordenador que se conecta."},{"isCorrect":true,"rationale":"Actúa como un directorio que permite localizar servidores usando nombres en lugar de memorizar secuencias de números.","text":"Traducir nombres de dominio legibles por humanos en direcciones IP numéricas."},{"isCorrect":false,"rationale":"El control de flujo y orden es una característica del protocolo TCP, no del sistema de nombres de dominio.","text":"Garantizar que los datos lleguen en el orden correcto al destinatario."}],"hint":"Recuerde cómo accede usted a Google sin necesidad de escribir su dirección IP exacta.","question":"¿Cuál es la función principal del protocolo DNS en una red informática?"},{"answerOptions":[{"isCorrect":false,"rationale":"Una hebra es una unidad de ejecución del procesador, no un concepto de protocolo de comunicación.","text":"Hebra"},{"isCorrect":false,"rationale":"Un datagrama es una unidad de datos de protocolo independiente en UDP, pero no describe la interacción lógica completa.","text":"Datagrama"},{"isCorrect":false,"rationale":"El socket es el punto final o extremo de la conexión, no la secuencia lógica de intercambio de mensajes.","text":"Socket"},{"isCorrect":true,"rationale":"Representa el ciclo completo desde que el cliente solicita un recurso hasta que el servidor entrega el resultado y se cierra o procesa la operación.","text":"Transacción"}],"hint":"Es una palabra común en banca y bases de datos para describir una operación completa.","question":"En una arquitectura Cliente/Servidor, ¿qué término define la unidad básica de interacción compuesta por una petición y su respuesta?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este método identifica al remitente o la dirección desde la que se envía el correo.","text":"setFrom()"},{"isCorrect":true,"rationale":"Es el método específico diseñado para asignar la cadena de texto que aparecerá en el campo de asunto del e-mail.","text":"setSubject()"},{"isCorrect":false,"rationale":"Este método se utiliza para definir el cuerpo o contenido principal del mensaje de texto.","text":"setText()"},{"isCorrect":false,"rationale":"Aunque el asunto es parte de la cabecera, existe un método especializado y más directo para el campo 'Subject'.","text":"setHeader()"}],"hint":"El nombre del método es la traducción directa al inglés de la palabra 'Asunto'.","question":"Para el envío de un correo electrónico en Java mediante SMTP, ¿qué método de la clase Message se utiliza para definir el asunto?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esa tarea la realiza el puerto 53 mediante el protocolo DNS.","text":"Para resolver el nombre del servidor FTP en una dirección IP."},{"isCorrect":false,"rationale":"La transferencia de datos se realiza habitualmente por el puerto 20 o puertos dinámicos en modo pasivo.","text":"Para la transmisión física de los bytes que componen los archivos."},{"isCorrect":true,"rationale":"Este puerto establece el canal de control donde se envían comandos como el login, la creación de directorios o la petición de archivos.","text":"Para el intercambio de órdenes y comandos de control."},{"isCorrect":false,"rationale":"FTP estándar en el puerto 21 no aplica cifrado; para ello se requieren protocolos adicionales sobre otros puertos.","text":"Para encriptar la sesión mediante el uso de certificados digitales."}],"hint":"Diferencie entre 'dar instrucciones' y 'mover la carga'.","question":"En el protocolo FTP, ¿para qué se utiliza específicamente el puerto 21?"},{"answerOptions":[{"isCorrect":true,"rationale":"Al eliminar el 'saludo' inicial y el control de errores constante, la latencia disminuye considerablemente.","text":"Es mucho más rápido al no requerir el establecimiento de una conexión previa."},{"isCorrect":false,"rationale":"La seguridad de UDP es menor que la de TCP al no verificar la integridad ni el origen de forma robusta.","text":"Permite el envío de archivos de texto plano con mayor seguridad que TCP."},{"isCorrect":false,"rationale":"UDP no retransmite paquetes perdidos, lo cual es una característica de TCP.","text":"Garantiza que todos los paquetes lleguen al destino sin pérdidas."},{"isCorrect":false,"rationale":"En UDP, los paquetes pueden llegar en cualquier orden y es la aplicación la que debe gestionarlos.","text":"Ordena automáticamente los paquetes recibidos antes de entregarlos a la aplicación."}],"hint":"Piense en por qué preferimos fluidez en un video aunque se pierda un píxel momentáneamente.","question":"¿Cuál es la principal ventaja de utilizar Sockets UDP en aplicaciones de streaming o juegos en línea?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esta excepción ocurre al intentar acceder a un objeto no inicializado, no por errores de comunicación externa.","text":"NullPointerException"},{"isCorrect":true,"rationale":"Es la excepción base para todos los errores de entrada/salida, incluyendo fallos de conexión de red.","text":"IOException"},{"isCorrect":false,"rationale":"Se produce por errores matemáticos (como división por cero) y no tiene relación con las interfaces de red.","text":"ArithmeticException"},{"isCorrect":false,"rationale":"Suele ocurrir por restricciones del gestor de seguridad de Java, no necesariamente por la disponibilidad física del host remoto.","text":"SecurityException"}],"hint":"Es la excepción más común cuando algo falla al leer o escribir datos fuera del programa.","question":"En una implementación de red en Java, ¿qué excepción suele lanzarse si intentamos conectar un Socket a una IP inexistente o puerto cerrado?"},{"answerOptions":[{"isCorrect":false,"rationale":"El User Agent reside en la parte del cliente, no en la infraestructura central del servidor.","text":"Es el servidor que almacena las bases de datos de los usuarios."},{"isCorrect":true,"rationale":"Identifica al software (como Chrome, Firefox o un programa Java) que está realizando la solicitud al servidor web.","text":"Es la aplicación o navegador que inicia la petición en nombre del usuario."},{"isCorrect":false,"rationale":"El término se refiere a una entidad de software dentro del protocolo, no a una persona física.","text":"Es el administrador de red encargado de configurar el puerto 80."},{"isCorrect":false,"rationale":"No es un protocolo en sí, sino un identificador dentro de las cabeceras del protocolo HTTP.","text":"Es un protocolo de seguridad que reemplaza al SSL."}],"hint":"Piense en quién actúa como 'representante' del humano ante el servidor web.","question":"¿Qué característica define al 'User Agent' en el protocolo HTTP?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los flujos (Streams) son propios de TCP; UDP utiliza paquetes discretos con su propia cabecera de dirección.","text":"El flujo de salida OutputStream obtenido del cliente."},{"isCorrect":true,"rationale":"UDP requiere que cada paquete individual contenga toda la información necesaria para el enrutamiento.","text":"Los datos, la longitud, la dirección IP destino y el puerto destino."},{"isCorrect":false,"rationale":"Al no haber conexión previa, el paquete 'suelto' no sabría a dónde dirigirse sin una dirección destino.","text":"Solo el array de bytes con el mensaje."},{"isCorrect":false,"rationale":"El socket necesita una InetAddress y un puerto numérico, no solo una cadena de texto de dominio.","text":"Únicamente el nombre de dominio resuelto por el servidor DNS."}],"hint":"Imagine que está enviando una carta física: ¿qué necesita poner en el sobre para que llegue?","question":"Para enviar datos a través de un DatagramSocket, ¿qué información debe incluirse obligatoriamente en el constructor del DatagramPacket de salida?"},{"answerOptions":[{"isCorrect":false,"rationale":"La confidencialidad asegura que solo las personas autorizadas lean el mensaje, sin importar si el emisor admite el envío.","text":"Confidencialidad"},{"isCorrect":true,"rationale":"Este principio garantiza que el emisor no pueda desvincularse legal o técnicamente de una acción o comunicación realizada.","text":"No repudio"},{"isCorrect":false,"rationale":"Se refiere a que el sistema esté accesible cuando se necesite, no a la autoría de los mensajes.","text":"Disponibilidad"},{"isCorrect":false,"rationale":"La integridad asegura que el mensaje no ha sido modificado, pero no garantiza quién lo envió originalmente.","text":"Integridad"}],"hint":"Es un término legal aplicado a la tecnología para evitar excusas sobre la autoría.","question":"En el contexto de la seguridad informática, ¿cuál de estos conceptos se refiere a que un usuario no pueda negar haber enviado un mensaje?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este método inicia el enlace físico, pero no proporciona por sí mismo la vía para leer los datos.","text":"connect()"},{"isCorrect":false,"rationale":"Es un método de ServerSocket, no de la clase Socket que utiliza el cliente para comunicarse.","text":"accept()"},{"isCorrect":true,"rationale":"Permite al cliente leer los bytes que el servidor está enviando como respuesta o información.","text":"getInputStream()"},{"isCorrect":false,"rationale":"Este método devuelve el flujo para enviar datos desde el cliente hacia el servidor.","text":"getOutputStream()"}],"hint":"Busque el flujo que representa la 'entrada' de información al programa local.","question":"¿Qué método de la clase Socket en Java se utiliza para obtener el canal de recepción de datos del servidor?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este comando se envía después de establecer la sesión para indicar el remitente del mensaje específico.","text":"MAIL FROM"},{"isCorrect":false,"rationale":"Aunque se requiere autenticación después, el saludo de protocolo obligatorio es previo a las credenciales de usuario.","text":"LOGIN"},{"isCorrect":false,"rationale":"No es un comando estándar de inicio de protocolo SMTP, aunque existen extensiones como STARTTLS para seguridad.","text":"START"},{"isCorrect":true,"rationale":"Es el comando de saludo inicial definido en el protocolo para identificarse ante el servidor de correo.","text":"HELO"}],"hint":"Es una variación corta de la palabra 'Hola' en inglés.","question":"Al programar un cliente SMTP, ¿cuál es el comando estándar utilizado para iniciar la sesión con el servidor de correo?"},{"answerOptions":[{"isCorrect":true,"rationale":"Incluye tanto el tiempo de transmisión por la red como el tiempo que tarda la CPU del servidor en procesar la lógica.","text":"El tiempo transcurrido entre la petición del cliente y la recepción del resultado final."},{"isCorrect":false,"rationale":"Eso se conoce como tiempo de carga o inicialización, no respuesta al servicio.","text":"El tiempo que tarda el servidor en arrancar desde cero."},{"isCorrect":false,"rationale":"La capacidad del hardware del cliente es solo uno de los muchos factores y no define la métrica de respuesta del servicio.","text":"La velocidad máxima de la tarjeta de red del cliente."},{"isCorrect":false,"rationale":"Esto define el rendimiento o caudal (throughput), no la latencia de una petición individual.","text":"El número de clientes que pueden conectarse por segundo."}],"hint":"Piense en cuánto tiempo espera un usuario desde que hace clic hasta que ve el dato.","question":"¿Qué indica el 'Tiempo de respuesta' en la monitorización de una aplicación servidor?"},{"answerOptions":[{"isCorrect":false,"rationale":"La forma de crear hilos es independiente del protocolo de red utilizado.","text":"Thread es obligatorio para servidores TCP y Runnable para UDP."},{"isCorrect":false,"rationale":"El consumo de recursos depende de la lógica interna del hilo, no de la sintaxis elegida para declararlo.","text":"Runnable consume mucha más memoria RAM al ejecutarse."},{"isCorrect":false,"rationale":"En ambas opciones se pueden pasar parámetros a través del constructor de la clase.","text":"Heredar de Thread es la única forma de pasar parámetros al hilo."},{"isCorrect":true,"rationale":"Java no admite herencia múltiple; usar la interfaz Runnable es más flexible para la arquitectura de clases.","text":"Runnable permite que la clase herede de otra si es necesario, mientras que Thread no."}],"hint":"Recuerde las limitaciones de la herencia simple en el lenguaje Java.","question":"En Java, ¿qué diferencia existe entre usar la interfaz Runnable o heredar de Thread para crear el hilo de un servidor?"},{"answerOptions":[{"isCorrect":false,"rationale":"La IP solo sirve para el enrutamiento hacia el equipo correcto, no indica el tamaño del mensaje.","text":"IP destino"},{"isCorrect":false,"rationale":"Identifica la aplicación emisora para posibles respuestas, pero es independiente del tamaño de la carga útil.","text":"Puerto origen"},{"isCorrect":false,"rationale":"Es el contenedor de los datos en sí, pero no el campo de control que indica su medida exacta.","text":"Array de bytes"},{"isCorrect":true,"rationale":"Este campo especifica el tamaño total del datagrama (cabecera más datos) para su correcto procesamiento.","text":"Longitud"}],"hint":"Es un valor numérico que acompaña a los datos para delimitar su final.","question":"Dentro de un datagrama UDP, ¿qué campo permite al receptor saber cuántos bytes de datos útiles contiene el paquete?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los protocolos son fijos según la implementación y no cambian por la carga de usuarios.","text":"Para evitar que el protocolo TCP cambie automáticamente a UDP."},{"isCorrect":false,"rationale":"Java puede manejar miles de hilos, el límite lo marca el hardware y la eficiencia del código.","text":"Porque Java solo permite un máximo de 10 hilos simultáneos por defecto."},{"isCorrect":true,"rationale":"Cada hilo consume recursos; un número excesivo de ellos podría degradar el rendimiento o provocar la caída del sistema.","text":"Para prevenir la saturación de los recursos de CPU y memoria RAM del servidor."},{"isCorrect":false,"rationale":"El límite de usuarios es una gestión de rendimiento, no una imposición de protocolos de seguridad.","text":"Para obligar a los clientes a utilizar conexiones cifradas HTTPS."}],"hint":"Piense en qué sucedería si mil personas intentaran entrar por una puerta diseñada para diez.","question":"¿Cuál es la principal razón por la que se recomienda establecer un 'máximo de clientes' en un servidor concurrente?"}];
+        let currentIndex = 0;
+        let mode = 'quiz';
+        let state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
 
-function updateProgress() {
-  document.querySelector('.progress-fill').style.width = (currentQ / quizData.length * 100) + '%';
-}
+        function getStats() {
+            const answered = state.filter((s) => s.selectedIndex !== null).length;
+            const correct = state.filter((s, i) => s.selectedIndex !== null && quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const wrong = state.filter((s, i) => s.selectedIndex !== null && !quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const skipped = quizData.length - answered;
+            const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+            return { answered, correct, wrong, skipped, accuracy };
+        }
 
-function showResults() {
-  document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
-  document.getElementById('results').classList.add('active');
-  const pct = Math.round((correctCount / quizData.length) * 100);
-  document.getElementById('score').textContent = pct + '%';
-  document.getElementById('score-text').textContent = tr.scoreText.replace('{correct}', correctCount).replace('{total}', quizData.length);
-  document.querySelector('.progress-fill').style.width = '100%';
-}
+        function shuffleAnswers() {
+            quizData.forEach((q) => {
+                for (let i = q.answerOptions.length - 1; i > 0; i -= 1) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.answerOptions[i], q.answerOptions[j]] = [q.answerOptions[j], q.answerOptions[i]];
+                }
+            });
+        }
 
-function restart() {
-  currentQ = 0; correctCount = 0; answered = false;
-  document.getElementById('results').classList.remove('active');
-  document.querySelectorAll('.question').forEach((q, i) => {
-    q.classList.toggle('active', i === 0);
-    q.querySelectorAll('.option').forEach(o => o.classList.remove('selected', 'correct', 'incorrect', 'disabled', 'show-correct'));
-    q.querySelectorAll('.option-feedback').forEach(f => {
-      f.classList.add('hidden');
-      f.classList.remove('correct-feedback', 'incorrect-feedback');
-    });
-    const btn = q.querySelector('.next-btn');
-    btn.classList.add('hidden');
-    btn.textContent = tr.next;
-  });
-  updateProgress();
-}
+        function shuffleQuestions() {
+            for (let i = quizData.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [quizData[i], quizData[j]] = [quizData[j], quizData[i]];
+            }
+        }
 
-init();
-</script>
+        function resetState() {
+            state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+        }
+
+        function renderQuestion() {
+            const q = quizData[currentIndex];
+            const s = state[currentIndex];
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+
+            let optionsHtml = '';
+            const correctIndex = q.answerOptions.findIndex((o) => o.isCorrect);
+            const selectedCorrect = s.selectedIndex !== null && q.answerOptions[s.selectedIndex].isCorrect;
+            q.answerOptions.forEach((opt, idx) => {
+                const isSelected = s.selectedIndex === idx;
+                const statusClass = isSelected ? (opt.isCorrect ? 'correct' : 'incorrect') : '';
+                const selectedClass = isSelected ? 'selected' : '';
+                const revealCorrect = (s.selectedIndex !== null && !selectedCorrect && opt.isCorrect) || (mode === 'review' && opt.isCorrect);
+                const revealClass = revealCorrect ? 'revealed-correct' : '';
+
+                optionsHtml += `
+                    <li class="option-item ${selectedClass} ${statusClass} ${revealClass}" onclick="selectOption(${idx})">
+                        <div class="option-label">
+                            <span>${String.fromCharCode(65 + idx)}. ${opt.text}</span>
+                        </div>
+                        <div class="feedback-state">
+                            ${opt.isCorrect ? '✓ Right answer' : '✕ Not quite'}
+                        </div>
+                        ${opt.rationale ? '<div class="rationale">' + opt.rationale + '</div>' : ''}
+                    </li>
+                `;
+            });
+
+            const stats = getStats();
+
+            content.innerHTML = `
+                <div class="progress-container">
+                    <div class="progress-text">${currentIndex + 1} / ${quizData.length}</div>
+                    <div class="status-bar">
+                        <div class="status-item status-correct">
+                            <span>✓</span>
+                            <span>${stats.correct}</span>
+                        </div>
+                        <div class="status-item status-wrong">
+                            <span>✕</span>
+                            <span>${stats.wrong}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="question-text">${q.question}</div>
+                <ul class="options-list">
+                    ${optionsHtml}
+                </ul>
+            `;
+
+            // Update Hint Box
+            const hintText = document.getElementById('hint-text');
+            hintText.innerText = q.hint || 'No hint available for this question.';
+            if (s.hintVisible) {
+                hintBox.classList.add('active');
+            } else {
+                hintBox.classList.remove('active');
+            }
+
+            results.classList.add('hidden');
+            content.classList.remove('hidden');
+            hintBox.classList.remove('hidden');
+            nav.classList.remove('hidden');
+
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = false;
+            if (mode === 'review') {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Back to Results' : 'Next';
+            } else {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finish' : 'Next';
+            }
+            document.getElementById('hint-icon-arrow').innerText = s.hintVisible ? '▲' : '▼';
+        }
+
+        function selectOption(idx) {
+            if (mode !== 'quiz') return;
+            if (state[currentIndex].selectedIndex !== null) return; // Prevent re-selection
+            state[currentIndex].selectedIndex = idx;
+            renderQuestion();
+        }
+
+        function toggleHint() {
+            if (mode === 'results') return;
+            state[currentIndex].hintVisible = !state[currentIndex].hintVisible;
+            renderQuestion();
+        }
+
+        function renderResults() {
+            const stats = getStats();
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+
+            const score = `${stats.correct} / ${quizData.length}`;
+
+            results.innerHTML = `
+                <div class="results-screen">
+                    <div>
+                        <h1 class="results-title">You did it! Quiz Complete.</h1>
+                        <p class="results-subtitle">Review your score or take another run.</p>
+                    </div>
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-label">Score</div>
+                            <div class="result-value">${score}</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Accuracy</div>
+                            <div class="result-value">${stats.accuracy}%</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-metrics">
+                                <div>Right <strong>${stats.correct}</strong></div>
+                                <div>Wrong <strong>${stats.wrong}</strong></div>
+                                <div>Skipped <strong>${stats.skipped}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="results-actions">
+                        <button id="review-btn" class="btn btn-ghost">Review Quiz</button>
+                        <button id="retake-btn" class="btn btn-next">Retake Quiz</button>
+                    </div>
+                </div>
+            `;
+
+            content.classList.add('hidden');
+            results.classList.remove('hidden');
+            hintBox.classList.add('hidden');
+            nav.classList.add('hidden');
+
+            document.getElementById('review-btn').onclick = () => {
+                mode = 'review';
+                currentIndex = 0;
+                renderQuestion();
+            };
+
+            document.getElementById('retake-btn').onclick = () => {
+                mode = 'quiz';
+                currentIndex = 0;
+                shuffleQuestions();
+                shuffleAnswers();
+                resetState();
+                renderQuestion();
+            };
+        }
+
+        document.getElementById('prev-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        };
+
+        document.getElementById('next-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (mode === 'review') {
+                if (currentIndex < quizData.length - 1) {
+                    currentIndex++;
+                    renderQuestion();
+                } else {
+                    mode = 'results';
+                    renderResults();
+                }
+                return;
+            }
+            if (currentIndex < quizData.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                mode = 'results';
+                renderResults();
+            }
+        };
+
+        document.getElementById('hint-toggle').onclick = toggleHint;
+
+        renderQuestion();
+    </script>
 </body>
 </html>

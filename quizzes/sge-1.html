@@ -1,1958 +1,646 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Odoo Cuestionario</title>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh; padding: 20px; color: #333;
-}
-.container { max-width: 700px; margin: 0 auto; }
-.header { text-align: center; color: #fff; padding: 30px 20px; }
-.header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
-.header .meta { font-size: 14px; opacity: 0.9; }
-.progress-bar { background: rgba(255,255,255,0.3); border-radius: 10px; height: 8px; margin: 20px 0; overflow: hidden; }
-.progress-fill { background: #fff; height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 10px; }
-.question { background: #fff; border-radius: 16px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
-.question.active { display: block; }
-.q-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: #888; }
-.q-number { font-weight: 600; color: #667eea; }
-.q-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 25px; color: #222; }
-.options { display: flex; flex-direction: column; gap: 12px; }
-.option-wrapper { display: flex; flex-direction: column; }
-.option {
-  display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
-  border: 2px solid #e8e8e8; border-radius: 12px; background: #fafafa;
-  cursor: pointer; transition: all 0.2s; text-align: left; font-size: 15px; width: 100%;
-}
-[dir="rtl"] .option { text-align: right; flex-direction: row-reverse; }
-.option:hover:not(.disabled) { border-color: #667eea; background: #f5f3ff; }
-.option.selected { border-color: #667eea; background: #ede9fe; }
-.option.correct { border-color: #22c55e; background: #dcfce7; }
-.option.incorrect { border-color: #ef4444; background: #fee2e2; }
-.option.disabled { cursor: default; }
-.option.show-correct { border-color: #22c55e; background: #dcfce7; }
-.opt-label {
-  display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; border-radius: 50%; background: #e8e8e8;
-  font-weight: 700; font-size: 14px; flex-shrink: 0;
-}
-.option.selected .opt-label { background: #667eea; color: #fff; }
-.option.correct .opt-label { background: #22c55e; color: #fff; }
-.option.incorrect .opt-label { background: #ef4444; color: #fff; }
-.option.show-correct .opt-label { background: #22c55e; color: #fff; }
-.opt-text { padding-top: 5px; line-height: 1.5; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGE - 8 a 15 - NotebookLM - Quiz Export</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
-/* Individual option feedback */
-.option-feedback {
-  margin: 8px 0 4px 46px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-[dir="rtl"] .option-feedback { margin-left: 0; margin-right: 46px; }
-.option-feedback.correct-feedback {
-  background: #dcfce7;
-  border-left: 3px solid #22c55e;
-}
-.option-feedback.incorrect-feedback {
-  background: #fef3f2;
-  border-left: 3px solid #fca5a5;
-}
-[dir="rtl"] .option-feedback.correct-feedback,
-[dir="rtl"] .option-feedback.incorrect-feedback {
-  border-left: none;
-  border-right: 3px solid;
-}
-[dir="rtl"] .option-feedback.correct-feedback { border-right-color: #22c55e; }
-[dir="rtl"] .option-feedback.incorrect-feedback { border-right-color: #fca5a5; }
-.feedback-status {
-  font-weight: 600;
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.feedback-status.correct { color: #166534; }
-.feedback-status.incorrect { color: #991b1b; }
-.feedback-rationale { color: #444; }
+        :root {
+            --bg: #f6f1e7;
+            --bg-deep: #efe4d6;
+            --ink: #171717;
+            --muted: #5b5b5b;
+            --accent: #d3542c;
+            --accent-light: #ff8f5a;
+            --accent-dark: #b14320;
+            --teal: #1f6f78;
+            --card: #fff7ef;
+            --stroke: #e3d6c5;
+            --shadow: 0 18px 40px rgba(23, 23, 23, 0.12);
+            --radius-sm: 10px;
+            --radius-md: 12px;
+            --radius-lg: 14px;
+            --radius-xl: 18px;
+            --radius-2xl: 22px;
+            --space-1: 6px;
+            --space-2: 8px;
+            --space-3: 10px;
+            --space-4: 12px;
+            --space-5: 14px;
+            --space-6: 16px;
+            --space-7: 18px;
+            --space-8: 20px;
+            --space-9: 24px;
+            --space-10: 32px;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --error: #b54832;
+        }
 
-/* Pista box */
-.hint-box {
-  margin: 12px 0;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #fffbeb;
-  border: 1px solid #fcd34d;
-}
-.hint-toggle {
-  width: 100%;
-  padding: 10px 16px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  color: #92400e;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.hint-toggle:hover { background: #fef3c7; }
-.hint-content {
-  padding: 0 16px;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s, padding 0.3s;
-  font-size: 14px;
-  color: #78350f;
-  line-height: 1.5;
-}
-.hint-box.show .hint-content {
-  padding: 0 16px 12px;
-  max-height: 200px;
-}
+        body {
+            font-family: var(--font-body);
+            background:
+                radial-gradient(240px 140px at 10% -10%, #ffd2b9 0%, transparent 70%),
+                radial-gradient(220px 160px at 90% 0%, #cfe7e6 0%, transparent 65%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+            color: var(--ink);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-.next-btn {
-  margin-top: 20px; width: 100%; padding: 14px;
-  background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none;
-  border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.next-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
-.hidden { display: none !important; }
-.results { background: #fff; border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
-.results.active { display: block; }
-.results h2 { font-size: 28px; margin-bottom: 10px; color: #333; }
-.results .score { font-size: 64px; font-weight: 700; color: #667eea; margin: 20px 0; }
-.results .score-text { font-size: 18px; color: #666; margin-bottom: 30px; }
-.restart-btn {
-  padding: 14px 40px; background: linear-gradient(135deg, #667eea, #764ba2);
-  color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
-}
+        .quiz-container {
+            width: 100%;
+            max-width: 800px;
+            padding: var(--space-10) var(--space-8);
+            box-sizing: border-box;
+            background: var(--card);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+        }
 
-/* Math CSS */
-.math, .math-block { font-family: "Cambria Math", "Times New Roman", Times, serif; font-style: italic; }
-.math-block { display: block; text-align: center; margin: 10px 0; font-size: 110%; }
-.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 3px; font-size: 0.9em; }
-.frac-num { border-bottom: 1px solid currentColor; padding: 0 4px 2px; line-height: 1.2; }
-.frac-den { padding: 2px 4px 0; line-height: 1.2; }
-.sqrt { white-space: nowrap; }
-.sqrt-content { border-top: 1px solid currentColor; padding: 0 3px; margin-left: 2px; }
-sup, sub { font-size: 0.75em; }
-sup { vertical-align: super; }
-sub { vertical-align: sub; }
-</style>
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .progress-text {
+            color: var(--muted);
+            font-size: 0.9em;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-correct { color: var(--teal); }
+        .status-wrong { color: var(--error); }
+
+        .question-text {
+            font-family: var(--font-display);
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-item:hover:not(.selected) {
+            background-color: var(--card);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .option-item.selected.correct {
+            background-color: rgba(31, 111, 120, 0.12);
+            border-color: var(--teal);
+        }
+
+        .option-item.selected.incorrect {
+            background-color: rgba(181, 72, 50, 0.12);
+            border-color: var(--error);
+        }
+
+        .option-item.revealed-correct {
+            border-color: rgba(31, 111, 120, 0.5);
+            box-shadow: inset 0 0 0 1px rgba(31, 111, 120, 0.16);
+        }
+
+        .option-label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feedback-state {
+            font-weight: bold;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .selected .feedback-state {
+            display: block;
+        }
+
+        .revealed-correct .feedback-state {
+            display: block;
+        }
+
+        .correct .feedback-state { color: var(--teal); }
+        .incorrect .feedback-state { color: var(--error); }
+        .revealed-correct .feedback-state { color: var(--teal); }
+
+        .rationale {
+            font-size: 0.95em;
+            color: var(--muted);
+            margin-top: 4px;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .selected .rationale {
+            display: block;
+        }
+
+        .revealed-correct .rationale {
+            display: block;
+        }
+        .hint-toggle {
+            border: 1px solid var(--stroke);
+            color: var(--muted);
+            cursor: pointer;
+            padding: var(--space-2) var(--space-6);
+            border-radius: var(--radius-md);
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hint-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .hint-content {
+            margin-top: 32px;
+            padding: var(--space-6);
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-lg);
+            font-size: 0.95em;
+            color: var(--muted);
+            display: none;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .hint-content.active {
+            display: flex;
+        }
+
+        .hint-icon-box {
+            color: var(--accent-dark);
+            font-size: 1.2em;
+            margin-top: -2px;
+        }
+
+        .navigation {
+            margin-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-7);
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-prev {
+            background-color: #fff;
+            color: var(--ink);
+            border-color: var(--stroke);
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn-next {
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            color: #fff;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .results-screen {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+        }
+
+        .results-title {
+            font-family: var(--font-display);
+            font-size: 2.1em;
+            margin: 0;
+        }
+
+        .results-subtitle {
+            color: var(--muted);
+            margin: 0;
+            font-size: 1em;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .result-card {
+            padding: var(--space-6);
+            border-radius: var(--radius-xl);
+            background: #fff;
+            border: 1px solid var(--stroke);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .result-label {
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-family: var(--font-display);
+        }
+
+        .result-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            border: 1px solid var(--stroke);
+            color: var(--ink);
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 900px) {
+            .quiz-container {
+                margin: var(--space-8);
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .quiz-container {
+                padding: var(--space-8) var(--space-6);
+            }
+
+            .question-text {
+                font-size: 1.3em;
+            }
+
+            .option-item {
+                padding: var(--space-4);
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .quiz-container {
+                margin: var(--space-6);
+                padding: var(--space-7) var(--space-5);
+            }
+
+            .progress-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+
+            .navigation {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-4);
+            }
+
+            .nav-buttons {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .hint-toggle {
+                justify-content: space-between;
+            }
+
+            .results-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <h1>Odoo Cuestionario</h1>
-    <div class="meta">28 questions</div>
-    <div class="progress-bar"><div class="progress-fill"></div></div>
-  </div>
-  <div id="quiz-container">
-        <div class="question" data-index="0">
-          <div class="q-header">
-            <span class="q-number">Question 1</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">Al utilizar el comando 'scaffold' para crear la estructura de un módulo, ¿cuál es el orden correcto de los parámetros en la línea de comandos según la documentación técnica de Odoo?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Recuerda que Odoo es una aplicación Python que requiere su binario principal para procesar comandos de creación.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="El comando 'scaffold' no es un ejecutable independiente del sistema, sino un subcomando que debe ser procesado por el script principal de Odoo.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">scaffold + nombre del módulo + ruta de destino + ruta de odoo-bin.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El comando 'scaffold' no es un ejecutable independiente del sistema, sino un subcomando que debe ser procesado por el script principal de Odoo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="La ruta de almacenamiento es un argumento final que indica dónde se volcará la estructura de carpetas generada por el comando.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Ruta de destino + scaffold + nombre del módulo + ruta de odoo-bin.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La ruta de almacenamiento es un argumento final que indica dónde se volcará la estructura de carpetas generada por el comando.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="El intérprete de Python debe preceder al archivo binario de Odoo para poder interpretarlo y ejecutar sus funciones internas.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">ruta de odoo-bin + python.exe + nombre del módulo + scaffold.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El intérprete de Python debe preceder al archivo binario de Odoo para poder interpretarlo y ejecutar sus funciones internas.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="Esta secuencia asegura que el intérprete de Python ejecute el script de Odoo con el comando de creación de plantillas sobre el directorio deseado.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Ruta de python.exe + ruta de odoo-bin + scaffold + nombre del módulo + ruta de destino.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esta secuencia asegura que el intérprete de Python ejecute el script de Odoo con el comando de creación de plantillas sobre el directorio deseado.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="1">
-          <div class="q-header">
-            <span class="q-number">Question 2</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">En el archivo 'manifest.py', ¿cuál es la función específica del campo 'depends'?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piensa en la jerarquía de instalación de aplicaciones dentro del ecosistema ERP.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="El campo 'depends' se refiere estrictamente a otros módulos de la plataforma Odoo, no a dependencias del entorno de ejecución de Python.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Indicar las librerías externas de Python que deben instalarse vía pip.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El campo 'depends' se refiere estrictamente a otros módulos de la plataforma Odoo, no a dependencias del entorno de ejecución de Python.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="La herencia de modelos se define dentro del código Python mediante el atributo '$\textunderscore inherit$', no en el manifiesto.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Especificar los modelos de datos que serán heredados por el módulo actual.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La herencia de modelos se define dentro del código Python mediante el atributo '<span class="math">textunderscore inherit</span>', no en el manifiesto.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="La carga de archivos de vista y datos se gestiona a través del campo 'data' en el manifiesto.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Definir los archivos XML que contienen la estructura de las vistas.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La carga de archivos de vista y datos se gestiona a través del campo 'data' en el manifiesto.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="Odoo utiliza este campo para resolver el orden de carga y asegurar que todas las dependencias funcionales estén presentes en la base de datos.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Listar los módulos técnicos que deben estar instalados previamente para que el nuevo módulo funcione.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Odoo utiliza este campo para resolver el orden de carga y asegurar que todas las dependencias funcionales estén presentes en la base de datos.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="2">
-          <div class="q-header">
-            <span class="q-number">Question 3</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">¿Qué atributo es fundamental en la clase de Python para realizar una herencia de modelo que modifique un objeto existente sin crear una tabla nueva en la base de datos?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Se trata de un mecanismo que 'inyecta' funcionalidad en una capa superior al objeto original.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Este atributo se usa para definir manualmente el nombre de la tabla en PostgreSQL, pero no gestiona la lógica de herencia de clases.">
-            <span class="opt-label">A</span>
-            <span class="opt-text"><span class="math">textunderscore table</span></span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este atributo se usa para definir manualmente el nombre de la tabla en PostgreSQL, pero no gestiona la lógica de herencia de clases.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="Este atributo indica a Odoo que debe extender la definición del modelo original, manteniendo la misma estructura de almacenamiento principal.">
-            <span class="opt-label">B</span>
-            <span class="opt-text"><span class="math">textunderscore inherit</span></span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este atributo indica a Odoo que debe extender la definición del modelo original, manteniendo la misma estructura de almacenamiento principal.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Este atributo se utiliza únicamente para proporcionar un nombre legible al modelo para los usuarios finales.">
-            <span class="opt-label">C</span>
-            <span class="opt-text"><span class="math">textunderscore description</span></span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este atributo se utiliza únicamente para proporcionar un nombre legible al modelo para los usuarios finales.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Si se usa '$\textunderscore name$' junto con '$\textunderscore inherit$', se crea un nuevo modelo que hereda las características del anterior, lo cual generaría una tabla distinta.">
-            <span class="opt-label">D</span>
-            <span class="opt-text"><span class="math">textunderscore name</span></span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Si se usa '<span class="math">textunderscore name</span>' junto con '<span class="math">textunderscore inherit</span>', se crea un nuevo modelo que hereda las características del anterior, lo cual generaría una tabla distinta.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="3">
-          <div class="q-header">
-            <span class="q-number">Question 4</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">Para heredar una vista específica en Odoo, ¿qué información debe incluirse obligatoriamente en el campo 'ref' del atributo 'inherit_id' en el XML?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Puedes encontrar esta información en el modo desarrollador bajo la opción 'Editar Vista'.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="El nombre de la aplicación es descriptivo y no sirve para enlazar registros técnicos específicos en el sistema de vistas.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">El nombre de la aplicación en la lista de módulos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El nombre de la aplicación es descriptivo y no sirve para enlazar registros técnicos específicos en el sistema de vistas.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Odoo gestiona las vistas desde la base de datos tras cargarlas, por lo que las rutas de archivos no se usan para referencias cruzadas.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">La ruta física del archivo XML original.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Odoo gestiona las vistas desde la base de datos tras cargarlas, por lo que las rutas de archivos no se usan para referencias cruzadas.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Aunque el modelo es necesario en la definición de la vista, la herencia requiere el identificador de la vista específica, no del modelo de datos.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">El nombre técnico del modelo asociado.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Aunque el modelo es necesario en la definición de la vista, la herencia requiere el identificador de la vista específica, no del modelo de datos.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="El ID externo es el identificador único que permite al motor de vistas de Odoo localizar la estructura original que se desea modificar.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">El ID externo de la vista padre.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El ID externo es el identificador único que permite al motor de vistas de Odoo localizar la estructura original que se desea modificar.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="4">
-          <div class="q-header">
-            <span class="q-number">Question 5</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">Si configuramos el parámetro 'log_handler' con el nivel :DEBUG, ¿qué impacto tendrá en la salida del log de Odoo?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Es el nivel de registro más bajo en la jerarquía, lo que significa que captura la mayor cantidad de datos.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Filtrar solo errores críticos corresponde al nivel CRITICAL, que es el polo opuesto en términos de detalle informativo.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Filtrará únicamente los errores críticos para evitar saturar el archivo de log.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Filtrar solo errores críticos corresponde al nivel CRITICAL, que es el polo opuesto en términos de detalle informativo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="La desactivación total del log no se consigue con el nivel DEBUG, sino configurando niveles de silencio específicos o redirigiendo a /dev/null.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Desactivará por completo la salida de registro por la consola estándar.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La desactivación total del log no se consigue con el nivel DEBUG, sino configurando niveles de silencio específicos o redirigiendo a /dev/null.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Aunque DEBUG incluye detalles SQL, también abarca muchos otros eventos del ciclo de vida de la aplicación.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Solo mostrará información sobre las consultas SQL ejecutadas.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Aunque DEBUG incluye detalles SQL, también abarca muchos otros eventos del ciclo de vida de la aplicación.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="El nivel DEBUG es el más detallado e incluye información técnica exhaustiva sobre procesos internos que normalmente se omiten.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Mostrará mensajes detallados de depuración además de los niveles superiores como INFO y WARNING.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El nivel DEBUG es el más detallado e incluye información técnica exhaustiva sobre procesos internos que normalmente se omiten.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="5">
-          <div class="q-header">
-            <span class="q-number">Question 6</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">¿Cuál es el resultado de ejecutar la función <span class="math">range(3)</span> en Python?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Ten en cuenta que en programación el conteo suele empezar en cero y el límite final no se incluye.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="El límite superior en la función range es exclusivo, lo que significa que el número proporcionado no se incluye en la lista resultante.">
-            <span class="opt-label">A</span>
-            <span class="opt-text"><span class="math">[0, 1, 2, 3]</span></span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El límite superior en la función range es exclusivo, lo que significa que el número proporcionado no se incluye en la lista resultante.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Python utiliza indexación basada en cero, por lo que el inicio por defecto es 0 a menos que se indique explícitamente lo contrario.">
-            <span class="opt-label">B</span>
-            <span class="opt-text"><span class="math">[1, 2, 3]</span></span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Python utiliza indexación basada en cero, por lo que el inicio por defecto es 0 a menos que se indique explícitamente lo contrario.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="La función range genera una secuencia que comienza en 0 y termina una unidad antes del valor especificado.">
-            <span class="opt-label">C</span>
-            <span class="opt-text"><span class="math">[0, 1, 2]</span></span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La función range genera una secuencia que comienza en 0 y termina una unidad antes del valor especificado.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Por defecto, range genera una secuencia ascendente; para obtener una descendente se requiere especificar un paso negativo.">
-            <span class="opt-label">D</span>
-            <span class="opt-text"><span class="math">[3, 2, 1, 0]</span></span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Por defecto, range genera una secuencia ascendente; para obtener una descendente se requiere especificar un paso negativo.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="6">
-          <div class="q-header">
-            <span class="q-number">Question 7</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">En el desarrollo de Odoo, ¿qué tecnología se utiliza específicamente como motor de plantillas para la creación de informes y documentos dinámicos?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Busca el nombre de la tecnología que utiliza etiquetas XML para procesar la lógica de presentación.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Aunque Jinja2 es común en frameworks Python como Flask, Odoo utiliza su propio motor propietario llamado QWeb.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Jinja2</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Aunque Jinja2 es común en frameworks Python como Flask, Odoo utiliza su propio motor propietario llamado QWeb.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="PostgreSQL es el gestor de base de datos, pero la lógica de presentación de informes reside en la capa de aplicación de Odoo.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">PostgreSQL Reports</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">PostgreSQL es el gestor de base de datos, pero la lógica de presentación de informes reside en la capa de aplicación de Odoo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="React es una librería de JavaScript para interfaces de usuario, no un motor de plantillas de informes del lado del servidor.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">React.js</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">React es una librería de JavaScript para interfaces de usuario, no un motor de plantillas de informes del lado del servidor.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="QWeb es un motor de plantillas basado en XML que permite renderizar datos en formatos HTML o PDF de forma integrada con el ERP.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">QWeb</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">QWeb es un motor de plantillas basado en XML que permite renderizar datos en formatos HTML o PDF de forma integrada con el ERP.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="7">
-          <div class="q-header">
-            <span class="q-number">Question 8</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">¿Qué requisitos de instalación presenta el módulo de Punto de Venta (PdV) en Odoo?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piensa en qué procesos del negocio se ven afectados directamente cuando se realiza una venta en una caja física.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="El CRM gestiona oportunidades de venta, pero el PdV gestiona el acto de venta directo y el stock, requiriendo otros fundamentos.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Requiere exclusivamente el módulo de CRM.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El CRM gestiona oportunidades de venta, pero el PdV gestiona el acto de venta directo y el stock, requiriendo otros fundamentos.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Dada la integración total de Odoo, el PdV no puede operar en el vacío sin referencias a productos y cuentas financieras.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Es un módulo independiente que no requiere ninguna otra aplicación.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Dada la integración total de Odoo, el PdV no puede operar en el vacío sin referencias a productos y cuentas financieras.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="El PdV necesita el Inventario para gestionar existencias y la Contabilidad para registrar los asientos de ventas generados.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Requiere tener instalados los módulos de Contabilidad e Inventario.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El PdV necesita el Inventario para gestionar existencias y la Contabilidad para registrar los asientos de ventas generados.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Estas son herramientas de comunicación y marketing que no son fundamentales para el procesamiento de transacciones físicas de venta.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Solo requiere el módulo de Sitio Web y Chat en vivo.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Estas son herramientas de comunicación y marketing que no son fundamentales para el procesamiento de transacciones físicas de venta.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="8">
-          <div class="q-header">
-            <span class="q-number">Question 9</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">¿Cómo se define una variable de tipo selección ('selection') en el modelo de datos para que sea válida?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Cada opción del desplegable necesita un valor para la base de datos y un nombre para el usuario.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Las cadenas simples no permiten estructurar metadatos como la etiqueta de visualización de forma efectiva.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">A través de una cadena de texto larga separada por comas.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Las cadenas simples no permiten estructurar metadatos como la etiqueta de visualización de forma efectiva.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="Este formato permite separar el dato almacenado en la base de datos de la descripción que ve el usuario final en la interfaz.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Mediante una lista de tuplas donde el primer elemento es el valor técnico y el segundo es la etiqueta visible.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este formato permite separar el dato almacenado en la base de datos de la descripción que ve el usuario final en la interfaz.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Odoo requiere tuplas para mantener el orden y la compatibilidad con el sistema de traducciones y almacenamiento.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Mediante un diccionario donde las claves son números enteros correlativos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Odoo requiere tuplas para mantener el orden y la compatibilidad con el sistema de traducciones y almacenamiento.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Los archivos CSV se usan para carga masiva de registros, no para definir las opciones estáticas de un campo en el código Python.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Usando un archivo CSV externo que se carga en el atributo 'data'.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Los archivos CSV se usan para carga masiva de registros, no para definir las opciones estáticas de un campo en el código Python.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="9">
-          <div class="q-header">
-            <span class="q-number">Question 10</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">¿Qué herramienta externa permite consultar y modificar los datos del ERP de Odoo directamente en el gestor de bases de datos?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Es la herramienta preferida por los administradores de sistemas para interactuar con PostgreSQL.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="PyCharm es un entorno de desarrollo integrado para escribir código, no una herramienta de gestión de bases de datos relacionales.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">PyCharm</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">PyCharm es un entorno de desarrollo integrado para escribir código, no una herramienta de gestión de bases de datos relacionales.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Postman se utiliza para probar peticiones API y servicios web, no para la manipulación directa de tablas SQL.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Postman</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Postman se utiliza para probar peticiones API y servicios web, no para la manipulación directa de tablas SQL.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="PgAdmin es el cliente administrativo estándar para PostgreSQL, permitiendo gestionar todas las tablas y datos del ERP a bajo nivel.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">PgAdmin</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">PgAdmin es el cliente administrativo estándar para PostgreSQL, permitiendo gestionar todas las tablas y datos del ERP a bajo nivel.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Este es un programa de utilidad que convierte HTML en archivos PDF, usado internamente por Odoo para informes.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Wkhtmltopdf</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este es un programa de utilidad que convierte HTML en archivos PDF, usado internamente por Odoo para informes.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="10">
-          <div class="q-header">
-            <span class="q-number">Question 11</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">Sobre la declaración de variables en Python, ¿cuál de las siguientes afirmaciones es correcta?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Los nombres de variables en Python siguen convenciones similares a otros lenguajes de alto nivel como C o Java.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Python es estrictamente sensible a las mayúsculas; 'Variable' y 'variable' se consideran identificadores distintos.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Python no distingue entre mayúsculas y minúsculas (no es case sensitive).</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Python es estrictamente sensible a las mayúsculas; 'Variable' y 'variable' se consideran identificadores distintos.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="Esta es la regla sintáctica de Python para identificadores válidos; empezar por números provocaría un error de sintaxis.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Deben empezar por letras o por el carácter guion bajo '<span class="math">textunderscore</span>'.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esta es la regla sintáctica de Python para identificadores válidos; empezar por números provocaría un error de sintaxis.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Los números son opcionales en el nombre de una variable y nunca pueden estar en la primera posición.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Es obligatorio que contengan al menos un número.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Los números son opcionales en el nombre de una variable y nunca pueden estar en la primera posición.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Existen reglas claras sobre caracteres permitidos y palabras reservadas que no pueden usarse como nombres de variables.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">No existen reglas específicas para su declaración.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Existen reglas claras sobre caracteres permitidos y palabras reservadas que no pueden usarse como nombres de variables.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="11">
-          <div class="q-header">
-            <span class="q-number">Question 12</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">¿Cuál es la utilidad del parámetro 'logfile' en el archivo odoo.conf?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Su nombre sugiere una función de almacenamiento de registros (logs).</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="La carga de archivos XML es responsabilidad de cada módulo a través de su archivo de manifiesto.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Especificar qué archivos XML se cargarán durante el inicio del servidor.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La carga de archivos XML es responsabilidad de cada módulo a través de su archivo de manifiesto.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="Esto permite mantener un historial persistente de los logs para su posterior análisis sin depender de la sesión actual de la terminal.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Redirigir la salida del registro de eventos a un archivo físico en el disco en lugar de la consola.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esto permite mantener un historial persistente de los logs para su posterior análisis sin depender de la sesión actual de la terminal.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Las copias de seguridad se gestionan a través de la interfaz de Odoo o mediante herramientas específicas de PostgreSQL.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Definir la ruta donde se guardan las copias de seguridad de la base de datos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Las copias de seguridad se gestionan a través de la interfaz de Odoo o mediante herramientas específicas de PostgreSQL.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="El modo depuración visual se activa mediante parámetros en la URL o desde la configuración de usuario en la interfaz.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Activar el modo de depuración visual en el navegador web.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El modo depuración visual se activa mediante parámetros en la URL o desde la configuración de usuario en la interfaz.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="12">
-          <div class="q-header">
-            <span class="q-number">Question 13</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">Al heredar una vista, ¿qué valor del atributo 'position' se debe usar para colocar un nuevo campo inmediatamente después de uno existente?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Es la traducción literal al inglés de la ubicación deseada.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Se usa para insertar contenido dentro de un contenedor (como una etiqueta &lt;div&gt; o &lt;group&gt;), no necesariamente después de un campo específico.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">inside</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Se usa para insertar contenido dentro de un contenedor (como una etiqueta &lt;div&gt; o &lt;group&gt;), no necesariamente después de un campo específico.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Este valor colocaría el nuevo elemento antes del campo referenciado, lo cual alteraría el orden visual deseado.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">before</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este valor colocaría el nuevo elemento antes del campo referenciado, lo cual alteraría el orden visual deseado.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="El valor 'after' indica al motor de vistas que inserte el nodo XML justo a continuación del elemento referenciado.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">after</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El valor 'after' indica al motor de vistas que inserte el nodo XML justo a continuación del elemento referenciado.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Este valor eliminaría el campo original y lo sustituiría por el nuevo, perdiendo la información previa en la vista.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">replace</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este valor eliminaría el campo original y lo sustituiría por el nuevo, perdiendo la información previa en la vista.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="13">
-          <div class="q-header">
-            <span class="q-number">Question 14</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">En el contexto de errores en Odoo, ¿qué diferencia a un error sintáctico detectado por PyCharm de un error de 'ID externo no encontrado'?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Uno es detectado por el editor antes de correr el programa y el otro por el ERP al procesar los datos.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Requiere corregir la referencia técnica en el código y actualizar el módulo afectado en la base de datos.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Un error de ID externo se soluciona reiniciando la computadora.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Requiere corregir la referencia técnica en el código y actualizar el módulo afectado en la base de datos.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Es un error lógico o de referencia de datos en el software, no tiene relación con el estado físico de los componentes.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">El error de ID externo es siempre un fallo de hardware del servidor.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es un error lógico o de referencia de datos en el software, no tiene relación con el estado físico de los componentes.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="PyCharm también puede detectar errores de sintaxis en XML (etiquetas sin cerrar), y un ID externo puede fallar al ser llamado desde Python.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Los errores sintácticos solo ocurren en archivos Python y los de ID externo en archivos XML.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">PyCharm también puede detectar errores de sintaxis en XML (etiquetas sin cerrar), y un ID externo puede fallar al ser llamado desde Python.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="PyCharm analiza el código estáticamente, pero los IDs externos dependen de los registros cargados en la base de datos durante el runtime.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">El error sintáctico se detecta en tiempo real al escribir, mientras que el ID externo falla durante la instalación o ejecución.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">PyCharm analiza el código estáticamente, pero los IDs externos dependen de los registros cargados en la base de datos durante el runtime.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="14">
-          <div class="q-header">
-            <span class="q-number">Question 15</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">¿Qué característica define a Python como lenguaje de programación en el ecosistema de Odoo?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Considera cómo se ejecuta el código y cuántos estilos de programación admite.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Python utiliza tipado dinámico y permite otros paradigmas además de la orientación a objetos pura.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Exclusivamente orientado a objetos y estáticamente tipado.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Python utiliza tipado dinámico y permite otros paradigmas además de la orientación a objetos pura.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Es un lenguaje de propósito general ampliamente utilizado en servidores, ciencia de datos y desarrollo web.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Diseñado únicamente para el desarrollo de aplicaciones móviles.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es un lenguaje de propósito general ampliamente utilizado en servidores, ciencia de datos y desarrollo web.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Python es un lenguaje de alto nivel cuya ejecución depende de un intérprete, a diferencia de lenguajes como C o C++.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Compilado y de bajo nivel.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Python es un lenguaje de alto nivel cuya ejecución depende de un intérprete, a diferencia de lenguajes como C o C++.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="Python no requiere compilación previa a código máquina y admite programación orientada a objetos, imperativa y funcional.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Interpretado y multiparadigma.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Python no requiere compilación previa a código máquina y admite programación orientada a objetos, imperativa y funcional.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="15">
-          <div class="q-header">
-            <span class="q-number">Question 16</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">En la programación de clases en Python para Odoo, ¿cuál es la mejor práctica al definir el constructor?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Es el método que 'prepara' el objeto justo después de nacer en memoria.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Esta sintaxis no pertenece al lenguaje Python; es una confusión con otros lenguajes o pseudocódigo.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Usar obligatoriamente la etiqueta 'const default'.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esta sintaxis no pertenece al lenguaje Python; es una confusión con otros lenguajes o pseudocódigo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="La lógica de negocio y las clases residen en archivos .py, mientras que el XML se encarga exclusivamente de la interfaz.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Las clases deben definirse dentro de los archivos XML de vistas.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La lógica de negocio y las clases residen en archivos .py, mientras que el XML se encarga exclusivamente de la interfaz.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Python permite la creación total de clases desde cero, lo cual es fundamental para definir nuevos modelos en Odoo.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Python no permite la creación de clases personalizadas, solo herencia simple.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Python permite la creación total de clases desde cero, lo cual es fundamental para definir nuevos modelos en Odoo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="Este método especial inicializa los atributos de la instancia cuando el objeto es creado por el sistema.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Utilizar la palabra reservada 'class' y definir el método especial $<span class="math">textunderscoretextunderscore inittextunderscoretextunderscore ()</span>.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este método especial inicializa los atributos de la instancia cuando el objeto es creado por el sistema.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="16">
-          <div class="q-header">
-            <span class="q-number">Question 17</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">¿Qué funcionalidad ofrece el 'Open Developer Tool' (icono del insecto) en la interfaz de Odoo?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Proporciona una capa de transparencia técnica sobre lo que el usuario común ve en pantalla.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="Es una herramienta esencial para desarrolladores que permite inspeccionar la estructura interna del ERP desde el propio navegador.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Visualizar información técnica como IDs externos, metadatos de modelos y permitir la edición rápida de vistas.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es una herramienta esencial para desarrolladores que permite inspeccionar la estructura interna del ERP desde el propio navegador.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Su nombre es una metáfora de 'debugging', pero no realiza funciones de antivirus o seguridad informática.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Eliminar virus y malware del servidor de base de datos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Su nombre es una metáfora de 'debugging', pero no realiza funciones de antivirus o seguridad informática.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Es una herramienta técnica, no un módulo funcional de negocio para el usuario final.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Gestionar el pago de nóminas y recursos humanos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es una herramienta técnica, no un módulo funcional de negocio para el usuario final.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Aunque ayuda a ver términos técnicos, la gestión de traducciones se realiza desde los ajustes de idioma del sistema.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Traducir automáticamente el sistema a todos los idiomas disponibles.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Aunque ayuda a ver términos técnicos, la gestión de traducciones se realiza desde los ajustes de idioma del sistema.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="17">
-          <div class="q-header">
-            <span class="q-number">Question 18</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">¿Es posible importar productos directamente al Punto de Venta desde archivos externos?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Esta opción suele estar disponible en la vista de lista de casi cualquier modelo de Odoo.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="La importación es una funcionalidad nativa y transversal en Odoo para facilitar la migración de datos desde otros sistemas.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Falso</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La importación es una funcionalidad nativa y transversal en Odoo para facilitar la migración de datos desde otros sistemas.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="Odoo permite la importación masiva de registros (incluyendo productos del PdV) mediante archivos CSV o Excel a través de su interfaz estándar.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Verdadero</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Odoo permite la importación masiva de registros (incluyendo productos del PdV) mediante archivos CSV o Excel a través de su interfaz estándar.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="18">
-          <div class="q-header">
-            <span class="q-number">Question 19</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">¿Viene configurado por defecto el módulo de Punto de Venta al instalar Odoo por primera vez?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Recuerda el proceso habitual para añadir nuevas funcionalidades como 'Ventas' o 'CRM'.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="Como la mayoría de las aplicaciones funcionales, el PdV debe ser seleccionado e instalado manualmente por el administrador según las necesidades de la empresa.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Falso</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Como la mayoría de las aplicaciones funcionales, el PdV debe ser seleccionado e instalado manualmente por el administrador según las necesidades de la empresa.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Odoo se instala inicialmente con una base mínima; los módulos funcionales específicos se añaden a demanda.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Verdadero</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Odoo se instala inicialmente con una base mínima; los módulos funcionales específicos se añaden a demanda.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="19">
-          <div class="q-header">
-            <span class="q-number">Question 20</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">¿Qué ocurre si no agregamos la ruta del nuevo repositorio 'mismodulos' al parámetro 'addons_path' en odoo.conf?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Es como decirle a un bibliotecario en qué pasillos nuevos debe buscar libros.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Si el módulo no se localiza, ni siquiera llegará a la fase de carga o ejecución de vistas.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Los módulos se cargarán pero todas sus vistas darán error.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Si el módulo no se localiza, ni siquiera llegará a la fase de carga o ejecución de vistas.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Odoo nunca borra archivos del sistema de archivos por una configuración incorrecta del addons_path.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Se borrarán automáticamente los archivos del nuevo repositorio.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Odoo nunca borra archivos del sistema de archivos por una configuración incorrecta del addons_path.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="El sistema arrancará normalmente, pero simplemente ignorará los módulos que estén fuera de su alcance de búsqueda.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">El sistema se bloqueará por completo al intentar arrancar.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El sistema arrancará normalmente, pero simplemente ignorará los módulos que estén fuera de su alcance de búsqueda.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="El servidor solo escanea las rutas especificadas en este parámetro para identificar el código fuente de los módulos instalables.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Odoo no podrá localizar los nuevos módulos y no aparecerán en la lista de aplicaciones.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El servidor solo escanea las rutas especificadas en este parámetro para identificar el código fuente de los módulos instalables.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="20">
-          <div class="q-header">
-            <span class="q-number">Question 21</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">En el archivo XML de una vista heredada, ¿cuál es la etiqueta raíz obligatoria que debe envolver todo el contenido?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Representa el nombre actual de la plataforma y es común a todos sus archivos de datos XML.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="La etiqueta header se usa dentro de una vista de formulario para botones de estado, no como raíz del archivo.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">&lt;header&gt;</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La etiqueta header se usa dentro de una vista de formulario para botones de estado, no como raíz del archivo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Esta etiqueta se utilizaba en versiones antiguas del software antes de su cambio de marca a Odoo.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">&lt;openerp&gt;</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esta etiqueta se utilizaba en versiones antiguas del software antes de su cambio de marca a Odoo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="Esta es la etiqueta estándar que define un archivo de datos para el motor de Odoo a partir de versiones recientes.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">&lt;odoo&gt;</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esta es la etiqueta estándar que define un archivo de datos para el motor de Odoo a partir de versiones recientes.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Se utiliza específicamente para vistas QWeb o del sitio web, no necesariamente para vistas de formulario del backend.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">&lt;template&gt;</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Se utiliza específicamente para vistas QWeb o del sitio web, no necesariamente para vistas de formulario del backend.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="21">
-          <div class="q-header">
-            <span class="q-number">Question 22</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">¿Cuál es la función del operador lógico 'and' en las expresiones condicionales de Python?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Exige que se cumplan todas las partes de la frase para ser válida.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Esa es la función del operador lógico 'or', no del 'and'.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Evaluar como verdadero si al menos una de las condiciones es verdadera.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esa es la función del operador lógico 'or', no del 'and'.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="La inversión lógica se realiza mediante el operador 'not'.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Invertir el valor de verdad de la expresión siguiente.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La inversión lógica se realiza mediante el operador 'not'.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Esa función corresponde al operador de identidad 'is'.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Comparar si dos variables apuntan al mismo objeto en memoria.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esa función corresponde al operador de identidad 'is'.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="El operador 'and' requiere el cumplimiento total de todas las premisas para validar la expresión completa.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Evaluar como verdadero solo si todas las condiciones que conecta son verdaderas.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El operador 'and' requiere el cumplimiento total de todas las premisas para validar la expresión completa.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="22">
-          <div class="q-header">
-            <span class="q-number">Question 23</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">¿Qué permiten realizar las sentencias 'break' y 'continue' dentro de los bucles en Python?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Sirven para 'romper' el ciclo o 'seguir' con el siguiente turno.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Son comandos de nivel de lenguaje de programación y no tienen impacto directo en la gestión del servicio del servidor.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Reiniciar el servidor de Odoo automáticamente tras un error.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Son comandos de nivel de lenguaje de programación y no tienen impacto directo en la gestión del servicio del servidor.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="El alcance de las variables se gestiona mediante otros mecanismos de Python, no con estas sentencias.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Declarar variables globales que persisten fuera del bucle.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El alcance de las variables se gestiona mediante otros mecanismos de Python, no con estas sentencias.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Son estructuras de control de flujo lógico y no afectan directamente a la velocidad bruta del procesador.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Aumentar la velocidad de procesamiento de la CPU durante el bucle.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Son estructuras de control de flujo lógico y no afectan directamente a la velocidad bruta del procesador.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="'break' finaliza el bucle prematuramente y 'continue' omite el resto del código del bloque actual para volver a evaluar la condición.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Alterar el flujo normal del bucle, ya sea deteniéndolo por completo o saltando a la siguiente iteración.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">'break' finaliza el bucle prematuramente y 'continue' omite el resto del código del bloque actual para volver a evaluar la condición.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="23">
-          <div class="q-header">
-            <span class="q-number">Question 24</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">Al configurar un módulo, ¿para qué se utiliza la carpeta 'demo' generada por el comando scaffold?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Su nombre indica que se trata de algo para 'demostrar' el potencial del módulo.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Los controladores web deben ubicarse en la carpeta 'controllers' para ser reconocidos por el sistema.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Es el lugar donde se guardan los controladores del sitio web.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Los controladores web deben ubicarse en la carpeta 'controllers' para ser reconocidos por el sistema.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Odoo no utiliza una carpeta específica llamada 'demo' para documentación gráfica; estas suelen ir en 'static'.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Para guardar capturas de pantalla del funcionamiento del módulo.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Odoo no utiliza una carpeta específica llamada 'demo' para documentación gráfica; estas suelen ir en 'static'.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Los tutoriales se gestionan normalmente a través de módulos de e-learning o archivos de documentación externos.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Para incluir tutoriales interactivos en vídeo.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Los tutoriales se gestionan normalmente a través de módulos de e-learning o archivos de documentación externos.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="Esto facilita que los usuarios nuevos puedan probar la funcionalidad del módulo con datos ficticios sin introducirlos manualmente.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Para almacenar registros de datos de ejemplo que se cargarán solo si se activa el modo de demostración al crear la base de datos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esto facilita que los usuarios nuevos puedan probar la funcionalidad del módulo con datos ficticios sin introducirlos manualmente.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="24">
-          <div class="q-header">
-            <span class="q-number">Question 25</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">¿Cuál es la forma recomendada por MEDAC para organizar módulos personalizados en una instalación de Odoo en Windows?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Busca una ubicación que esté cerca del núcleo de Odoo pero claramente identificada como propia.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Odoo requiere acceso local rápido al sistema de archivos para cargar los módulos eficientemente durante el arranque.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Almacenarlos en un servidor externo al que se accede por FTP en tiempo real.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Odoo requiere acceso local rápido al sistema de archivos para cargar los módulos eficientemente durante el arranque.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Aunque es posible, suele causar problemas de permisos de lectura para el servicio que ejecuta Odoo.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Guardarlos en la carpeta 'Mis Documentos' del usuario actual.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Aunque es posible, suele causar problemas de permisos de lectura para el servicio que ejecuta Odoo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="Mantener los módulos personalizados en un repositorio separado facilita las actualizaciones y la organización del código propio.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Crear una carpeta llamada 'mismodulos' dentro del directorio del servidor de Odoo.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Mantener los módulos personalizados en un repositorio separado facilita las actualizaciones y la organización del código propio.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Esta es una mala práctica que dificulta distinguir el código original del ERP de las personalizaciones realizadas.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Mezclarlos directamente dentro de la carpeta 'addons' estándar de Odoo.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esta es una mala práctica que dificulta distinguir el código original del ERP de las personalizaciones realizadas.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="25">
-          <div class="q-header">
-            <span class="q-number">Question 26</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">En el desarrollo de informes QWeb, ¿cuál es el formato de los archivos que contienen las plantillas?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Es el mismo formato estructurado que se utiliza para definir vistas y menús.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="QWeb utiliza sintaxis XML para definir la lógica de bucles y condiciones que luego se transforman en HTML.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">XML</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">QWeb utiliza sintaxis XML para definir la lógica de bucles y condiciones que luego se transforman en HTML.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="C++ es un lenguaje compilado de bajo nivel, inadecuado para la definición flexible de plantillas de informes web.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">C++</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">C++ es un lenguaje compilado de bajo nivel, inadecuado para la definición flexible de plantillas de informes web.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Odoo está basado en Python; Java no tiene presencia en el motor de renderizado de informes estándar del sistema.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Java</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Odoo está basado en Python; Java no tiene presencia en el motor de renderizado de informes estándar del sistema.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="JSON se usa para transferencia de datos, pero no es el lenguaje de marcado estándar para las plantillas de visualización en Odoo.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">JSON</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">JSON se usa para transferencia de datos, pero no es el lenguaje de marcado estándar para las plantillas de visualización en Odoo.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="26">
-          <div class="q-header">
-            <span class="q-number">Question 27</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">Si al intentar instalar un módulo recibes un 'Internal Server Error', ¿cuál suele ser la causa más común según el material?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Es un fallo de 'lógica interna' durante el arranque o instalación de un componente.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Los errores de servidor son lógicos y de software; el hardware periférico no influye en la lógica de procesamiento de Odoo.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Que el monitor de la computadora está desconectado.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Los errores de servidor son lógicos y de software; el hardware periférico no influye en la lógica de procesamiento de Odoo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="Este error genérico indica que el servidor ha encontrado una excepción imprevista que no ha podido manejar durante el proceso de carga.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Un error crítico en el código Python o una referencia fallida en el XML que impide cargar el módulo.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este error genérico indica que el servidor ha encontrado una excepción imprevista que no ha podido manejar durante el proceso de carga.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Los problemas de autenticación tienen sus propios mensajes de error específicos y no provocan un fallo del servidor interno.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Que el usuario ha olvidado su contraseña de acceso.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Los problemas de autenticación tienen sus propios mensajes de error específicos y no provocan un fallo del servidor interno.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Si Odoo está instalado localmente, puede funcionar e instalar módulos perfectamente sin acceso a la red externa.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Que no hay conexión a internet.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Si Odoo está instalado localmente, puede funcionar e instalar módulos perfectamente sin acceso a la red externa.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="27">
-          <div class="q-header">
-            <span class="q-number">Question 28</span>
-            <span class="q-of">/ 28</span>
-          </div>
-          <div class="q-text">¿Qué permite la gestión de permisos en el administrador de usuarios de Odoo?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Se trata de la 'seguridad' y los privilegios dentro de las aplicaciones del ERP.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Los permisos de Odoo están confinados dentro de la aplicación ERP y no tienen control sobre el sistema operativo anfitrión.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Cambiar el color de fondo del escritorio del sistema operativo del usuario.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Los permisos de Odoo están confinados dentro de la aplicación ERP y no tienen control sobre el sistema operativo anfitrión.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Aunque existen módulos de asistencia, los permisos de usuario se refieren al acceso a datos y funciones del software.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Decidir a qué hora exacta debe entrar y salir el empleado de la oficina.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Aunque existen módulos de asistencia, los permisos de usuario se refieren al acceso a datos y funciones del software.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="Este sistema de seguridad garantiza que cada empleado solo acceda a la información necesaria para su puesto de trabajo.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Controlar qué aplicaciones puede ver un usuario y qué acciones (leer, crear, editar, borrar) puede realizar.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este sistema de seguridad garantiza que cada empleado solo acceda a la información necesaria para su puesto de trabajo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="La nómina es un proceso contable y de RRHH independiente de la configuración técnica de permisos de acceso.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Asignar automáticamente el salario mensual basándose en las horas de uso del ERP.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La nómina es un proceso contable y de RRHH independiente de la configuración técnica de permisos de acceso.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      </div>
-  <div class="results" id="results">
-    <h2>Quiz Complete!</h2>
-    <div class="score" id="score">0%</div>
-    <div class="score-text" id="score-text"></div>
-    <button class="restart-btn" onclick="restart()">Try Again</button>
-  </div>
-</div>
-<script>
-const quizData = [{"question":"Al utilizar el comando 'scaffold' para crear la estructura de un módulo, ¿cuál es el orden correcto de los parámetros en la línea de comandos según la documentación técnica de Odoo?","hint":"Recuerda que Odoo es una aplicación Python que requiere su binario principal para procesar comandos de creación.","options":[{"label":"A","text":"scaffold + nombre del módulo + ruta de destino + ruta de odoo-bin.","isCorrect":false,"rationale":"El comando 'scaffold' no es un ejecutable independiente del sistema, sino un subcomando que debe ser procesado por el script principal de Odoo."},{"label":"B","text":"Ruta de destino + scaffold + nombre del módulo + ruta de odoo-bin.","isCorrect":false,"rationale":"La ruta de almacenamiento es un argumento final que indica dónde se volcará la estructura de carpetas generada por el comando."},{"label":"C","text":"ruta de odoo-bin + python.exe + nombre del módulo + scaffold.","isCorrect":false,"rationale":"El intérprete de Python debe preceder al archivo binario de Odoo para poder interpretarlo y ejecutar sus funciones internas."},{"label":"D","text":"Ruta de python.exe + ruta de odoo-bin + scaffold + nombre del módulo + ruta de destino.","isCorrect":true,"rationale":"Esta secuencia asegura que el intérprete de Python ejecute el script de Odoo con el comando de creación de plantillas sobre el directorio deseado."}]},{"question":"En el archivo 'manifest.py', ¿cuál es la función específica del campo 'depends'?","hint":"Piensa en la jerarquía de instalación de aplicaciones dentro del ecosistema ERP.","options":[{"label":"A","text":"Indicar las librerías externas de Python que deben instalarse vía pip.","isCorrect":false,"rationale":"El campo 'depends' se refiere estrictamente a otros módulos de la plataforma Odoo, no a dependencias del entorno de ejecución de Python."},{"label":"B","text":"Especificar los modelos de datos que serán heredados por el módulo actual.","isCorrect":false,"rationale":"La herencia de modelos se define dentro del código Python mediante el atributo '$\\textunderscore inherit$', no en el manifiesto."},{"label":"C","text":"Definir los archivos XML que contienen la estructura de las vistas.","isCorrect":false,"rationale":"La carga de archivos de vista y datos se gestiona a través del campo 'data' en el manifiesto."},{"label":"D","text":"Listar los módulos técnicos que deben estar instalados previamente para que el nuevo módulo funcione.","isCorrect":true,"rationale":"Odoo utiliza este campo para resolver el orden de carga y asegurar que todas las dependencias funcionales estén presentes en la base de datos."}]},{"question":"¿Qué atributo es fundamental en la clase de Python para realizar una herencia de modelo que modifique un objeto existente sin crear una tabla nueva en la base de datos?","hint":"Se trata de un mecanismo que 'inyecta' funcionalidad en una capa superior al objeto original.","options":[{"label":"A","text":"$\\textunderscore table$","isCorrect":false,"rationale":"Este atributo se usa para definir manualmente el nombre de la tabla en PostgreSQL, pero no gestiona la lógica de herencia de clases."},{"label":"B","text":"$\\textunderscore inherit$","isCorrect":true,"rationale":"Este atributo indica a Odoo que debe extender la definición del modelo original, manteniendo la misma estructura de almacenamiento principal."},{"label":"C","text":"$\\textunderscore description$","isCorrect":false,"rationale":"Este atributo se utiliza únicamente para proporcionar un nombre legible al modelo para los usuarios finales."},{"label":"D","text":"$\\textunderscore name$","isCorrect":false,"rationale":"Si se usa '$\\textunderscore name$' junto con '$\\textunderscore inherit$', se crea un nuevo modelo que hereda las características del anterior, lo cual generaría una tabla distinta."}]},{"question":"Para heredar una vista específica en Odoo, ¿qué información debe incluirse obligatoriamente en el campo 'ref' del atributo 'inherit_id' en el XML?","hint":"Puedes encontrar esta información en el modo desarrollador bajo la opción 'Editar Vista'.","options":[{"label":"A","text":"El nombre de la aplicación en la lista de módulos.","isCorrect":false,"rationale":"El nombre de la aplicación es descriptivo y no sirve para enlazar registros técnicos específicos en el sistema de vistas."},{"label":"B","text":"La ruta física del archivo XML original.","isCorrect":false,"rationale":"Odoo gestiona las vistas desde la base de datos tras cargarlas, por lo que las rutas de archivos no se usan para referencias cruzadas."},{"label":"C","text":"El nombre técnico del modelo asociado.","isCorrect":false,"rationale":"Aunque el modelo es necesario en la definición de la vista, la herencia requiere el identificador de la vista específica, no del modelo de datos."},{"label":"D","text":"El ID externo de la vista padre.","isCorrect":true,"rationale":"El ID externo es el identificador único que permite al motor de vistas de Odoo localizar la estructura original que se desea modificar."}]},{"question":"Si configuramos el parámetro 'log_handler' con el nivel :DEBUG, ¿qué impacto tendrá en la salida del log de Odoo?","hint":"Es el nivel de registro más bajo en la jerarquía, lo que significa que captura la mayor cantidad de datos.","options":[{"label":"A","text":"Filtrará únicamente los errores críticos para evitar saturar el archivo de log.","isCorrect":false,"rationale":"Filtrar solo errores críticos corresponde al nivel CRITICAL, que es el polo opuesto en términos de detalle informativo."},{"label":"B","text":"Desactivará por completo la salida de registro por la consola estándar.","isCorrect":false,"rationale":"La desactivación total del log no se consigue con el nivel DEBUG, sino configurando niveles de silencio específicos o redirigiendo a /dev/null."},{"label":"C","text":"Solo mostrará información sobre las consultas SQL ejecutadas.","isCorrect":false,"rationale":"Aunque DEBUG incluye detalles SQL, también abarca muchos otros eventos del ciclo de vida de la aplicación."},{"label":"D","text":"Mostrará mensajes detallados de depuración además de los niveles superiores como INFO y WARNING.","isCorrect":true,"rationale":"El nivel DEBUG es el más detallado e incluye información técnica exhaustiva sobre procesos internos que normalmente se omiten."}]},{"question":"¿Cuál es el resultado de ejecutar la función $range(3)$ en Python?","hint":"Ten en cuenta que en programación el conteo suele empezar en cero y el límite final no se incluye.","options":[{"label":"A","text":"$[0, 1, 2, 3]$","isCorrect":false,"rationale":"El límite superior en la función range es exclusivo, lo que significa que el número proporcionado no se incluye en la lista resultante."},{"label":"B","text":"$[1, 2, 3]$","isCorrect":false,"rationale":"Python utiliza indexación basada en cero, por lo que el inicio por defecto es 0 a menos que se indique explícitamente lo contrario."},{"label":"C","text":"$[0, 1, 2]$","isCorrect":true,"rationale":"La función range genera una secuencia que comienza en 0 y termina una unidad antes del valor especificado."},{"label":"D","text":"$[3, 2, 1, 0]$","isCorrect":false,"rationale":"Por defecto, range genera una secuencia ascendente; para obtener una descendente se requiere especificar un paso negativo."}]},{"question":"En el desarrollo de Odoo, ¿qué tecnología se utiliza específicamente como motor de plantillas para la creación de informes y documentos dinámicos?","hint":"Busca el nombre de la tecnología que utiliza etiquetas XML para procesar la lógica de presentación.","options":[{"label":"A","text":"Jinja2","isCorrect":false,"rationale":"Aunque Jinja2 es común en frameworks Python como Flask, Odoo utiliza su propio motor propietario llamado QWeb."},{"label":"B","text":"PostgreSQL Reports","isCorrect":false,"rationale":"PostgreSQL es el gestor de base de datos, pero la lógica de presentación de informes reside en la capa de aplicación de Odoo."},{"label":"C","text":"React.js","isCorrect":false,"rationale":"React es una librería de JavaScript para interfaces de usuario, no un motor de plantillas de informes del lado del servidor."},{"label":"D","text":"QWeb","isCorrect":true,"rationale":"QWeb es un motor de plantillas basado en XML que permite renderizar datos en formatos HTML o PDF de forma integrada con el ERP."}]},{"question":"¿Qué requisitos de instalación presenta el módulo de Punto de Venta (PdV) en Odoo?","hint":"Piensa en qué procesos del negocio se ven afectados directamente cuando se realiza una venta en una caja física.","options":[{"label":"A","text":"Requiere exclusivamente el módulo de CRM.","isCorrect":false,"rationale":"El CRM gestiona oportunidades de venta, pero el PdV gestiona el acto de venta directo y el stock, requiriendo otros fundamentos."},{"label":"B","text":"Es un módulo independiente que no requiere ninguna otra aplicación.","isCorrect":false,"rationale":"Dada la integración total de Odoo, el PdV no puede operar en el vacío sin referencias a productos y cuentas financieras."},{"label":"C","text":"Requiere tener instalados los módulos de Contabilidad e Inventario.","isCorrect":true,"rationale":"El PdV necesita el Inventario para gestionar existencias y la Contabilidad para registrar los asientos de ventas generados."},{"label":"D","text":"Solo requiere el módulo de Sitio Web y Chat en vivo.","isCorrect":false,"rationale":"Estas son herramientas de comunicación y marketing que no son fundamentales para el procesamiento de transacciones físicas de venta."}]},{"question":"¿Cómo se define una variable de tipo selección ('selection') en el modelo de datos para que sea válida?","hint":"Cada opción del desplegable necesita un valor para la base de datos y un nombre para el usuario.","options":[{"label":"A","text":"A través de una cadena de texto larga separada por comas.","isCorrect":false,"rationale":"Las cadenas simples no permiten estructurar metadatos como la etiqueta de visualización de forma efectiva."},{"label":"B","text":"Mediante una lista de tuplas donde el primer elemento es el valor técnico y el segundo es la etiqueta visible.","isCorrect":true,"rationale":"Este formato permite separar el dato almacenado en la base de datos de la descripción que ve el usuario final en la interfaz."},{"label":"C","text":"Mediante un diccionario donde las claves son números enteros correlativos.","isCorrect":false,"rationale":"Odoo requiere tuplas para mantener el orden y la compatibilidad con el sistema de traducciones y almacenamiento."},{"label":"D","text":"Usando un archivo CSV externo que se carga en el atributo 'data'.","isCorrect":false,"rationale":"Los archivos CSV se usan para carga masiva de registros, no para definir las opciones estáticas de un campo en el código Python."}]},{"question":"¿Qué herramienta externa permite consultar y modificar los datos del ERP de Odoo directamente en el gestor de bases de datos?","hint":"Es la herramienta preferida por los administradores de sistemas para interactuar con PostgreSQL.","options":[{"label":"A","text":"PyCharm","isCorrect":false,"rationale":"PyCharm es un entorno de desarrollo integrado para escribir código, no una herramienta de gestión de bases de datos relacionales."},{"label":"B","text":"Postman","isCorrect":false,"rationale":"Postman se utiliza para probar peticiones API y servicios web, no para la manipulación directa de tablas SQL."},{"label":"C","text":"PgAdmin","isCorrect":true,"rationale":"PgAdmin es el cliente administrativo estándar para PostgreSQL, permitiendo gestionar todas las tablas y datos del ERP a bajo nivel."},{"label":"D","text":"Wkhtmltopdf","isCorrect":false,"rationale":"Este es un programa de utilidad que convierte HTML en archivos PDF, usado internamente por Odoo para informes."}]},{"question":"Sobre la declaración de variables en Python, ¿cuál de las siguientes afirmaciones es correcta?","hint":"Los nombres de variables en Python siguen convenciones similares a otros lenguajes de alto nivel como C o Java.","options":[{"label":"A","text":"Python no distingue entre mayúsculas y minúsculas (no es case sensitive).","isCorrect":false,"rationale":"Python es estrictamente sensible a las mayúsculas; 'Variable' y 'variable' se consideran identificadores distintos."},{"label":"B","text":"Deben empezar por letras o por el carácter guion bajo '$\\textunderscore$'.","isCorrect":true,"rationale":"Esta es la regla sintáctica de Python para identificadores válidos; empezar por números provocaría un error de sintaxis."},{"label":"C","text":"Es obligatorio que contengan al menos un número.","isCorrect":false,"rationale":"Los números son opcionales en el nombre de una variable y nunca pueden estar en la primera posición."},{"label":"D","text":"No existen reglas específicas para su declaración.","isCorrect":false,"rationale":"Existen reglas claras sobre caracteres permitidos y palabras reservadas que no pueden usarse como nombres de variables."}]},{"question":"¿Cuál es la utilidad del parámetro 'logfile' en el archivo odoo.conf?","hint":"Su nombre sugiere una función de almacenamiento de registros (logs).","options":[{"label":"A","text":"Especificar qué archivos XML se cargarán durante el inicio del servidor.","isCorrect":false,"rationale":"La carga de archivos XML es responsabilidad de cada módulo a través de su archivo de manifiesto."},{"label":"B","text":"Redirigir la salida del registro de eventos a un archivo físico en el disco en lugar de la consola.","isCorrect":true,"rationale":"Esto permite mantener un historial persistente de los logs para su posterior análisis sin depender de la sesión actual de la terminal."},{"label":"C","text":"Definir la ruta donde se guardan las copias de seguridad de la base de datos.","isCorrect":false,"rationale":"Las copias de seguridad se gestionan a través de la interfaz de Odoo o mediante herramientas específicas de PostgreSQL."},{"label":"D","text":"Activar el modo de depuración visual en el navegador web.","isCorrect":false,"rationale":"El modo depuración visual se activa mediante parámetros en la URL o desde la configuración de usuario en la interfaz."}]},{"question":"Al heredar una vista, ¿qué valor del atributo 'position' se debe usar para colocar un nuevo campo inmediatamente después de uno existente?","hint":"Es la traducción literal al inglés de la ubicación deseada.","options":[{"label":"A","text":"inside","isCorrect":false,"rationale":"Se usa para insertar contenido dentro de un contenedor (como una etiqueta <div> o <group>), no necesariamente después de un campo específico."},{"label":"B","text":"before","isCorrect":false,"rationale":"Este valor colocaría el nuevo elemento antes del campo referenciado, lo cual alteraría el orden visual deseado."},{"label":"C","text":"after","isCorrect":true,"rationale":"El valor 'after' indica al motor de vistas que inserte el nodo XML justo a continuación del elemento referenciado."},{"label":"D","text":"replace","isCorrect":false,"rationale":"Este valor eliminaría el campo original y lo sustituiría por el nuevo, perdiendo la información previa en la vista."}]},{"question":"En el contexto de errores en Odoo, ¿qué diferencia a un error sintáctico detectado por PyCharm de un error de 'ID externo no encontrado'?","hint":"Uno es detectado por el editor antes de correr el programa y el otro por el ERP al procesar los datos.","options":[{"label":"A","text":"Un error de ID externo se soluciona reiniciando la computadora.","isCorrect":false,"rationale":"Requiere corregir la referencia técnica en el código y actualizar el módulo afectado en la base de datos."},{"label":"B","text":"El error de ID externo es siempre un fallo de hardware del servidor.","isCorrect":false,"rationale":"Es un error lógico o de referencia de datos en el software, no tiene relación con el estado físico de los componentes."},{"label":"C","text":"Los errores sintácticos solo ocurren en archivos Python y los de ID externo en archivos XML.","isCorrect":false,"rationale":"PyCharm también puede detectar errores de sintaxis en XML (etiquetas sin cerrar), y un ID externo puede fallar al ser llamado desde Python."},{"label":"D","text":"El error sintáctico se detecta en tiempo real al escribir, mientras que el ID externo falla durante la instalación o ejecución.","isCorrect":true,"rationale":"PyCharm analiza el código estáticamente, pero los IDs externos dependen de los registros cargados en la base de datos durante el runtime."}]},{"question":"¿Qué característica define a Python como lenguaje de programación en el ecosistema de Odoo?","hint":"Considera cómo se ejecuta el código y cuántos estilos de programación admite.","options":[{"label":"A","text":"Exclusivamente orientado a objetos y estáticamente tipado.","isCorrect":false,"rationale":"Python utiliza tipado dinámico y permite otros paradigmas además de la orientación a objetos pura."},{"label":"B","text":"Diseñado únicamente para el desarrollo de aplicaciones móviles.","isCorrect":false,"rationale":"Es un lenguaje de propósito general ampliamente utilizado en servidores, ciencia de datos y desarrollo web."},{"label":"C","text":"Compilado y de bajo nivel.","isCorrect":false,"rationale":"Python es un lenguaje de alto nivel cuya ejecución depende de un intérprete, a diferencia de lenguajes como C o C++."},{"label":"D","text":"Interpretado y multiparadigma.","isCorrect":true,"rationale":"Python no requiere compilación previa a código máquina y admite programación orientada a objetos, imperativa y funcional."}]},{"question":"En la programación de clases en Python para Odoo, ¿cuál es la mejor práctica al definir el constructor?","hint":"Es el método que 'prepara' el objeto justo después de nacer en memoria.","options":[{"label":"A","text":"Usar obligatoriamente la etiqueta 'const default'.","isCorrect":false,"rationale":"Esta sintaxis no pertenece al lenguaje Python; es una confusión con otros lenguajes o pseudocódigo."},{"label":"B","text":"Las clases deben definirse dentro de los archivos XML de vistas.","isCorrect":false,"rationale":"La lógica de negocio y las clases residen en archivos .py, mientras que el XML se encarga exclusivamente de la interfaz."},{"label":"C","text":"Python no permite la creación de clases personalizadas, solo herencia simple.","isCorrect":false,"rationale":"Python permite la creación total de clases desde cero, lo cual es fundamental para definir nuevos modelos en Odoo."},{"label":"D","text":"Utilizar la palabra reservada 'class' y definir el método especial $$\\textunderscore\\textunderscore init\\textunderscore\\textunderscore ()$.","isCorrect":true,"rationale":"Este método especial inicializa los atributos de la instancia cuando el objeto es creado por el sistema."}]},{"question":"¿Qué funcionalidad ofrece el 'Open Developer Tool' (icono del insecto) en la interfaz de Odoo?","hint":"Proporciona una capa de transparencia técnica sobre lo que el usuario común ve en pantalla.","options":[{"label":"A","text":"Visualizar información técnica como IDs externos, metadatos de modelos y permitir la edición rápida de vistas.","isCorrect":true,"rationale":"Es una herramienta esencial para desarrolladores que permite inspeccionar la estructura interna del ERP desde el propio navegador."},{"label":"B","text":"Eliminar virus y malware del servidor de base de datos.","isCorrect":false,"rationale":"Su nombre es una metáfora de 'debugging', pero no realiza funciones de antivirus o seguridad informática."},{"label":"C","text":"Gestionar el pago de nóminas y recursos humanos.","isCorrect":false,"rationale":"Es una herramienta técnica, no un módulo funcional de negocio para el usuario final."},{"label":"D","text":"Traducir automáticamente el sistema a todos los idiomas disponibles.","isCorrect":false,"rationale":"Aunque ayuda a ver términos técnicos, la gestión de traducciones se realiza desde los ajustes de idioma del sistema."}]},{"question":"¿Es posible importar productos directamente al Punto de Venta desde archivos externos?","hint":"Esta opción suele estar disponible en la vista de lista de casi cualquier modelo de Odoo.","options":[{"label":"A","text":"Falso","isCorrect":false,"rationale":"La importación es una funcionalidad nativa y transversal en Odoo para facilitar la migración de datos desde otros sistemas."},{"label":"B","text":"Verdadero","isCorrect":true,"rationale":"Odoo permite la importación masiva de registros (incluyendo productos del PdV) mediante archivos CSV o Excel a través de su interfaz estándar."}]},{"question":"¿Viene configurado por defecto el módulo de Punto de Venta al instalar Odoo por primera vez?","hint":"Recuerda el proceso habitual para añadir nuevas funcionalidades como 'Ventas' o 'CRM'.","options":[{"label":"A","text":"Falso","isCorrect":true,"rationale":"Como la mayoría de las aplicaciones funcionales, el PdV debe ser seleccionado e instalado manualmente por el administrador según las necesidades de la empresa."},{"label":"B","text":"Verdadero","isCorrect":false,"rationale":"Odoo se instala inicialmente con una base mínima; los módulos funcionales específicos se añaden a demanda."}]},{"question":"¿Qué ocurre si no agregamos la ruta del nuevo repositorio 'mismodulos' al parámetro 'addons_path' en odoo.conf?","hint":"Es como decirle a un bibliotecario en qué pasillos nuevos debe buscar libros.","options":[{"label":"A","text":"Los módulos se cargarán pero todas sus vistas darán error.","isCorrect":false,"rationale":"Si el módulo no se localiza, ni siquiera llegará a la fase de carga o ejecución de vistas."},{"label":"B","text":"Se borrarán automáticamente los archivos del nuevo repositorio.","isCorrect":false,"rationale":"Odoo nunca borra archivos del sistema de archivos por una configuración incorrecta del addons_path."},{"label":"C","text":"El sistema se bloqueará por completo al intentar arrancar.","isCorrect":false,"rationale":"El sistema arrancará normalmente, pero simplemente ignorará los módulos que estén fuera de su alcance de búsqueda."},{"label":"D","text":"Odoo no podrá localizar los nuevos módulos y no aparecerán en la lista de aplicaciones.","isCorrect":true,"rationale":"El servidor solo escanea las rutas especificadas en este parámetro para identificar el código fuente de los módulos instalables."}]},{"question":"En el archivo XML de una vista heredada, ¿cuál es la etiqueta raíz obligatoria que debe envolver todo el contenido?","hint":"Representa el nombre actual de la plataforma y es común a todos sus archivos de datos XML.","options":[{"label":"A","text":"<header>","isCorrect":false,"rationale":"La etiqueta header se usa dentro de una vista de formulario para botones de estado, no como raíz del archivo."},{"label":"B","text":"<openerp>","isCorrect":false,"rationale":"Esta etiqueta se utilizaba en versiones antiguas del software antes de su cambio de marca a Odoo."},{"label":"C","text":"<odoo>","isCorrect":true,"rationale":"Esta es la etiqueta estándar que define un archivo de datos para el motor de Odoo a partir de versiones recientes."},{"label":"D","text":"<template>","isCorrect":false,"rationale":"Se utiliza específicamente para vistas QWeb o del sitio web, no necesariamente para vistas de formulario del backend."}]},{"question":"¿Cuál es la función del operador lógico 'and' en las expresiones condicionales de Python?","hint":"Exige que se cumplan todas las partes de la frase para ser válida.","options":[{"label":"A","text":"Evaluar como verdadero si al menos una de las condiciones es verdadera.","isCorrect":false,"rationale":"Esa es la función del operador lógico 'or', no del 'and'."},{"label":"B","text":"Invertir el valor de verdad de la expresión siguiente.","isCorrect":false,"rationale":"La inversión lógica se realiza mediante el operador 'not'."},{"label":"C","text":"Comparar si dos variables apuntan al mismo objeto en memoria.","isCorrect":false,"rationale":"Esa función corresponde al operador de identidad 'is'."},{"label":"D","text":"Evaluar como verdadero solo si todas las condiciones que conecta son verdaderas.","isCorrect":true,"rationale":"El operador 'and' requiere el cumplimiento total de todas las premisas para validar la expresión completa."}]},{"question":"¿Qué permiten realizar las sentencias 'break' y 'continue' dentro de los bucles en Python?","hint":"Sirven para 'romper' el ciclo o 'seguir' con el siguiente turno.","options":[{"label":"A","text":"Reiniciar el servidor de Odoo automáticamente tras un error.","isCorrect":false,"rationale":"Son comandos de nivel de lenguaje de programación y no tienen impacto directo en la gestión del servicio del servidor."},{"label":"B","text":"Declarar variables globales que persisten fuera del bucle.","isCorrect":false,"rationale":"El alcance de las variables se gestiona mediante otros mecanismos de Python, no con estas sentencias."},{"label":"C","text":"Aumentar la velocidad de procesamiento de la CPU durante el bucle.","isCorrect":false,"rationale":"Son estructuras de control de flujo lógico y no afectan directamente a la velocidad bruta del procesador."},{"label":"D","text":"Alterar el flujo normal del bucle, ya sea deteniéndolo por completo o saltando a la siguiente iteración.","isCorrect":true,"rationale":"'break' finaliza el bucle prematuramente y 'continue' omite el resto del código del bloque actual para volver a evaluar la condición."}]},{"question":"Al configurar un módulo, ¿para qué se utiliza la carpeta 'demo' generada por el comando scaffold?","hint":"Su nombre indica que se trata de algo para 'demostrar' el potencial del módulo.","options":[{"label":"A","text":"Es el lugar donde se guardan los controladores del sitio web.","isCorrect":false,"rationale":"Los controladores web deben ubicarse en la carpeta 'controllers' para ser reconocidos por el sistema."},{"label":"B","text":"Para guardar capturas de pantalla del funcionamiento del módulo.","isCorrect":false,"rationale":"Odoo no utiliza una carpeta específica llamada 'demo' para documentación gráfica; estas suelen ir en 'static'."},{"label":"C","text":"Para incluir tutoriales interactivos en vídeo.","isCorrect":false,"rationale":"Los tutoriales se gestionan normalmente a través de módulos de e-learning o archivos de documentación externos."},{"label":"D","text":"Para almacenar registros de datos de ejemplo que se cargarán solo si se activa el modo de demostración al crear la base de datos.","isCorrect":true,"rationale":"Esto facilita que los usuarios nuevos puedan probar la funcionalidad del módulo con datos ficticios sin introducirlos manualmente."}]},{"question":"¿Cuál es la forma recomendada por MEDAC para organizar módulos personalizados en una instalación de Odoo en Windows?","hint":"Busca una ubicación que esté cerca del núcleo de Odoo pero claramente identificada como propia.","options":[{"label":"A","text":"Almacenarlos en un servidor externo al que se accede por FTP en tiempo real.","isCorrect":false,"rationale":"Odoo requiere acceso local rápido al sistema de archivos para cargar los módulos eficientemente durante el arranque."},{"label":"B","text":"Guardarlos en la carpeta 'Mis Documentos' del usuario actual.","isCorrect":false,"rationale":"Aunque es posible, suele causar problemas de permisos de lectura para el servicio que ejecuta Odoo."},{"label":"C","text":"Crear una carpeta llamada 'mismodulos' dentro del directorio del servidor de Odoo.","isCorrect":true,"rationale":"Mantener los módulos personalizados en un repositorio separado facilita las actualizaciones y la organización del código propio."},{"label":"D","text":"Mezclarlos directamente dentro de la carpeta 'addons' estándar de Odoo.","isCorrect":false,"rationale":"Esta es una mala práctica que dificulta distinguir el código original del ERP de las personalizaciones realizadas."}]},{"question":"En el desarrollo de informes QWeb, ¿cuál es el formato de los archivos que contienen las plantillas?","hint":"Es el mismo formato estructurado que se utiliza para definir vistas y menús.","options":[{"label":"A","text":"XML","isCorrect":true,"rationale":"QWeb utiliza sintaxis XML para definir la lógica de bucles y condiciones que luego se transforman en HTML."},{"label":"B","text":"C++","isCorrect":false,"rationale":"C++ es un lenguaje compilado de bajo nivel, inadecuado para la definición flexible de plantillas de informes web."},{"label":"C","text":"Java","isCorrect":false,"rationale":"Odoo está basado en Python; Java no tiene presencia en el motor de renderizado de informes estándar del sistema."},{"label":"D","text":"JSON","isCorrect":false,"rationale":"JSON se usa para transferencia de datos, pero no es el lenguaje de marcado estándar para las plantillas de visualización en Odoo."}]},{"question":"Si al intentar instalar un módulo recibes un 'Internal Server Error', ¿cuál suele ser la causa más común según el material?","hint":"Es un fallo de 'lógica interna' durante el arranque o instalación de un componente.","options":[{"label":"A","text":"Que el monitor de la computadora está desconectado.","isCorrect":false,"rationale":"Los errores de servidor son lógicos y de software; el hardware periférico no influye en la lógica de procesamiento de Odoo."},{"label":"B","text":"Un error crítico en el código Python o una referencia fallida en el XML que impide cargar el módulo.","isCorrect":true,"rationale":"Este error genérico indica que el servidor ha encontrado una excepción imprevista que no ha podido manejar durante el proceso de carga."},{"label":"C","text":"Que el usuario ha olvidado su contraseña de acceso.","isCorrect":false,"rationale":"Los problemas de autenticación tienen sus propios mensajes de error específicos y no provocan un fallo del servidor interno."},{"label":"D","text":"Que no hay conexión a internet.","isCorrect":false,"rationale":"Si Odoo está instalado localmente, puede funcionar e instalar módulos perfectamente sin acceso a la red externa."}]},{"question":"¿Qué permite la gestión de permisos en el administrador de usuarios de Odoo?","hint":"Se trata de la 'seguridad' y los privilegios dentro de las aplicaciones del ERP.","options":[{"label":"A","text":"Cambiar el color de fondo del escritorio del sistema operativo del usuario.","isCorrect":false,"rationale":"Los permisos de Odoo están confinados dentro de la aplicación ERP y no tienen control sobre el sistema operativo anfitrión."},{"label":"B","text":"Decidir a qué hora exacta debe entrar y salir el empleado de la oficina.","isCorrect":false,"rationale":"Aunque existen módulos de asistencia, los permisos de usuario se refieren al acceso a datos y funciones del software."},{"label":"C","text":"Controlar qué aplicaciones puede ver un usuario y qué acciones (leer, crear, editar, borrar) puede realizar.","isCorrect":true,"rationale":"Este sistema de seguridad garantiza que cada empleado solo acceda a la información necesaria para su puesto de trabajo."},{"label":"D","text":"Asignar automáticamente el salario mensual basándose en las horas de uso del ERP.","isCorrect":false,"rationale":"La nómina es un proceso contable y de RRHH independiente de la configuración técnica de permisos de acceso."}]}];
-const tr = {"correct":"Correct!","incorrect":"Incorrect","next":"Siguiente Question →","seeResults":"See Results","complete":"Quiz Complete!","scoreText":"You got {correct} out of {total} correct","tryAgain":"Try Again","rightAnswer":"Correctas answer","notQuite":"Not quite"};
-let currentQ = 0, correctCount = 0, answered = false;
+    <div class="quiz-container">
+        <div id="quiz-content">
+            <!-- Dynamic Content -->
+        </div>
+        <div id="results-content" class="hidden"></div>
 
-function init() {
-  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === 0));
-  updateProgress();
-  document.querySelectorAll('.option').forEach(opt => opt.addEventListener('click', () => selectOption(opt)));
-  document.querySelectorAll('.next-btn').forEach(btn => btn.addEventListener('click', nextQuestion));
-}
+        <div id="hint-box" class="hint-content">
+            <div class="hint-icon-box">💡</div>
+            <div id="hint-text"></div>
+        </div>
 
-function selectOption(opt) {
-  if (answered) return;
-  answered = true;
-  const q = opt.closest('.question');
-  const options = q.querySelectorAll('.option');
-  const nextBtn = q.querySelector('.next-btn');
-  const isCorrect = opt.dataset.correct === 'true';
-  
-  // Mark all options as disabled
-  options.forEach(o => o.classList.add('disabled'));
-  
-  // Style selected option
-  opt.classList.add('selected', isCorrect ? 'correct' : 'incorrect');
-  
-  // Show correct answer if wrong
-  if (!isCorrect) {
-    const correctOpt = [...options].find(o => o.dataset.correct === 'true');
-    if (correctOpt) correctOpt.classList.add('show-correct');
-  }
-  
-  if (isCorrect) correctCount++;
-  
-  // Show feedback for ALL options that have rationale
-  options.forEach(o => {
-    const wrapper = o.closest('.option-wrapper');
-    const feedback = wrapper.querySelector('.option-feedback');
-    const rationale = o.dataset.rationale;
-    const isThisCorrect = o.dataset.correct === 'true';
-    
-    if (rationale && rationale.trim()) {
-      feedback.classList.remove('hidden');
-      feedback.classList.add(isThisCorrect ? 'correct-feedback' : 'incorrect-feedback');
-      
-      const statusEl = feedback.querySelector('.feedback-status');
-      statusEl.className = 'feedback-status ' + (isThisCorrect ? 'correct' : 'incorrect');
-      statusEl.innerHTML = isThisCorrect 
-        ? '✓ ' + tr.rightAnswer
-        : '✗ ' + tr.notQuite;
-    }
-  });
-  
-  nextBtn.classList.remove('hidden');
-  if (currentQ === quizData.length - 1) nextBtn.textContent = tr.seeResults;
-}
+        <div class="navigation">
+            <button id="hint-toggle" class="hint-toggle">
+                <span>Hint</span>
+                <span id="hint-icon-arrow">▼</span>
+            </button>
+            <div class="nav-buttons">
+                <button id="prev-btn" class="btn btn-prev">Previous</button>
+                <button id="next-btn" class="btn btn-next">Next</button>
+            </div>
+        </div>
+    </div>
 
-function nextQuestion() {
-  answered = false;
-  currentQ++;
-  if (currentQ >= quizData.length) { showResults(); return; }
-  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === currentQ));
-  updateProgress();
-}
+    <script>
+        const quizData = [{"answerOptions":[{"isCorrect":true,"rationale":"Esta secuencia asegura que el intérprete de Python ejecute el script de Odoo con el comando de creación de plantillas sobre el directorio deseado.","text":"Ruta de python.exe + ruta de odoo-bin + scaffold + nombre del módulo + ruta de destino."},{"isCorrect":false,"rationale":"La ruta de almacenamiento es un argumento final que indica dónde se volcará la estructura de carpetas generada por el comando.","text":"Ruta de destino + scaffold + nombre del módulo + ruta de odoo-bin."},{"isCorrect":false,"rationale":"El comando 'scaffold' no es un ejecutable independiente del sistema, sino un subcomando que debe ser procesado por el script principal de Odoo.","text":"scaffold + nombre del módulo + ruta de destino + ruta de odoo-bin."},{"isCorrect":false,"rationale":"El intérprete de Python debe preceder al archivo binario de Odoo para poder interpretarlo y ejecutar sus funciones internas.","text":"ruta de odoo-bin + python.exe + nombre del módulo + scaffold."}],"hint":"Recuerda que Odoo es una aplicación Python que requiere su binario principal para procesar comandos de creación.","question":"Al utilizar el comando 'scaffold' para crear la estructura de un módulo, ¿cuál es el orden correcto de los parámetros en la línea de comandos según la documentación técnica de Odoo?"},{"answerOptions":[{"isCorrect":false,"rationale":"La herencia de modelos se define dentro del código Python mediante el atributo '$\\textunderscore inherit$', no en el manifiesto.","text":"Especificar los modelos de datos que serán heredados por el módulo actual."},{"isCorrect":true,"rationale":"Odoo utiliza este campo para resolver el orden de carga y asegurar que todas las dependencias funcionales estén presentes en la base de datos.","text":"Listar los módulos técnicos que deben estar instalados previamente para que el nuevo módulo funcione."},{"isCorrect":false,"rationale":"El campo 'depends' se refiere estrictamente a otros módulos de la plataforma Odoo, no a dependencias del entorno de ejecución de Python.","text":"Indicar las librerías externas de Python que deben instalarse vía pip."},{"isCorrect":false,"rationale":"La carga de archivos de vista y datos se gestiona a través del campo 'data' en el manifiesto.","text":"Definir los archivos XML que contienen la estructura de las vistas."}],"hint":"Piensa en la jerarquía de instalación de aplicaciones dentro del ecosistema ERP.","question":"En el archivo 'manifest.py', ¿cuál es la función específica del campo 'depends'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este atributo se utiliza únicamente para proporcionar un nombre legible al modelo para los usuarios finales.","text":"$\\textunderscore description$"},{"isCorrect":true,"rationale":"Este atributo indica a Odoo que debe extender la definición del modelo original, manteniendo la misma estructura de almacenamiento principal.","text":"$\\textunderscore inherit$"},{"isCorrect":false,"rationale":"Si se usa '$\\textunderscore name$' junto con '$\\textunderscore inherit$', se crea un nuevo modelo que hereda las características del anterior, lo cual generaría una tabla distinta.","text":"$\\textunderscore name$"},{"isCorrect":false,"rationale":"Este atributo se usa para definir manualmente el nombre de la tabla en PostgreSQL, pero no gestiona la lógica de herencia de clases.","text":"$\\textunderscore table$"}],"hint":"Se trata de un mecanismo que 'inyecta' funcionalidad en una capa superior al objeto original.","question":"¿Qué atributo es fundamental en la clase de Python para realizar una herencia de modelo que modifique un objeto existente sin crear una tabla nueva en la base de datos?"},{"answerOptions":[{"isCorrect":false,"rationale":"Odoo gestiona las vistas desde la base de datos tras cargarlas, por lo que las rutas de archivos no se usan para referencias cruzadas.","text":"La ruta física del archivo XML original."},{"isCorrect":true,"rationale":"El ID externo es el identificador único que permite al motor de vistas de Odoo localizar la estructura original que se desea modificar.","text":"El ID externo de la vista padre."},{"isCorrect":false,"rationale":"El nombre de la aplicación es descriptivo y no sirve para enlazar registros técnicos específicos en el sistema de vistas.","text":"El nombre de la aplicación en la lista de módulos."},{"isCorrect":false,"rationale":"Aunque el modelo es necesario en la definición de la vista, la herencia requiere el identificador de la vista específica, no del modelo de datos.","text":"El nombre técnico del modelo asociado."}],"hint":"Puedes encontrar esta información en el modo desarrollador bajo la opción 'Editar Vista'.","question":"Para heredar una vista específica en Odoo, ¿qué información debe incluirse obligatoriamente en el campo 'ref' del atributo 'inherit_id' en el XML?"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque DEBUG incluye detalles SQL, también abarca muchos otros eventos del ciclo de vida de la aplicación.","text":"Solo mostrará información sobre las consultas SQL ejecutadas."},{"isCorrect":false,"rationale":"La desactivación total del log no se consigue con el nivel DEBUG, sino configurando niveles de silencio específicos o redirigiendo a /dev/null.","text":"Desactivará por completo la salida de registro por la consola estándar."},{"isCorrect":true,"rationale":"El nivel DEBUG es el más detallado e incluye información técnica exhaustiva sobre procesos internos que normalmente se omiten.","text":"Mostrará mensajes detallados de depuración además de los niveles superiores como INFO y WARNING."},{"isCorrect":false,"rationale":"Filtrar solo errores críticos corresponde al nivel CRITICAL, que es el polo opuesto en términos de detalle informativo.","text":"Filtrará únicamente los errores críticos para evitar saturar el archivo de log."}],"hint":"Es el nivel de registro más bajo en la jerarquía, lo que significa que captura la mayor cantidad de datos.","question":"Si configuramos el parámetro 'log_handler' con el nivel :DEBUG, ¿qué impacto tendrá en la salida del log de Odoo?"},{"answerOptions":[{"isCorrect":false,"rationale":"Por defecto, range genera una secuencia ascendente; para obtener una descendente se requiere especificar un paso negativo.","text":"$[3, 2, 1, 0]$"},{"isCorrect":false,"rationale":"El límite superior en la función range es exclusivo, lo que significa que el número proporcionado no se incluye en la lista resultante.","text":"$[0, 1, 2, 3]$"},{"isCorrect":false,"rationale":"Python utiliza indexación basada en cero, por lo que el inicio por defecto es 0 a menos que se indique explícitamente lo contrario.","text":"$[1, 2, 3]$"},{"isCorrect":true,"rationale":"La función range genera una secuencia que comienza en 0 y termina una unidad antes del valor especificado.","text":"$[0, 1, 2]$"}],"hint":"Ten en cuenta que en programación el conteo suele empezar en cero y el límite final no se incluye.","question":"¿Cuál es el resultado de ejecutar la función $range(3)$ en Python?"},{"answerOptions":[{"isCorrect":true,"rationale":"QWeb es un motor de plantillas basado en XML que permite renderizar datos en formatos HTML o PDF de forma integrada con el ERP.","text":"QWeb"},{"isCorrect":false,"rationale":"PostgreSQL es el gestor de base de datos, pero la lógica de presentación de informes reside en la capa de aplicación de Odoo.","text":"PostgreSQL Reports"},{"isCorrect":false,"rationale":"Aunque Jinja2 es común en frameworks Python como Flask, Odoo utiliza su propio motor propietario llamado QWeb.","text":"Jinja2"},{"isCorrect":false,"rationale":"React es una librería de JavaScript para interfaces de usuario, no un motor de plantillas de informes del lado del servidor.","text":"React.js"}],"hint":"Busca el nombre de la tecnología que utiliza etiquetas XML para procesar la lógica de presentación.","question":"En el desarrollo de Odoo, ¿qué tecnología se utiliza específicamente como motor de plantillas para la creación de informes y documentos dinámicos?"},{"answerOptions":[{"isCorrect":false,"rationale":"Dada la integración total de Odoo, el PdV no puede operar en el vacío sin referencias a productos y cuentas financieras.","text":"Es un módulo independiente que no requiere ninguna otra aplicación."},{"isCorrect":false,"rationale":"Estas son herramientas de comunicación y marketing que no son fundamentales para el procesamiento de transacciones físicas de venta.","text":"Solo requiere el módulo de Sitio Web y Chat en vivo."},{"isCorrect":false,"rationale":"El CRM gestiona oportunidades de venta, pero el PdV gestiona el acto de venta directo y el stock, requiriendo otros fundamentos.","text":"Requiere exclusivamente el módulo de CRM."},{"isCorrect":true,"rationale":"El PdV necesita el Inventario para gestionar existencias y la Contabilidad para registrar los asientos de ventas generados.","text":"Requiere tener instalados los módulos de Contabilidad e Inventario."}],"hint":"Piensa en qué procesos del negocio se ven afectados directamente cuando se realiza una venta en una caja física.","question":"¿Qué requisitos de instalación presenta el módulo de Punto de Venta (PdV) en Odoo?"},{"answerOptions":[{"isCorrect":false,"rationale":"Odoo requiere tuplas para mantener el orden y la compatibilidad con el sistema de traducciones y almacenamiento.","text":"Mediante un diccionario donde las claves son números enteros correlativos."},{"isCorrect":false,"rationale":"Los archivos CSV se usan para carga masiva de registros, no para definir las opciones estáticas de un campo en el código Python.","text":"Usando un archivo CSV externo que se carga en el atributo 'data'."},{"isCorrect":true,"rationale":"Este formato permite separar el dato almacenado en la base de datos de la descripción que ve el usuario final en la interfaz.","text":"Mediante una lista de tuplas donde el primer elemento es el valor técnico y el segundo es la etiqueta visible."},{"isCorrect":false,"rationale":"Las cadenas simples no permiten estructurar metadatos como la etiqueta de visualización de forma efectiva.","text":"A través de una cadena de texto larga separada por comas."}],"hint":"Cada opción del desplegable necesita un valor para la base de datos y un nombre para el usuario.","question":"¿Cómo se define una variable de tipo selección ('selection') en el modelo de datos para que sea válida?"},{"answerOptions":[{"isCorrect":false,"rationale":"Postman se utiliza para probar peticiones API y servicios web, no para la manipulación directa de tablas SQL.","text":"Postman"},{"isCorrect":false,"rationale":"Este es un programa de utilidad que convierte HTML en archivos PDF, usado internamente por Odoo para informes.","text":"Wkhtmltopdf"},{"isCorrect":true,"rationale":"PgAdmin es el cliente administrativo estándar para PostgreSQL, permitiendo gestionar todas las tablas y datos del ERP a bajo nivel.","text":"PgAdmin"},{"isCorrect":false,"rationale":"PyCharm es un entorno de desarrollo integrado para escribir código, no una herramienta de gestión de bases de datos relacionales.","text":"PyCharm"}],"hint":"Es la herramienta preferida por los administradores de sistemas para interactuar con PostgreSQL.","question":"¿Qué herramienta externa permite consultar y modificar los datos del ERP de Odoo directamente en el gestor de bases de datos?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los números son opcionales en el nombre de una variable y nunca pueden estar en la primera posición.","text":"Es obligatorio que contengan al menos un número."},{"isCorrect":true,"rationale":"Esta es la regla sintáctica de Python para identificadores válidos; empezar por números provocaría un error de sintaxis.","text":"Deben empezar por letras o por el carácter guion bajo '$\\textunderscore$'."},{"isCorrect":false,"rationale":"Python es estrictamente sensible a las mayúsculas; 'Variable' y 'variable' se consideran identificadores distintos.","text":"Python no distingue entre mayúsculas y minúsculas (no es case sensitive)."},{"isCorrect":false,"rationale":"Existen reglas claras sobre caracteres permitidos y palabras reservadas que no pueden usarse como nombres de variables.","text":"No existen reglas específicas para su declaración."}],"hint":"Los nombres de variables en Python siguen convenciones similares a otros lenguajes de alto nivel como C o Java.","question":"Sobre la declaración de variables en Python, ¿cuál de las siguientes afirmaciones es correcta?"},{"answerOptions":[{"isCorrect":true,"rationale":"Esto permite mantener un historial persistente de los logs para su posterior análisis sin depender de la sesión actual de la terminal.","text":"Redirigir la salida del registro de eventos a un archivo físico en el disco en lugar de la consola."},{"isCorrect":false,"rationale":"La carga de archivos XML es responsabilidad de cada módulo a través de su archivo de manifiesto.","text":"Especificar qué archivos XML se cargarán durante el inicio del servidor."},{"isCorrect":false,"rationale":"Las copias de seguridad se gestionan a través de la interfaz de Odoo o mediante herramientas específicas de PostgreSQL.","text":"Definir la ruta donde se guardan las copias de seguridad de la base de datos."},{"isCorrect":false,"rationale":"El modo depuración visual se activa mediante parámetros en la URL o desde la configuración de usuario en la interfaz.","text":"Activar el modo de depuración visual en el navegador web."}],"hint":"Su nombre sugiere una función de almacenamiento de registros (logs).","question":"¿Cuál es la utilidad del parámetro 'logfile' en el archivo odoo.conf?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este valor colocaría el nuevo elemento antes del campo referenciado, lo cual alteraría el orden visual deseado.","text":"before"},{"isCorrect":true,"rationale":"El valor 'after' indica al motor de vistas que inserte el nodo XML justo a continuación del elemento referenciado.","text":"after"},{"isCorrect":false,"rationale":"Este valor eliminaría el campo original y lo sustituiría por el nuevo, perdiendo la información previa en la vista.","text":"replace"},{"isCorrect":false,"rationale":"Se usa para insertar contenido dentro de un contenedor (como una etiqueta <div> o <group>), no necesariamente después de un campo específico.","text":"inside"}],"hint":"Es la traducción literal al inglés de la ubicación deseada.","question":"Al heredar una vista, ¿qué valor del atributo 'position' se debe usar para colocar un nuevo campo inmediatamente después de uno existente?"},{"answerOptions":[{"isCorrect":true,"rationale":"PyCharm analiza el código estáticamente, pero los IDs externos dependen de los registros cargados en la base de datos durante el runtime.","text":"El error sintáctico se detecta en tiempo real al escribir, mientras que el ID externo falla durante la instalación o ejecución."},{"isCorrect":false,"rationale":"Es un error lógico o de referencia de datos en el software, no tiene relación con el estado físico de los componentes.","text":"El error de ID externo es siempre un fallo de hardware del servidor."},{"isCorrect":false,"rationale":"PyCharm también puede detectar errores de sintaxis en XML (etiquetas sin cerrar), y un ID externo puede fallar al ser llamado desde Python.","text":"Los errores sintácticos solo ocurren en archivos Python y los de ID externo en archivos XML."},{"isCorrect":false,"rationale":"Requiere corregir la referencia técnica en el código y actualizar el módulo afectado en la base de datos.","text":"Un error de ID externo se soluciona reiniciando la computadora."}],"hint":"Uno es detectado por el editor antes de correr el programa y el otro por el ERP al procesar los datos.","question":"En el contexto de errores en Odoo, ¿qué diferencia a un error sintáctico detectado por PyCharm de un error de 'ID externo no encontrado'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Python es un lenguaje de alto nivel cuya ejecución depende de un intérprete, a diferencia de lenguajes como C o C++.","text":"Compilado y de bajo nivel."},{"isCorrect":false,"rationale":"Es un lenguaje de propósito general ampliamente utilizado en servidores, ciencia de datos y desarrollo web.","text":"Diseñado únicamente para el desarrollo de aplicaciones móviles."},{"isCorrect":true,"rationale":"Python no requiere compilación previa a código máquina y admite programación orientada a objetos, imperativa y funcional.","text":"Interpretado y multiparadigma."},{"isCorrect":false,"rationale":"Python utiliza tipado dinámico y permite otros paradigmas además de la orientación a objetos pura.","text":"Exclusivamente orientado a objetos y estáticamente tipado."}],"hint":"Considera cómo se ejecuta el código y cuántos estilos de programación admite.","question":"¿Qué característica define a Python como lenguaje de programación en el ecosistema de Odoo?"},{"answerOptions":[{"isCorrect":true,"rationale":"Este método especial inicializa los atributos de la instancia cuando el objeto es creado por el sistema.","text":"Utilizar la palabra reservada 'class' y definir el método especial $$\\textunderscore\\textunderscore init\\textunderscore\\textunderscore ()$."},{"isCorrect":false,"rationale":"Python permite la creación total de clases desde cero, lo cual es fundamental para definir nuevos modelos en Odoo.","text":"Python no permite la creación de clases personalizadas, solo herencia simple."},{"isCorrect":false,"rationale":"Esta sintaxis no pertenece al lenguaje Python; es una confusión con otros lenguajes o pseudocódigo.","text":"Usar obligatoriamente la etiqueta 'const default'."},{"isCorrect":false,"rationale":"La lógica de negocio y las clases residen en archivos .py, mientras que el XML se encarga exclusivamente de la interfaz.","text":"Las clases deben definirse dentro de los archivos XML de vistas."}],"hint":"Es el método que 'prepara' el objeto justo después de nacer en memoria.","question":"En la programación de clases en Python para Odoo, ¿cuál es la mejor práctica al definir el constructor?"},{"answerOptions":[{"isCorrect":false,"rationale":"Su nombre es una metáfora de 'debugging', pero no realiza funciones de antivirus o seguridad informática.","text":"Eliminar virus y malware del servidor de base de datos."},{"isCorrect":true,"rationale":"Es una herramienta esencial para desarrolladores que permite inspeccionar la estructura interna del ERP desde el propio navegador.","text":"Visualizar información técnica como IDs externos, metadatos de modelos y permitir la edición rápida de vistas."},{"isCorrect":false,"rationale":"Aunque ayuda a ver términos técnicos, la gestión de traducciones se realiza desde los ajustes de idioma del sistema.","text":"Traducir automáticamente el sistema a todos los idiomas disponibles."},{"isCorrect":false,"rationale":"Es una herramienta técnica, no un módulo funcional de negocio para el usuario final.","text":"Gestionar el pago de nóminas y recursos humanos."}],"hint":"Proporciona una capa de transparencia técnica sobre lo que el usuario común ve en pantalla.","question":"¿Qué funcionalidad ofrece el 'Open Developer Tool' (icono del insecto) en la interfaz de Odoo?"},{"answerOptions":[{"isCorrect":false,"rationale":"La importación es una funcionalidad nativa y transversal en Odoo para facilitar la migración de datos desde otros sistemas.","text":"Falso"},{"isCorrect":true,"rationale":"Odoo permite la importación masiva de registros (incluyendo productos del PdV) mediante archivos CSV o Excel a través de su interfaz estándar.","text":"Verdadero"}],"hint":"Esta opción suele estar disponible en la vista de lista de casi cualquier modelo de Odoo.","question":"¿Es posible importar productos directamente al Punto de Venta desde archivos externos?"},{"answerOptions":[{"isCorrect":true,"rationale":"Como la mayoría de las aplicaciones funcionales, el PdV debe ser seleccionado e instalado manualmente por el administrador según las necesidades de la empresa.","text":"Falso"},{"isCorrect":false,"rationale":"Odoo se instala inicialmente con una base mínima; los módulos funcionales específicos se añaden a demanda.","text":"Verdadero"}],"hint":"Recuerda el proceso habitual para añadir nuevas funcionalidades como 'Ventas' o 'CRM'.","question":"¿Viene configurado por defecto el módulo de Punto de Venta al instalar Odoo por primera vez?"},{"answerOptions":[{"isCorrect":false,"rationale":"Si el módulo no se localiza, ni siquiera llegará a la fase de carga o ejecución de vistas.","text":"Los módulos se cargarán pero todas sus vistas darán error."},{"isCorrect":true,"rationale":"El servidor solo escanea las rutas especificadas en este parámetro para identificar el código fuente de los módulos instalables.","text":"Odoo no podrá localizar los nuevos módulos y no aparecerán en la lista de aplicaciones."},{"isCorrect":false,"rationale":"El sistema arrancará normalmente, pero simplemente ignorará los módulos que estén fuera de su alcance de búsqueda.","text":"El sistema se bloqueará por completo al intentar arrancar."},{"isCorrect":false,"rationale":"Odoo nunca borra archivos del sistema de archivos por una configuración incorrecta del addons_path.","text":"Se borrarán automáticamente los archivos del nuevo repositorio."}],"hint":"Es como decirle a un bibliotecario en qué pasillos nuevos debe buscar libros.","question":"¿Qué ocurre si no agregamos la ruta del nuevo repositorio 'mismodulos' al parámetro 'addons_path' en odoo.conf?"},{"answerOptions":[{"isCorrect":false,"rationale":"Se utiliza específicamente para vistas QWeb o del sitio web, no necesariamente para vistas de formulario del backend.","text":"<template>"},{"isCorrect":true,"rationale":"Esta es la etiqueta estándar que define un archivo de datos para el motor de Odoo a partir de versiones recientes.","text":"<odoo>"},{"isCorrect":false,"rationale":"La etiqueta header se usa dentro de una vista de formulario para botones de estado, no como raíz del archivo.","text":"<header>"},{"isCorrect":false,"rationale":"Esta etiqueta se utilizaba en versiones antiguas del software antes de su cambio de marca a Odoo.","text":"<openerp>"}],"hint":"Representa el nombre actual de la plataforma y es común a todos sus archivos de datos XML.","question":"En el archivo XML de una vista heredada, ¿cuál es la etiqueta raíz obligatoria que debe envolver todo el contenido?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esa función corresponde al operador de identidad 'is'.","text":"Comparar si dos variables apuntan al mismo objeto en memoria."},{"isCorrect":true,"rationale":"El operador 'and' requiere el cumplimiento total de todas las premisas para validar la expresión completa.","text":"Evaluar como verdadero solo si todas las condiciones que conecta son verdaderas."},{"isCorrect":false,"rationale":"La inversión lógica se realiza mediante el operador 'not'.","text":"Invertir el valor de verdad de la expresión siguiente."},{"isCorrect":false,"rationale":"Esa es la función del operador lógico 'or', no del 'and'.","text":"Evaluar como verdadero si al menos una de las condiciones es verdadera."}],"hint":"Exige que se cumplan todas las partes de la frase para ser válida.","question":"¿Cuál es la función del operador lógico 'and' en las expresiones condicionales de Python?"},{"answerOptions":[{"isCorrect":false,"rationale":"Son estructuras de control de flujo lógico y no afectan directamente a la velocidad bruta del procesador.","text":"Aumentar la velocidad de procesamiento de la CPU durante el bucle."},{"isCorrect":true,"rationale":"'break' finaliza el bucle prematuramente y 'continue' omite el resto del código del bloque actual para volver a evaluar la condición.","text":"Alterar el flujo normal del bucle, ya sea deteniéndolo por completo o saltando a la siguiente iteración."},{"isCorrect":false,"rationale":"El alcance de las variables se gestiona mediante otros mecanismos de Python, no con estas sentencias.","text":"Declarar variables globales que persisten fuera del bucle."},{"isCorrect":false,"rationale":"Son comandos de nivel de lenguaje de programación y no tienen impacto directo en la gestión del servicio del servidor.","text":"Reiniciar el servidor de Odoo automáticamente tras un error."}],"hint":"Sirven para 'romper' el ciclo o 'seguir' con el siguiente turno.","question":"¿Qué permiten realizar las sentencias 'break' y 'continue' dentro de los bucles en Python?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los tutoriales se gestionan normalmente a través de módulos de e-learning o archivos de documentación externos.","text":"Para incluir tutoriales interactivos en vídeo."},{"isCorrect":false,"rationale":"Odoo no utiliza una carpeta específica llamada 'demo' para documentación gráfica; estas suelen ir en 'static'.","text":"Para guardar capturas de pantalla del funcionamiento del módulo."},{"isCorrect":false,"rationale":"Los controladores web deben ubicarse en la carpeta 'controllers' para ser reconocidos por el sistema.","text":"Es el lugar donde se guardan los controladores del sitio web."},{"isCorrect":true,"rationale":"Esto facilita que los usuarios nuevos puedan probar la funcionalidad del módulo con datos ficticios sin introducirlos manualmente.","text":"Para almacenar registros de datos de ejemplo que se cargarán solo si se activa el modo de demostración al crear la base de datos."}],"hint":"Su nombre indica que se trata de algo para 'demostrar' el potencial del módulo.","question":"Al configurar un módulo, ¿para qué se utiliza la carpeta 'demo' generada por el comando scaffold?"},{"answerOptions":[{"isCorrect":true,"rationale":"Mantener los módulos personalizados en un repositorio separado facilita las actualizaciones y la organización del código propio.","text":"Crear una carpeta llamada 'mismodulos' dentro del directorio del servidor de Odoo."},{"isCorrect":false,"rationale":"Aunque es posible, suele causar problemas de permisos de lectura para el servicio que ejecuta Odoo.","text":"Guardarlos en la carpeta 'Mis Documentos' del usuario actual."},{"isCorrect":false,"rationale":"Odoo requiere acceso local rápido al sistema de archivos para cargar los módulos eficientemente durante el arranque.","text":"Almacenarlos en un servidor externo al que se accede por FTP en tiempo real."},{"isCorrect":false,"rationale":"Esta es una mala práctica que dificulta distinguir el código original del ERP de las personalizaciones realizadas.","text":"Mezclarlos directamente dentro de la carpeta 'addons' estándar de Odoo."}],"hint":"Busca una ubicación que esté cerca del núcleo de Odoo pero claramente identificada como propia.","question":"¿Cuál es la forma recomendada por MEDAC para organizar módulos personalizados en una instalación de Odoo en Windows?"},{"answerOptions":[{"isCorrect":false,"rationale":"JSON se usa para transferencia de datos, pero no es el lenguaje de marcado estándar para las plantillas de visualización en Odoo.","text":"JSON"},{"isCorrect":false,"rationale":"Odoo está basado en Python; Java no tiene presencia en el motor de renderizado de informes estándar del sistema.","text":"Java"},{"isCorrect":false,"rationale":"C++ es un lenguaje compilado de bajo nivel, inadecuado para la definición flexible de plantillas de informes web.","text":"C++"},{"isCorrect":true,"rationale":"QWeb utiliza sintaxis XML para definir la lógica de bucles y condiciones que luego se transforman en HTML.","text":"XML"}],"hint":"Es el mismo formato estructurado que se utiliza para definir vistas y menús.","question":"En el desarrollo de informes QWeb, ¿cuál es el formato de los archivos que contienen las plantillas?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los errores de servidor son lógicos y de software; el hardware periférico no influye en la lógica de procesamiento de Odoo.","text":"Que el monitor de la computadora está desconectado."},{"isCorrect":false,"rationale":"Si Odoo está instalado localmente, puede funcionar e instalar módulos perfectamente sin acceso a la red externa.","text":"Que no hay conexión a internet."},{"isCorrect":false,"rationale":"Los problemas de autenticación tienen sus propios mensajes de error específicos y no provocan un fallo del servidor interno.","text":"Que el usuario ha olvidado su contraseña de acceso."},{"isCorrect":true,"rationale":"Este error genérico indica que el servidor ha encontrado una excepción imprevista que no ha podido manejar durante el proceso de carga.","text":"Un error crítico en el código Python o una referencia fallida en el XML que impide cargar el módulo."}],"hint":"Es un fallo de 'lógica interna' durante el arranque o instalación de un componente.","question":"Si al intentar instalar un módulo recibes un 'Internal Server Error', ¿cuál suele ser la causa más común según el material?"},{"answerOptions":[{"isCorrect":false,"rationale":"La nómina es un proceso contable y de RRHH independiente de la configuración técnica de permisos de acceso.","text":"Asignar automáticamente el salario mensual basándose en las horas de uso del ERP."},{"isCorrect":false,"rationale":"Aunque existen módulos de asistencia, los permisos de usuario se refieren al acceso a datos y funciones del software.","text":"Decidir a qué hora exacta debe entrar y salir el empleado de la oficina."},{"isCorrect":false,"rationale":"Los permisos de Odoo están confinados dentro de la aplicación ERP y no tienen control sobre el sistema operativo anfitrión.","text":"Cambiar el color de fondo del escritorio del sistema operativo del usuario."},{"isCorrect":true,"rationale":"Este sistema de seguridad garantiza que cada empleado solo acceda a la información necesaria para su puesto de trabajo.","text":"Controlar qué aplicaciones puede ver un usuario y qué acciones (leer, crear, editar, borrar) puede realizar."}],"hint":"Se trata de la 'seguridad' y los privilegios dentro de las aplicaciones del ERP.","question":"¿Qué permite la gestión de permisos en el administrador de usuarios de Odoo?"}];
+        let currentIndex = 0;
+        let mode = 'quiz';
+        let state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
 
-function updateProgress() {
-  document.querySelector('.progress-fill').style.width = (currentQ / quizData.length * 100) + '%';
-}
+        function getStats() {
+            const answered = state.filter((s) => s.selectedIndex !== null).length;
+            const correct = state.filter((s, i) => s.selectedIndex !== null && quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const wrong = state.filter((s, i) => s.selectedIndex !== null && !quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const skipped = quizData.length - answered;
+            const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+            return { answered, correct, wrong, skipped, accuracy };
+        }
 
-function showResults() {
-  document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
-  document.getElementById('results').classList.add('active');
-  const pct = Math.round((correctCount / quizData.length) * 100);
-  document.getElementById('score').textContent = pct + '%';
-  document.getElementById('score-text').textContent = tr.scoreText.replace('{correct}', correctCount).replace('{total}', quizData.length);
-  document.querySelector('.progress-fill').style.width = '100%';
-}
+        function shuffleAnswers() {
+            quizData.forEach((q) => {
+                for (let i = q.answerOptions.length - 1; i > 0; i -= 1) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.answerOptions[i], q.answerOptions[j]] = [q.answerOptions[j], q.answerOptions[i]];
+                }
+            });
+        }
 
-function restart() {
-  currentQ = 0; correctCount = 0; answered = false;
-  document.getElementById('results').classList.remove('active');
-  document.querySelectorAll('.question').forEach((q, i) => {
-    q.classList.toggle('active', i === 0);
-    q.querySelectorAll('.option').forEach(o => o.classList.remove('selected', 'correct', 'incorrect', 'disabled', 'show-correct'));
-    q.querySelectorAll('.option-feedback').forEach(f => {
-      f.classList.add('hidden');
-      f.classList.remove('correct-feedback', 'incorrect-feedback');
-    });
-    const btn = q.querySelector('.next-btn');
-    btn.classList.add('hidden');
-    btn.textContent = tr.next;
-  });
-  updateProgress();
-}
+        function shuffleQuestions() {
+            for (let i = quizData.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [quizData[i], quizData[j]] = [quizData[j], quizData[i]];
+            }
+        }
 
-init();
-</script>
+        function resetState() {
+            state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+        }
+
+        function renderQuestion() {
+            const q = quizData[currentIndex];
+            const s = state[currentIndex];
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+
+            let optionsHtml = '';
+            const correctIndex = q.answerOptions.findIndex((o) => o.isCorrect);
+            const selectedCorrect = s.selectedIndex !== null && q.answerOptions[s.selectedIndex].isCorrect;
+            q.answerOptions.forEach((opt, idx) => {
+                const isSelected = s.selectedIndex === idx;
+                const statusClass = isSelected ? (opt.isCorrect ? 'correct' : 'incorrect') : '';
+                const selectedClass = isSelected ? 'selected' : '';
+                const revealCorrect = (s.selectedIndex !== null && !selectedCorrect && opt.isCorrect) || (mode === 'review' && opt.isCorrect);
+                const revealClass = revealCorrect ? 'revealed-correct' : '';
+
+                optionsHtml += `
+                    <li class="option-item ${selectedClass} ${statusClass} ${revealClass}" onclick="selectOption(${idx})">
+                        <div class="option-label">
+                            <span>${String.fromCharCode(65 + idx)}. ${opt.text}</span>
+                        </div>
+                        <div class="feedback-state">
+                            ${opt.isCorrect ? '✓ Right answer' : '✕ Not quite'}
+                        </div>
+                        ${opt.rationale ? '<div class="rationale">' + opt.rationale + '</div>' : ''}
+                    </li>
+                `;
+            });
+
+            const stats = getStats();
+
+            content.innerHTML = `
+                <div class="progress-container">
+                    <div class="progress-text">${currentIndex + 1} / ${quizData.length}</div>
+                    <div class="status-bar">
+                        <div class="status-item status-correct">
+                            <span>✓</span>
+                            <span>${stats.correct}</span>
+                        </div>
+                        <div class="status-item status-wrong">
+                            <span>✕</span>
+                            <span>${stats.wrong}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="question-text">${q.question}</div>
+                <ul class="options-list">
+                    ${optionsHtml}
+                </ul>
+            `;
+
+            // Update Hint Box
+            const hintText = document.getElementById('hint-text');
+            hintText.innerText = q.hint || 'No hint available for this question.';
+            if (s.hintVisible) {
+                hintBox.classList.add('active');
+            } else {
+                hintBox.classList.remove('active');
+            }
+
+            results.classList.add('hidden');
+            content.classList.remove('hidden');
+            hintBox.classList.remove('hidden');
+            nav.classList.remove('hidden');
+
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = false;
+            if (mode === 'review') {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Back to Results' : 'Next';
+            } else {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finish' : 'Next';
+            }
+            document.getElementById('hint-icon-arrow').innerText = s.hintVisible ? '▲' : '▼';
+        }
+
+        function selectOption(idx) {
+            if (mode !== 'quiz') return;
+            if (state[currentIndex].selectedIndex !== null) return; // Prevent re-selection
+            state[currentIndex].selectedIndex = idx;
+            renderQuestion();
+        }
+
+        function toggleHint() {
+            if (mode === 'results') return;
+            state[currentIndex].hintVisible = !state[currentIndex].hintVisible;
+            renderQuestion();
+        }
+
+        function renderResults() {
+            const stats = getStats();
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+
+            const score = `${stats.correct} / ${quizData.length}`;
+
+            results.innerHTML = `
+                <div class="results-screen">
+                    <div>
+                        <h1 class="results-title">You did it! Quiz Complete.</h1>
+                        <p class="results-subtitle">Review your score or take another run.</p>
+                    </div>
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-label">Score</div>
+                            <div class="result-value">${score}</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Accuracy</div>
+                            <div class="result-value">${stats.accuracy}%</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-metrics">
+                                <div>Right <strong>${stats.correct}</strong></div>
+                                <div>Wrong <strong>${stats.wrong}</strong></div>
+                                <div>Skipped <strong>${stats.skipped}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="results-actions">
+                        <button id="review-btn" class="btn btn-ghost">Review Quiz</button>
+                        <button id="retake-btn" class="btn btn-next">Retake Quiz</button>
+                    </div>
+                </div>
+            `;
+
+            content.classList.add('hidden');
+            results.classList.remove('hidden');
+            hintBox.classList.add('hidden');
+            nav.classList.add('hidden');
+
+            document.getElementById('review-btn').onclick = () => {
+                mode = 'review';
+                currentIndex = 0;
+                renderQuestion();
+            };
+
+            document.getElementById('retake-btn').onclick = () => {
+                mode = 'quiz';
+                currentIndex = 0;
+                shuffleQuestions();
+                shuffleAnswers();
+                resetState();
+                renderQuestion();
+            };
+        }
+
+        document.getElementById('prev-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        };
+
+        document.getElementById('next-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (mode === 'review') {
+                if (currentIndex < quizData.length - 1) {
+                    currentIndex++;
+                    renderQuestion();
+                } else {
+                    mode = 'results';
+                    renderResults();
+                }
+                return;
+            }
+            if (currentIndex < quizData.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                mode = 'results';
+                renderResults();
+            }
+        };
+
+        document.getElementById('hint-toggle').onclick = toggleHint;
+
+        renderQuestion();
+    </script>
 </body>
 </html>

@@ -1,1940 +1,646 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Software Cuestionario</title>
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh; padding: 20px; color: #333;
-}
-.container { max-width: 700px; margin: 0 auto; }
-.header { text-align: center; color: #fff; padding: 30px 20px; }
-.header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
-.header .meta { font-size: 14px; opacity: 0.9; }
-.progress-bar { background: rgba(255,255,255,0.3); border-radius: 10px; height: 8px; margin: 20px 0; overflow: hidden; }
-.progress-fill { background: #fff; height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 10px; }
-.question { background: #fff; border-radius: 16px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
-.question.active { display: block; }
-.q-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: #888; }
-.q-number { font-weight: 600; color: #667eea; }
-.q-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 25px; color: #222; }
-.options { display: flex; flex-direction: column; gap: 12px; }
-.option-wrapper { display: flex; flex-direction: column; }
-.option {
-  display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
-  border: 2px solid #e8e8e8; border-radius: 12px; background: #fafafa;
-  cursor: pointer; transition: all 0.2s; text-align: left; font-size: 15px; width: 100%;
-}
-[dir="rtl"] .option { text-align: right; flex-direction: row-reverse; }
-.option:hover:not(.disabled) { border-color: #667eea; background: #f5f3ff; }
-.option.selected { border-color: #667eea; background: #ede9fe; }
-.option.correct { border-color: #22c55e; background: #dcfce7; }
-.option.incorrect { border-color: #ef4444; background: #fee2e2; }
-.option.disabled { cursor: default; }
-.option.show-correct { border-color: #22c55e; background: #dcfce7; }
-.opt-label {
-  display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; border-radius: 50%; background: #e8e8e8;
-  font-weight: 700; font-size: 14px; flex-shrink: 0;
-}
-.option.selected .opt-label { background: #667eea; color: #fff; }
-.option.correct .opt-label { background: #22c55e; color: #fff; }
-.option.incorrect .opt-label { background: #ef4444; color: #fff; }
-.option.show-correct .opt-label { background: #22c55e; color: #fff; }
-.opt-text { padding-top: 5px; line-height: 1.5; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desarrollo de Interface - 8 a 15 - NotebookLM - Quiz Export</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
 
-/* Individual option feedback */
-.option-feedback {
-  margin: 8px 0 4px 46px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-[dir="rtl"] .option-feedback { margin-left: 0; margin-right: 46px; }
-.option-feedback.correct-feedback {
-  background: #dcfce7;
-  border-left: 3px solid #22c55e;
-}
-.option-feedback.incorrect-feedback {
-  background: #fef3f2;
-  border-left: 3px solid #fca5a5;
-}
-[dir="rtl"] .option-feedback.correct-feedback,
-[dir="rtl"] .option-feedback.incorrect-feedback {
-  border-left: none;
-  border-right: 3px solid;
-}
-[dir="rtl"] .option-feedback.correct-feedback { border-right-color: #22c55e; }
-[dir="rtl"] .option-feedback.incorrect-feedback { border-right-color: #fca5a5; }
-.feedback-status {
-  font-weight: 600;
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.feedback-status.correct { color: #166534; }
-.feedback-status.incorrect { color: #991b1b; }
-.feedback-rationale { color: #444; }
+        :root {
+            --bg: #f6f1e7;
+            --bg-deep: #efe4d6;
+            --ink: #171717;
+            --muted: #5b5b5b;
+            --accent: #d3542c;
+            --accent-light: #ff8f5a;
+            --accent-dark: #b14320;
+            --teal: #1f6f78;
+            --card: #fff7ef;
+            --stroke: #e3d6c5;
+            --shadow: 0 18px 40px rgba(23, 23, 23, 0.12);
+            --radius-sm: 10px;
+            --radius-md: 12px;
+            --radius-lg: 14px;
+            --radius-xl: 18px;
+            --radius-2xl: 22px;
+            --space-1: 6px;
+            --space-2: 8px;
+            --space-3: 10px;
+            --space-4: 12px;
+            --space-5: 14px;
+            --space-6: 16px;
+            --space-7: 18px;
+            --space-8: 20px;
+            --space-9: 24px;
+            --space-10: 32px;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --error: #b54832;
+        }
 
-/* Pista box */
-.hint-box {
-  margin: 12px 0;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #fffbeb;
-  border: 1px solid #fcd34d;
-}
-.hint-toggle {
-  width: 100%;
-  padding: 10px 16px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  color: #92400e;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.hint-toggle:hover { background: #fef3c7; }
-.hint-content {
-  padding: 0 16px;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s, padding 0.3s;
-  font-size: 14px;
-  color: #78350f;
-  line-height: 1.5;
-}
-.hint-box.show .hint-content {
-  padding: 0 16px 12px;
-  max-height: 200px;
-}
+        body {
+            font-family: var(--font-body);
+            background:
+                radial-gradient(240px 140px at 10% -10%, #ffd2b9 0%, transparent 70%),
+                radial-gradient(220px 160px at 90% 0%, #cfe7e6 0%, transparent 65%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+            color: var(--ink);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-.next-btn {
-  margin-top: 20px; width: 100%; padding: 14px;
-  background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none;
-  border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-.next-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
-.hidden { display: none !important; }
-.results { background: #fff; border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
-.results.active { display: block; }
-.results h2 { font-size: 28px; margin-bottom: 10px; color: #333; }
-.results .score { font-size: 64px; font-weight: 700; color: #667eea; margin: 20px 0; }
-.results .score-text { font-size: 18px; color: #666; margin-bottom: 30px; }
-.restart-btn {
-  padding: 14px 40px; background: linear-gradient(135deg, #667eea, #764ba2);
-  color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
-}
+        .quiz-container {
+            width: 100%;
+            max-width: 800px;
+            padding: var(--space-10) var(--space-8);
+            box-sizing: border-box;
+            background: var(--card);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+        }
 
-/* Math CSS */
-.math, .math-block { font-family: "Cambria Math", "Times New Roman", Times, serif; font-style: italic; }
-.math-block { display: block; text-align: center; margin: 10px 0; font-size: 110%; }
-.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 3px; font-size: 0.9em; }
-.frac-num { border-bottom: 1px solid currentColor; padding: 0 4px 2px; line-height: 1.2; }
-.frac-den { padding: 2px 4px 0; line-height: 1.2; }
-.sqrt { white-space: nowrap; }
-.sqrt-content { border-top: 1px solid currentColor; padding: 0 3px; margin-left: 2px; }
-sup, sub { font-size: 0.75em; }
-sup { vertical-align: super; }
-sub { vertical-align: sub; }
-</style>
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .progress-text {
+            color: var(--muted);
+            font-size: 0.9em;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-correct { color: var(--teal); }
+        .status-wrong { color: var(--error); }
+
+        .question-text {
+            font-family: var(--font-display);
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-item:hover:not(.selected) {
+            background-color: var(--card);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .option-item.selected.correct {
+            background-color: rgba(31, 111, 120, 0.12);
+            border-color: var(--teal);
+        }
+
+        .option-item.selected.incorrect {
+            background-color: rgba(181, 72, 50, 0.12);
+            border-color: var(--error);
+        }
+
+        .option-item.revealed-correct {
+            border-color: rgba(31, 111, 120, 0.5);
+            box-shadow: inset 0 0 0 1px rgba(31, 111, 120, 0.16);
+        }
+
+        .option-label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feedback-state {
+            font-weight: bold;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .selected .feedback-state {
+            display: block;
+        }
+
+        .revealed-correct .feedback-state {
+            display: block;
+        }
+
+        .correct .feedback-state { color: var(--teal); }
+        .incorrect .feedback-state { color: var(--error); }
+        .revealed-correct .feedback-state { color: var(--teal); }
+
+        .rationale {
+            font-size: 0.95em;
+            color: var(--muted);
+            margin-top: 4px;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .selected .rationale {
+            display: block;
+        }
+
+        .revealed-correct .rationale {
+            display: block;
+        }
+        .hint-toggle {
+            border: 1px solid var(--stroke);
+            color: var(--muted);
+            cursor: pointer;
+            padding: var(--space-2) var(--space-6);
+            border-radius: var(--radius-md);
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hint-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .hint-content {
+            margin-top: 32px;
+            padding: var(--space-6);
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-lg);
+            font-size: 0.95em;
+            color: var(--muted);
+            display: none;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .hint-content.active {
+            display: flex;
+        }
+
+        .hint-icon-box {
+            color: var(--accent-dark);
+            font-size: 1.2em;
+            margin-top: -2px;
+        }
+
+        .navigation {
+            margin-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-7);
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-prev {
+            background-color: #fff;
+            color: var(--ink);
+            border-color: var(--stroke);
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn-next {
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            color: #fff;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .results-screen {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+        }
+
+        .results-title {
+            font-family: var(--font-display);
+            font-size: 2.1em;
+            margin: 0;
+        }
+
+        .results-subtitle {
+            color: var(--muted);
+            margin: 0;
+            font-size: 1em;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .result-card {
+            padding: var(--space-6);
+            border-radius: var(--radius-xl);
+            background: #fff;
+            border: 1px solid var(--stroke);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .result-label {
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-family: var(--font-display);
+        }
+
+        .result-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            border: 1px solid var(--stroke);
+            color: var(--ink);
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 900px) {
+            .quiz-container {
+                margin: var(--space-8);
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .quiz-container {
+                padding: var(--space-8) var(--space-6);
+            }
+
+            .question-text {
+                font-size: 1.3em;
+            }
+
+            .option-item {
+                padding: var(--space-4);
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .quiz-container {
+                margin: var(--space-6);
+                padding: var(--space-7) var(--space-5);
+            }
+
+            .progress-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+
+            .navigation {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-4);
+            }
+
+            .nav-buttons {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .hint-toggle {
+                justify-content: space-between;
+            }
+
+            .results-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <h1>Software Cuestionario</h1>
-    <div class="meta">27 questions</div>
-    <div class="progress-bar"><div class="progress-fill"></div></div>
-  </div>
-  <div id="quiz-container">
-        <div class="question" data-index="0">
-          <div class="q-header">
-            <span class="q-number">Question 1</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">¿Cuál es la distinción técnica principal entre el mapa de fichero y la vista de información en un sistema de ayuda digital?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Considere cuál de los dos elementos actúa como un esquema de navegación interno frente al que interactúa directamente con el lector.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="El mapa actúa como el motor de redireccionamiento interno del sistema, mientras que la vista es la capa visual de interacción que incluye el índice y buscador.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">El mapa de fichero asocia identificadores a URL, mientras que la vista de información presenta la interfaz de navegación al usuario.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El mapa actúa como el motor de redireccionamiento interno del sistema, mientras que la vista es la capa visual de interacción que incluye el índice y buscador.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Esta es una confusión sobre formatos de archivo específicos de HLP y no define la arquitectura general de los sistemas de ayuda.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">La vista de información gestiona las tablas de contenido .cnt, mientras que el mapa de fichero genera los archivos RTF.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esta es una confusión sobre formatos de archivo específicos de HLP y no define la arquitectura general de los sistemas de ayuda.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Se invierten las funciones; los identificadores pertenecen al mapa para permitir la navegación lógica.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">La vista de información contiene los identificadores de los temas, mientras que el mapa de fichero es el glosario final.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Se invierten las funciones; los identificadores pertenecen al mapa para permitir la navegación lógica.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Ambos conceptos son componentes estructurales del software de ayuda en formato digital.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">El mapa de fichero es exclusivo del soporte físico, mientras que la vista de información es para el soporte digital.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Ambos conceptos son componentes estructurales del software de ayuda en formato digital.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="1">
-          <div class="q-header">
-            <span class="q-number">Question 2</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">En el contexto del formato de ayuda HPJ, ¿qué función cumplen específicamente los ficheros con extensión .shg?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Relacione la extensión con el tipo de contenido que no es puramente textual ni estructural.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Esta es una característica típica de los archivos .gid en el formato HLP.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Almacenan la información extra de soporte para Windows.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esta es una característica típica de los archivos .gid en el formato HLP.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="Dentro de la estructura de Help Workshop para HPJ, los archivos .shg están destinados específicamente al contenido visual o gráfico.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Se encargan de la representación de elementos gráficos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Dentro de la estructura de Help Workshop para HPJ, los archivos .shg están destinados específicamente al contenido visual o gráfico.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Un archivo .shg es un recurso de datos, no una herramienta de procesamiento como un compilador.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Actúan como el compilador del proyecto de ayuda.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Un archivo .shg es un recurso de datos, no una herramienta de procesamiento como un compilador.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Esa función corresponde a los ficheros de tipo .cnt.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Representan la estructura de la tabla de contenidos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esa función corresponde a los ficheros de tipo .cnt.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="2">
-          <div class="q-header">
-            <span class="q-number">Question 3</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">De acuerdo con las pautas de diseño, ¿cuándo se considera que una guía de referencia puede constituir por sí misma un manual completo?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en la relación entre la complejidad del software y el detalle de la documentación necesaria.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Incluso para expertos, la complejidad de la aplicación dicta la necesidad de manuales más extensos que una simple guía.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Cuando el perfil del usuario es exclusivamente de diseño o soporte técnico.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Incluso para expertos, la complejidad de la aplicación dicta la necesidad de manuales más extensos que una simple guía.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="En aplicaciones complejas, la guía de referencia es solo un complemento del manual de usuario, no un sustituto.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Cuando la aplicación es extremadamente compleja y requiere fragmentación.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">En aplicaciones complejas, la guía de referencia es solo un complemento del manual de usuario, no un sustituto.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="La especificidad y brevedad de una guía de referencia es suficiente para cubrir la totalidad de una herramienta con funcionalidades limitadas.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">En aplicaciones muy sencillas donde los procedimientos son directos y concretos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La especificidad y brevedad de una guía de referencia es suficiente para cubrir la totalidad de una herramienta con funcionalidades limitadas.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="El soporte no determina si la guía puede actuar como manual único.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Solo cuando se incluye en formato físico y digital simultáneamente.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El soporte no determina si la guía puede actuar como manual único.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="3">
-          <div class="q-header">
-            <span class="q-number">Question 4</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">¿Qué tipo de error se caracteriza por no devolver un mensaje de error explícito, siendo su detección la más compleja durante el desarrollo?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Busque el fallo que reside en el razonamiento del desarrollador más que en la escritura del código.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Aunque la sintaxis sea correcta, los errores de ejecución suelen interrumpir el programa con una excepción o mensaje.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Error de ejecución.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Aunque la sintaxis sea correcta, los errores de ejecución suelen interrumpir el programa con una excepción o mensaje.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Los errores de compilación son detectados automáticamente por el compilador al no respetar la sintaxis.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Error de compilación.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Los errores de compilación son detectados automáticamente por el compilador al no respetar la sintaxis.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="Estos errores ocurren cuando el programa funciona pero el resultado no es el esperado, requiriendo pruebas exhaustivas para su identificación.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Error de lógica.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Estos errores ocurren cuando el programa funciona pero el resultado no es el esperado, requiriendo pruebas exhaustivas para su identificación.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Este término se refiere a una fase de pruebas, no a una categoría de error sintáctico o funcional del código.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Error de integración ascendente.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este término se refiere a una fase de pruebas, no a una categoría de error sintáctico o funcional del código.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="4">
-          <div class="q-header">
-            <span class="q-number">Question 5</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">En una estrategia de pruebas de integración, ¿cuál es la diferencia operativa fundamental entre el enfoque ascendente y el descendente?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Identifique el elemento de coordinación necesario cuando se empieza desde los niveles más bajos de la aplicación.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="Las pruebas ascendentes suben en la jerarquía necesitando coordinación, mientras que las descendentes bajan desde el núcleo hacia los subordinados.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">El enfoque ascendente requiere un controlador para coordinar entradas y salidas, mientras que el descendente inicia desde el módulo principal.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Las pruebas ascendentes suben en la jerarquía necesitando coordinación, mientras que las descendentes bajan desde el núcleo hacia los subordinados.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Ambos enfoques pueden automatizarse; la diferencia radica en el flujo jerárquico de las pruebas.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">El descendente utiliza herramientas automáticas y el ascendente es estrictamente manual.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Ambos enfoques pueden automatizarse; la diferencia radica en el flujo jerárquico de las pruebas.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Ambos son tipos de pruebas de integración que pueden involucrar tanto caja blanca como caja negra dependiendo del módulo.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">El ascendente solo evalúa la interfaz y el descendente solo evalúa el código interno.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Ambos son tipos de pruebas de integración que pueden involucrar tanto caja blanca como caja negra dependiendo del módulo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Las pruebas de sistema son las que requieren la integración total; las de integración evalúan la unión progresiva de módulos.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">El descendente requiere que todos los módulos estén finalizados y el ascendente se hace por separado.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Las pruebas de sistema son las que requieren la integración total; las de integración evalúan la unión progresiva de módulos.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="5">
-          <div class="q-header">
-            <span class="q-number">Question 6</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">Si tras introducir un cambio para solucionar un defecto, aparecen errores en partes del código que no han sido modificadas pero que antes estaban ocultos, ¿ante qué tipo de prueba de regresión nos encontramos?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en errores que ya estaban allí pero cuya presencia solo se hace evidente tras alterar el entorno.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="Se define así cuando los cambios nuevos exponen fallos preexistentes que no tenían relación directa con la modificación.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Regresión desenmascarada.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Se define así cuando los cambios nuevos exponen fallos preexistentes que no tenían relación directa con la modificación.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="La regresión remota surge de problemas de integración entre diferentes partes que funcionan bien por separado.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Regresión remota.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La regresión remota surge de problemas de integración entre diferentes partes que funcionan bien por separado.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="La regresión local se refiere a errores introducidos directamente por los cambios recientes en la misma zona.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Regresión local.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La regresión local se refiere a errores introducidos directamente por los cambios recientes en la misma zona.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Este no es un término técnico tipificado en el material; se refiere generalmente a pruebas de regresión globales.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Regresión de sistema.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este no es un término técnico tipificado en el material; se refiere generalmente a pruebas de regresión globales.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="6">
-          <div class="q-header">
-            <span class="q-number">Question 7</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">¿Cuál es la característica principal de las pruebas de estrés en comparación con las pruebas de volumen?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Diferencie entre la 'cantidad' de información y la 'reacción' del sistema ante un colapso inminente.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="La velocidad es objetivo de las pruebas de rendimiento, no de estrés.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">El estrés evalúa la velocidad de procesamiento y el volumen la seguridad.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La velocidad es objetivo de las pruebas de rendimiento, no de estrés.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Ambas son generalmente consideradas pruebas no funcionales de caja negra.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">El volumen es una prueba de caja blanca y el estrés es de caja negra.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Ambas son generalmente consideradas pruebas no funcionales de caja negra.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Aunque relacionadas con la capacidad, cada una mide un aspecto distinto del comportamiento bajo presión.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">No existe diferencia; son sinónimos dentro de las pruebas de capacidad.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Aunque relacionadas con la capacidad, cada una mide un aspecto distinto del comportamiento bajo presión.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="El estrés busca el punto de ruptura y recuperación, mientras que el volumen se enfoca en la magnitud de los datos procesados.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">El estrés evalúa la capacidad de recuperación ante sobrecargas, mientras que el volumen analiza el manejo de grandes cantidades de datos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El estrés busca el punto de ruptura y recuperación, mientras que el volumen se enfoca en la magnitud de los datos procesados.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="7">
-          <div class="q-header">
-            <span class="q-number">Question 8</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">En el desarrollo con Android Studio, ¿qué sucede si un desarrollador no utiliza ningún objeto Layout para organizar sus componentes?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en la función de los Layouts como guías de distribución espacial.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Android no tiene un sistema de ordenación alfabética automática para la interfaz.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Los elementos se distribuirán automáticamente siguiendo un orden alfabético.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Android no tiene un sistema de ordenación alfabética automática para la interfaz.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="El desarrollador debe declarar explícitamente el tipo de layout; no hay una asignación automática de lógica de distribución.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Se activará por defecto el RelativeLayout para evitar el colapso.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El desarrollador debe declarar explícitamente el tipo de layout; no hay una asignación automática de lógica de distribución.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="El XML puede ser válido sin layouts complejos, pero el resultado visual será incorrecto.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">La aplicación no podrá compilarse por errores de sintaxis en el XML.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El XML puede ser válido sin layouts complejos, pero el resultado visual será incorrecto.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="Los layouts son necesarios para definir dimensiones y posiciones; sin ellos, el sistema no sabe cómo distribuir el espacio.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Los elementos ocuparían todo el contenedor, solapándose o perdiendo su posición pretendida.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Los layouts son necesarios para definir dimensiones y posiciones; sin ellos, el sistema no sabe cómo distribuir el espacio.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="8">
-          <div class="q-header">
-            <span class="q-number">Question 9</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">Dentro de la jerarquía de componentes de Android, ¿cuál es la restricción principal de los objetos de tipo View?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Considere la diferencia entre un 'contenedor' y un 'componente simple'.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="A diferencia de los ViewGroup, los View son componentes finales (átomos) que implementan una función pero no actúan como contenedores.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">No pueden contener en su interior otros elementos View ni ViewGroup.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">A diferencia de los ViewGroup, los View son componentes finales (átomos) que implementan una función pero no actúan como contenedores.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Los elementos View pueden residir en cualquier tipo de layout o contenedor ViewGroup.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Solo pueden ser utilizados dentro de un LinearLayout vertical.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Los elementos View pueden residir en cualquier tipo de layout o contenedor ViewGroup.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Pueden usar wrap_content o medidas fijas; el atributo no es una restricción de jerarquía.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Requieren obligatoriamente el atributo match_parent para visualizarse.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Pueden usar wrap_content o medidas fijas; el atributo no es una restricción de jerarquía.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Todos los elementos View necesitan un ID para ser referenciados en el código.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">No pueden tener una ID asociada en el archivo activity_main.xml.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Todos los elementos View necesitan un ID para ser referenciados en el código.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="9">
-          <div class="q-header">
-            <span class="q-number">Question 10</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">¿Cuál es la función del atributo android:layout_gravity en un componente de interfaz Android?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en cómo se 'alinea' un objeto dentro de una caja más grande.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Esa es la función de los márgenes o posiciones específicas en RelativeLayout, no de la gravedad.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Establece la distancia absoluta en píxeles respecto al borde superior.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esa es la función de los márgenes o posiciones específicas en RelativeLayout, no de la gravedad.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="La gravedad controla la alineación (centrado, arriba, derecha, etc.) del elemento respecto al espacio que le otorga su padre.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Determina la posición en la que debe situarse un elemento dentro de su contenedor.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La gravedad controla la alineación (centrado, arriba, derecha, etc.) del elemento respecto al espacio que le otorga su padre.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="El orden de navegación se gestiona mediante otros atributos de enfoque, no mediante el layout_gravity.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Define el orden de tabulación para la navegación por teclado.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El orden de navegación se gestiona mediante otros atributos de enfoque, no mediante el layout_gravity.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="La 'gravedad' en layouts no tiene relación con la física de procesamiento de hardware.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Determina el peso del componente para la aceleración de hardware.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La 'gravedad' en layouts no tiene relación con la física de procesamiento de hardware.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="10">
-          <div class="q-header">
-            <span class="q-number">Question 11</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">¿Qué herramienta permite transformar un paquete de tipo JAR (Java) en un ejecutable de tipo EXE para Windows?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Identifique la utilidad que actúa como un 'lanzador' para aplicaciones multiplataforma en entornos Windows.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="AptUrl es una herramienta para la descarga e instalación de paquetes desde servidores web.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">AptUrl.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">AptUrl es una herramienta para la descarga e instalación de paquetes desde servidores web.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Es un instalador general, no una herramienta de conversión de tipos de archivo específicos de Java.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">InstallBuilder.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es un instalador general, no una herramienta de conversión de tipos de archivo específicos de Java.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="Es la herramienta específica mencionada para realizar el empaquetado de aplicaciones Java como ejecutables nativos de Windows.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Launch4j.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es la herramienta específica mencionada para realizar el empaquetado de aplicaciones Java como ejecutables nativos de Windows.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Dpkg es una herramienta de gestión de paquetes para sistemas basados en Debian (Linux).">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Dpkg.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Dpkg es una herramienta de gestión de paquetes para sistemas basados en Debian (Linux).</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="11">
-          <div class="q-header">
-            <span class="q-number">Question 12</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">En el ciclo de vida de un proyecto, ¿cuál es la consecuencia económica de detectar un error en la fase de producción frente a la fase de diseño?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Considere la forma de la gráfica de costes mencionada en la resolución del caso práctico.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Las pruebas de aceptación ocurren antes de producción; un error en producción ya implica fallos en el servicio real y costes de redepliegue.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">No hay impacto económico si se dispone de una buena estrategia de pruebas de aceptación.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Las pruebas de aceptación ocurren antes de producción; un error en producción ya implica fallos en el servicio real y costes de redepliegue.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="Tal como indica el material, cuanto más tarde se detecta un error, más fases hay que desandar, disparando los costes económicos.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">El coste crece de forma exponencial, siendo mucho más caro solucionarlo en producción.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Tal como indica el material, cuanto más tarde se detecta un error, más fases hay que desandar, disparando los costes económicos.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Los costes de corrección varían drásticamente dependiendo de la fase en la que se encuentre el proyecto.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">El coste se mantiene constante gracias a los contratos de mantenimiento.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Los costes de corrección varían drásticamente dependiendo de la fase en la que se encuentre el proyecto.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="La progresión no es lineal, sino mucho más agresiva.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">El coste aumenta de forma lineal a medida que avanza el tiempo.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La progresión no es lineal, sino mucho más agresiva.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="12">
-          <div class="q-header">
-            <span class="q-number">Question 13</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">Al crear un cuadro de diálogo en Android mediante AlertDialog.Builder, ¿qué método se utiliza para que el usuario no pueda cerrar la ventana pulsando fuera de ella?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Busque el término que indica si una acción es 'anulable' o no.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Es el método que instancia el objeto final tras configurar todas las propiedades, pero no controla la persistencia.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">.create()</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es el método que instancia el objeto final tras configurar todas las propiedades, pero no controla la persistencia.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="Este método bloquea la posibilidad de ignorar el diálogo, forzando al usuario a elegir una de las opciones (Yes/No).">
-            <span class="opt-label">B</span>
-            <span class="opt-text">.setCancelable(false)</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este método bloquea la posibilidad de ignorar el diálogo, forzando al usuario a elegir una de las opciones (Yes/No).</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Este método cierra la actividad actual de la aplicación, no el diálogo emergente.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">.finish()</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este método cierra la actividad actual de la aplicación, no el diálogo emergente.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Este método define la acción del botón de afirmación, no el comportamiento de cierre del cuadro.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">.setPositiveButton()</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este método define la acción del botón de afirmación, no el comportamiento de cierre del cuadro.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="13">
-          <div class="q-header">
-            <span class="q-number">Question 14</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">En la instalación de Android Studio, ¿cuál es el fichero principal que se abre por defecto al iniciar un proyecto nuevo?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en el nombre de la 'clase' que gestiona la actividad principal de la aplicación.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Este es el fichero de diseño de la interfaz, pero no es el que el entorno muestra primero por defecto.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">activity_main.xml</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este es el fichero de diseño de la interfaz, pero no es el que el entorno muestra primero por defecto.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="Android Studio abre por defecto la clase principal de la actividad (en Kotlin o Java) al cargar el proyecto.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">MainActivity.kt</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Android Studio abre por defecto la clase principal de la actividad (en Kotlin o Java) al cargar el proyecto.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Es el fichero de configuración global de la aplicación, pero no es la pantalla de inicio del desarrollador.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">AndroidManifest.xml</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es el fichero de configuración global de la aplicación, pero no es la pantalla de inicio del desarrollador.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Es un fichero secundario de diseño que a veces se incluye en plantillas, pero no es el principal por defecto.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">content_main.xml</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es un fichero secundario de diseño que a veces se incluye en plantillas, pero no es el principal por defecto.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="14">
-          <div class="q-header">
-            <span class="q-number">Question 15</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">¿Qué diferencia existe entre una versión Alfa y una versión Beta en cuanto al entorno de ejecución de las pruebas?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Considere dónde se encuentra el 'grupo de control' en cada etapa.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Es al revés; la Alfa suele ser controlada (simulada o interna) y la Beta busca entornos reales de cliente.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">La Alfa se prueba en servidores reales y la Beta en simuladores.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es al revés; la Alfa suele ser controlada (simulada o interna) y la Beta busca entornos reales de cliente.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="La Alfa es interna (laboratorio) con expertos, mientras que la Beta es externa con clientes o usuarios finales para evitar condicionamientos.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">La versión Alfa se prueba en las oficinas de los desarrolladores y la Beta fuera de dicho entorno.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La Alfa es interna (laboratorio) con expertos, mientras que la Beta es externa con clientes o usuarios finales para evitar condicionamientos.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="El entorno es crucial para detectar errores que el equipo de desarrollo podría pasar por alto debido al sesgo de conocimiento.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">No hay diferencia de entorno, solo cambia el número de errores permitidos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El entorno es crucial para detectar errores que el equipo de desarrollo podría pasar por alto debido al sesgo de conocimiento.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Ambos tipos de versiones son aplicables a cualquier desarrollo de software independientemente de la plataforma.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">La versión Beta es solo para dispositivos móviles y la Alfa para web.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Ambos tipos de versiones son aplicables a cualquier desarrollo de software independientemente de la plataforma.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="15">
-          <div class="q-header">
-            <span class="q-number">Question 16</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">¿Qué elemento de la paleta de Android permite implementar un menú desplegable?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en el término en inglés para algo que 'gira' o 'despliega' opciones.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="Es el componente estándar en Android para representar listas desplegables y se encuentra en la carpeta Containers.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Spinner.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es el componente estándar en Android para representar listas desplegables y se encuentra en la carpeta Containers.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Se usa para selección múltiple de opciones visibles, no para desplegables.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">CheckBox.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Se usa para selección múltiple de opciones visibles, no para desplegables.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Este componente es un conmutador de dos estados.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">ToggleButton.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este componente es un conmutador de dos estados.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Su función principal es la entrada de texto por parte del usuario.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">TextField.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Su función principal es la entrada de texto por parte del usuario.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="16">
-          <div class="q-header">
-            <span class="q-number">Question 17</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">En el formato de ayuda HLP, ¿qué contiene habitualmente el fichero con extensión .gid?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Se trata de un archivo que acompaña al manual pero que el desarrollador no escribe directamente.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Esta función la cumple el fichero con extensión .cnt.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">La tabla de contenido interactiva.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esta función la cumple el fichero con extensión .cnt.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="El RTF es el archivo de texto plano con formato, no el de soporte extra del sistema.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">El código fuente en RTF.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El RTF es el archivo de texto plano con formato, no el de soporte extra del sistema.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="Los archivos .gid son ficheros auxiliares que Windows crea para gestionar el índice y la búsqueda rápida en archivos HLP.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Información adicional de soporte generada por el sistema.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Los archivos .gid son ficheros auxiliares que Windows crea para gestionar el índice y la búsqueda rápida en archivos HLP.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="El mapa de navegación es un concepto lógico implementado en el propio fichero compilado, no un .gid externo.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">El mapa de navegación de URL.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El mapa de navegación es un concepto lógico implementado en el propio fichero compilado, no un .gid externo.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="17">
-          <div class="q-header">
-            <span class="q-number">Question 18</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">¿Cuál es la función del organismo FNMT en el proceso de distribución de aplicaciones?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Relacione el organismo con la seguridad y la identidad legal digital.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="La Fábrica Nacional de Moneda y Timbre es una autoridad certificadora mencionada para validar la identidad del software.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Emitir certificados de firma digital para garantizar la autenticidad.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La Fábrica Nacional de Moneda y Timbre es una autoridad certificadora mencionada para validar la identidad del software.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="El alojamiento depende de servidores del desarrollador o de terceros, no de la FNMT.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Alojar paquetes en servidores web para su descarga.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El alojamiento depende de servidores del desarrollador o de terceros, no de la FNMT.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Esa tarea corresponde a herramientas como Launch4j.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Compilar ficheros Java en ejecutables.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esa tarea corresponde a herramientas como Launch4j.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Windows Update es gestionado por Microsoft; la FNMT se limita a la certificación de identidad.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Gestionar las actualizaciones automáticas de Windows.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Windows Update es gestionado por Microsoft; la FNMT se limita a la certificación de identidad.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="18">
-          <div class="q-header">
-            <span class="q-number">Question 19</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">En el diseño de tablas de contenido, ¿cuál es una de las pautas críticas para evitar la confusión del usuario?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en los principios de economía de información y claridad expositiva.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Los títulos deben ser lo suficientemente claros para no necesitar documentos adicionales de apoyo.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Utilizar títulos crípticos que obliguen a consultar el manual de referencia.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Los títulos deben ser lo suficientemente claros para no necesitar documentos adicionales de apoyo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Las tablas de contenido deben situarse al inicio, como el índice de un libro.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Situar la tabla siempre al final del documento como un apéndice.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Las tablas de contenido deben situarse al inicio, como el índice de un libro.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="La claridad y la falta de redundancia son pilares para un índice útil y profesional.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Asegurar que los títulos sean claros y que no se duplique la información.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La claridad y la falta de redundancia son pilares para un índice útil y profesional.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="El material indica explícitamente que no debe duplicarse la información.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Duplicar la información clave en varios niveles para asegurar su lectura.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El material indica explícitamente que no debe duplicarse la información.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="19">
-          <div class="q-header">
-            <span class="q-number">Question 20</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">¿Qué herramienta gratuita se destaca por permitir exportar toda la documentación de ayuda en un único archivo PDF?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Es la herramienta que destaca por su capacidad de unificar todo el manual en un solo documento estándar de lectura.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="Se menciona específicamente que Help Maker permite contener todo en un único fichero exportable a PDF.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Help Maker.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Se menciona específicamente que Help Maker permite contener todo en un único fichero exportable a PDF.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Esta herramienta se centra en formatos nativos de Windows (HLP/CHM), no en PDF.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Help Workshop.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esta herramienta se centra en formatos nativos de Windows (HLP/CHM), no en PDF.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="JavaHelp es un sistema para aplicaciones Java, no una herramienta de exportación documental a PDF.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">JavaHelp.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">JavaHelp es un sistema para aplicaciones Java, no una herramienta de exportación documental a PDF.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Aunque es un editor potente, la característica de exportación a PDF único se atribuye a Help Maker.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Shalom Help Maker.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Aunque es un editor potente, la característica de exportación a PDF único se atribuye a Help Maker.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="20">
-          <div class="q-header">
-            <span class="q-number">Question 21</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">En las pruebas de usuario, ¿qué número mínimo de participantes se recomienda para garantizar una tasa de detección de errores cercana al 100%?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Recuerde la cifra estadística mencionada en el Tema 12 para la fiabilidad de los tests.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="El azar no es eficiente; los usuarios deben coincidir con el perfil al que va dirigida la aplicación.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Cien usuarios elegidos al azar.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El azar no es eficiente; los usuarios deben coincidir con el perfil al que va dirigida la aplicación.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Las pruebas de expertos son distintas a las de usuarios; los expertos pueden pasar por alto lo que es intuitivo para un novato.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Un solo experto en Diseño Centrado en el Usuario (DCU).</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Las pruebas de expertos son distintas a las de usuarios; los expertos pueden pasar por alto lo que es intuitivo para un novato.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="El material establece que con quince usuarios se alcanza una probabilidad muy alta de detectar la totalidad de fallos de interfaz.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Al menos quince usuarios representativos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El material establece que con quince usuarios se alcanza una probabilidad muy alta de detectar la totalidad de fallos de interfaz.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Cinco usuarios son insuficientes para cubrir todos los escenarios y perfiles según el estándar mencionado.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Cinco usuarios expertos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Cinco usuarios son insuficientes para cubrir todos los escenarios y perfiles según el estándar mencionado.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="21">
-          <div class="q-header">
-            <span class="q-number">Question 22</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">Al utilizar un LinearLayout en Android, ¿qué atributo define si los elementos se apilan uno al lado del otro o uno debajo del otro?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en el concepto de 'rumbo' o 'sentido' que toman los componentes al ser añadidos.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="Aunque no se detalla el nombre exacto en el texto del extracto, se menciona que el layout permite alinear en dirección vertical u horizontal.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">android:orientation</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Aunque no se detalla el nombre exacto en el texto del extracto, se menciona que el layout permite alinear en dirección vertical u horizontal.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Define la separación entre elementos o bordes, no la dirección del flujo.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">android:layout_margin</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Define la separación entre elementos o bordes, no la dirección del flujo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Este atributo controla la posición dentro del espacio asignado, no la dirección del layout.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">android:layout_gravity</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este atributo controla la posición dentro del espacio asignado, no la dirección del layout.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Solo define el ancho del elemento, no la lógica de apilamiento del contenedor.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">android:layout_width</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Solo define el ancho del elemento, no la lógica de apilamiento del contenedor.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="22">
-          <div class="q-header">
-            <span class="q-number">Question 23</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">En la distribución TableLayout, ¿qué objeto específico se requiere para definir cada una de las filas de la tabla?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Es el nombre directo en inglés para una 'fila de tabla'.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Es un tipo de layout independiente, aunque podría usarse dentro de una tabla, no es el objeto estándar para definir filas.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">LinearLayout.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es un tipo de layout independiente, aunque podría usarse dentro de una tabla, no es el objeto estándar para definir filas.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Es una denominación incorrecta para los elementos de estructura de tabla.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">ViewRow.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es una denominación incorrecta para los elementos de estructura de tabla.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Este término no pertenece a la nomenclatura de TableLayout en Android.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">GridRow.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Este término no pertenece a la nomenclatura de TableLayout en Android.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="Tal como indica el Código 7 y el texto, los objetos TableRow son los contenedores de nivel secundario que estructuran la tabla.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">TableRow.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Tal como indica el Código 7 y el texto, los objetos TableRow son los contenedores de nivel secundario que estructuran la tabla.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="23">
-          <div class="q-header">
-            <span class="q-number">Question 24</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">¿Qué formato de empaquetado es el estándar para aplicaciones desarrolladas en lenguaje Java?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Piense en el acrónimo que representa un archivo comprimido de Java.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Es un formato de paquetes para sistemas Linux Debian.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">.deb</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es un formato de paquetes para sistemas Linux Debian.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="Es el ejecutable de Windows, pero Java usa un formato propio portable.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">.exe</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es el ejecutable de Windows, pero Java usa un formato propio portable.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Es el instalador de Microsoft Windows, no nativo de Java.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">.msi</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es el instalador de Microsoft Windows, no nativo de Java.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="true" data-rationale="El Java ARchive (.jar) es el formato nativo para agrupar clases y recursos de Java.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">.jar</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El Java ARchive (.jar) es el formato nativo para agrupar clases y recursos de Java.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="24">
-          <div class="q-header">
-            <span class="q-number">Question 25</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">¿Cuál es la función principal de la herramienta Apache JMeter dentro de una estrategia de pruebas?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Relacione la herramienta con la simulación de múltiples peticiones al sistema.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="true" data-rationale="JMeter se especializa en simular cargas de trabajo para ver cómo responde la aplicación ante el uso masivo.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Realizar pruebas de carga para evaluar el rendimiento.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">JMeter se especializa en simular cargas de trabajo para ver cómo responde la aplicación ante el uso masivo.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="JMeter es una herramienta de testing técnico, no de documentación documental.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Documentar los manuales de usuario en formato PDF.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">JMeter es una herramienta de testing técnico, no de documentación documental.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="Esa es la función principal de JUnit.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Realizar pruebas unitarias de código en Java.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esa es la función principal de JUnit.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="Esa es la función de Bugzilla.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Hacer el seguimiento de defectos y versiones.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Esa es la función de Bugzilla.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="25">
-          <div class="q-header">
-            <span class="q-number">Question 26</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">En el entorno Android Studio, ¿qué se visualiza específicamente en la zona 'Split' de la interfaz?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Traduzca el término inglés para entender qué hace con la pantalla principal.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="Estas herramientas suelen estar en la parte inferior, no en la conmutación de visualización central.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">La consola de errores y el depurador.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Estas herramientas suelen estar en la parte inferior, no en la conmutación de visualización central.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="true" data-rationale="La vista 'Split' permite ver simultáneamente el XML y la previsualización visual de la interfaz.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Una combinación del código de desarrollo y el lienzo de diseño.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La vista 'Split' permite ver simultáneamente el XML y la previsualización visual de la interfaz.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="false" data-rationale="El explorador es una zona fija a la izquierda, no el contenido central de 'Split'.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Solo el explorador de proyectos.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">El explorador es una zona fija a la izquierda, no el contenido central de 'Split'.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="La vista 'Split' se refiere a la relación entre el diseño visual y su código XML subyacente.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">El código Kotlin y el código Java traducido.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La vista 'Split' se refiere a la relación entre el diseño visual y su código XML subyacente.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      
-        <div class="question" data-index="26">
-          <div class="q-header">
-            <span class="q-number">Question 27</span>
-            <span class="q-of">/ 27</span>
-          </div>
-          <div class="q-text">¿Qué tipo de prueba funcional evalúa si la aplicación cumple con los requisitos mínimos para poder integrarse con otros sistemas software?</div>
-          
-        <div class="hint-box">
-          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
-            💡 Pista
-          </button>
-          <div class="hint-content">Busque el término que describe la cooperación entre diferentes softwares.</div>
-        </div>
-      
-          <div class="options">
-        <div class="option-wrapper">
-          <button class="option" data-label="A" data-correct="false" data-rationale="La exactitud se refiere a la precisión de los resultados devueltos por la aplicación.">
-            <span class="opt-label">A</span>
-            <span class="opt-text">Exactitud.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="A">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La exactitud se refiere a la precisión de los resultados devueltos por la aplicación.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="B" data-correct="false" data-rationale="La seguridad evalúa la protección de datos y accesos, no la capacidad de conexión técnica.">
-            <span class="opt-label">B</span>
-            <span class="opt-text">Seguridad.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="B">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La seguridad evalúa la protección de datos y accesos, no la capacidad de conexión técnica.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="C" data-correct="true" data-rationale="Es la capacidad de un sistema para interactuar con otros, tal como se muestra en el diagrama de la norma ISO 25010.">
-            <span class="opt-label">C</span>
-            <span class="opt-text">Interoperabilidad.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="C">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">Es la capacidad de un sistema para interactuar con otros, tal como se muestra en el diagrama de la norma ISO 25010.</div>
-          </div>
-        </div>
-      
-        <div class="option-wrapper">
-          <button class="option" data-label="D" data-correct="false" data-rationale="La idoneidad mide si las funciones son apropiadas para las tareas especificadas.">
-            <span class="opt-label">D</span>
-            <span class="opt-text">Idoneidad.</span>
-          </button>
-          <div class="option-feedback hidden" data-for="D">
-            <div class="feedback-status"></div>
-            <div class="feedback-rationale">La idoneidad mide si las funciones son apropiadas para las tareas especificadas.</div>
-          </div>
-        </div>
-      </div>
-          <button class="next-btn hidden">Siguiente Question →</button>
-        </div>
-      </div>
-  <div class="results" id="results">
-    <h2>Quiz Complete!</h2>
-    <div class="score" id="score">0%</div>
-    <div class="score-text" id="score-text"></div>
-    <button class="restart-btn" onclick="restart()">Try Again</button>
-  </div>
-</div>
-<script>
-const quizData = [{"question":"¿Cuál es la distinción técnica principal entre el mapa de fichero y la vista de información en un sistema de ayuda digital?","hint":"Considere cuál de los dos elementos actúa como un esquema de navegación interno frente al que interactúa directamente con el lector.","options":[{"label":"A","text":"El mapa de fichero asocia identificadores a URL, mientras que la vista de información presenta la interfaz de navegación al usuario.","isCorrect":true,"rationale":"El mapa actúa como el motor de redireccionamiento interno del sistema, mientras que la vista es la capa visual de interacción que incluye el índice y buscador."},{"label":"B","text":"La vista de información gestiona las tablas de contenido .cnt, mientras que el mapa de fichero genera los archivos RTF.","isCorrect":false,"rationale":"Esta es una confusión sobre formatos de archivo específicos de HLP y no define la arquitectura general de los sistemas de ayuda."},{"label":"C","text":"La vista de información contiene los identificadores de los temas, mientras que el mapa de fichero es el glosario final.","isCorrect":false,"rationale":"Se invierten las funciones; los identificadores pertenecen al mapa para permitir la navegación lógica."},{"label":"D","text":"El mapa de fichero es exclusivo del soporte físico, mientras que la vista de información es para el soporte digital.","isCorrect":false,"rationale":"Ambos conceptos son componentes estructurales del software de ayuda en formato digital."}]},{"question":"En el contexto del formato de ayuda HPJ, ¿qué función cumplen específicamente los ficheros con extensión .shg?","hint":"Relacione la extensión con el tipo de contenido que no es puramente textual ni estructural.","options":[{"label":"A","text":"Almacenan la información extra de soporte para Windows.","isCorrect":false,"rationale":"Esta es una característica típica de los archivos .gid en el formato HLP."},{"label":"B","text":"Se encargan de la representación de elementos gráficos.","isCorrect":true,"rationale":"Dentro de la estructura de Help Workshop para HPJ, los archivos .shg están destinados específicamente al contenido visual o gráfico."},{"label":"C","text":"Actúan como el compilador del proyecto de ayuda.","isCorrect":false,"rationale":"Un archivo .shg es un recurso de datos, no una herramienta de procesamiento como un compilador."},{"label":"D","text":"Representan la estructura de la tabla de contenidos.","isCorrect":false,"rationale":"Esa función corresponde a los ficheros de tipo .cnt."}]},{"question":"De acuerdo con las pautas de diseño, ¿cuándo se considera que una guía de referencia puede constituir por sí misma un manual completo?","hint":"Piense en la relación entre la complejidad del software y el detalle de la documentación necesaria.","options":[{"label":"A","text":"Cuando el perfil del usuario es exclusivamente de diseño o soporte técnico.","isCorrect":false,"rationale":"Incluso para expertos, la complejidad de la aplicación dicta la necesidad de manuales más extensos que una simple guía."},{"label":"B","text":"Cuando la aplicación es extremadamente compleja y requiere fragmentación.","isCorrect":false,"rationale":"En aplicaciones complejas, la guía de referencia es solo un complemento del manual de usuario, no un sustituto."},{"label":"C","text":"En aplicaciones muy sencillas donde los procedimientos son directos y concretos.","isCorrect":true,"rationale":"La especificidad y brevedad de una guía de referencia es suficiente para cubrir la totalidad de una herramienta con funcionalidades limitadas."},{"label":"D","text":"Solo cuando se incluye en formato físico y digital simultáneamente.","isCorrect":false,"rationale":"El soporte no determina si la guía puede actuar como manual único."}]},{"question":"¿Qué tipo de error se caracteriza por no devolver un mensaje de error explícito, siendo su detección la más compleja durante el desarrollo?","hint":"Busque el fallo que reside en el razonamiento del desarrollador más que en la escritura del código.","options":[{"label":"A","text":"Error de ejecución.","isCorrect":false,"rationale":"Aunque la sintaxis sea correcta, los errores de ejecución suelen interrumpir el programa con una excepción o mensaje."},{"label":"B","text":"Error de compilación.","isCorrect":false,"rationale":"Los errores de compilación son detectados automáticamente por el compilador al no respetar la sintaxis."},{"label":"C","text":"Error de lógica.","isCorrect":true,"rationale":"Estos errores ocurren cuando el programa funciona pero el resultado no es el esperado, requiriendo pruebas exhaustivas para su identificación."},{"label":"D","text":"Error de integración ascendente.","isCorrect":false,"rationale":"Este término se refiere a una fase de pruebas, no a una categoría de error sintáctico o funcional del código."}]},{"question":"En una estrategia de pruebas de integración, ¿cuál es la diferencia operativa fundamental entre el enfoque ascendente y el descendente?","hint":"Identifique el elemento de coordinación necesario cuando se empieza desde los niveles más bajos de la aplicación.","options":[{"label":"A","text":"El enfoque ascendente requiere un controlador para coordinar entradas y salidas, mientras que el descendente inicia desde el módulo principal.","isCorrect":true,"rationale":"Las pruebas ascendentes suben en la jerarquía necesitando coordinación, mientras que las descendentes bajan desde el núcleo hacia los subordinados."},{"label":"B","text":"El descendente utiliza herramientas automáticas y el ascendente es estrictamente manual.","isCorrect":false,"rationale":"Ambos enfoques pueden automatizarse; la diferencia radica en el flujo jerárquico de las pruebas."},{"label":"C","text":"El ascendente solo evalúa la interfaz y el descendente solo evalúa el código interno.","isCorrect":false,"rationale":"Ambos son tipos de pruebas de integración que pueden involucrar tanto caja blanca como caja negra dependiendo del módulo."},{"label":"D","text":"El descendente requiere que todos los módulos estén finalizados y el ascendente se hace por separado.","isCorrect":false,"rationale":"Las pruebas de sistema son las que requieren la integración total; las de integración evalúan la unión progresiva de módulos."}]},{"question":"Si tras introducir un cambio para solucionar un defecto, aparecen errores en partes del código que no han sido modificadas pero que antes estaban ocultos, ¿ante qué tipo de prueba de regresión nos encontramos?","hint":"Piense en errores que ya estaban allí pero cuya presencia solo se hace evidente tras alterar el entorno.","options":[{"label":"A","text":"Regresión desenmascarada.","isCorrect":true,"rationale":"Se define así cuando los cambios nuevos exponen fallos preexistentes que no tenían relación directa con la modificación."},{"label":"B","text":"Regresión remota.","isCorrect":false,"rationale":"La regresión remota surge de problemas de integración entre diferentes partes que funcionan bien por separado."},{"label":"C","text":"Regresión local.","isCorrect":false,"rationale":"La regresión local se refiere a errores introducidos directamente por los cambios recientes en la misma zona."},{"label":"D","text":"Regresión de sistema.","isCorrect":false,"rationale":"Este no es un término técnico tipificado en el material; se refiere generalmente a pruebas de regresión globales."}]},{"question":"¿Cuál es la característica principal de las pruebas de estrés en comparación con las pruebas de volumen?","hint":"Diferencie entre la 'cantidad' de información y la 'reacción' del sistema ante un colapso inminente.","options":[{"label":"A","text":"El estrés evalúa la velocidad de procesamiento y el volumen la seguridad.","isCorrect":false,"rationale":"La velocidad es objetivo de las pruebas de rendimiento, no de estrés."},{"label":"B","text":"El volumen es una prueba de caja blanca y el estrés es de caja negra.","isCorrect":false,"rationale":"Ambas son generalmente consideradas pruebas no funcionales de caja negra."},{"label":"C","text":"No existe diferencia; son sinónimos dentro de las pruebas de capacidad.","isCorrect":false,"rationale":"Aunque relacionadas con la capacidad, cada una mide un aspecto distinto del comportamiento bajo presión."},{"label":"D","text":"El estrés evalúa la capacidad de recuperación ante sobrecargas, mientras que el volumen analiza el manejo de grandes cantidades de datos.","isCorrect":true,"rationale":"El estrés busca el punto de ruptura y recuperación, mientras que el volumen se enfoca en la magnitud de los datos procesados."}]},{"question":"En el desarrollo con Android Studio, ¿qué sucede si un desarrollador no utiliza ningún objeto Layout para organizar sus componentes?","hint":"Piense en la función de los Layouts como guías de distribución espacial.","options":[{"label":"A","text":"Los elementos se distribuirán automáticamente siguiendo un orden alfabético.","isCorrect":false,"rationale":"Android no tiene un sistema de ordenación alfabética automática para la interfaz."},{"label":"B","text":"Se activará por defecto el RelativeLayout para evitar el colapso.","isCorrect":false,"rationale":"El desarrollador debe declarar explícitamente el tipo de layout; no hay una asignación automática de lógica de distribución."},{"label":"C","text":"La aplicación no podrá compilarse por errores de sintaxis en el XML.","isCorrect":false,"rationale":"El XML puede ser válido sin layouts complejos, pero el resultado visual será incorrecto."},{"label":"D","text":"Los elementos ocuparían todo el contenedor, solapándose o perdiendo su posición pretendida.","isCorrect":true,"rationale":"Los layouts son necesarios para definir dimensiones y posiciones; sin ellos, el sistema no sabe cómo distribuir el espacio."}]},{"question":"Dentro de la jerarquía de componentes de Android, ¿cuál es la restricción principal de los objetos de tipo View?","hint":"Considere la diferencia entre un 'contenedor' y un 'componente simple'.","options":[{"label":"A","text":"No pueden contener en su interior otros elementos View ni ViewGroup.","isCorrect":true,"rationale":"A diferencia de los ViewGroup, los View son componentes finales (átomos) que implementan una función pero no actúan como contenedores."},{"label":"B","text":"Solo pueden ser utilizados dentro de un LinearLayout vertical.","isCorrect":false,"rationale":"Los elementos View pueden residir en cualquier tipo de layout o contenedor ViewGroup."},{"label":"C","text":"Requieren obligatoriamente el atributo match_parent para visualizarse.","isCorrect":false,"rationale":"Pueden usar wrap_content o medidas fijas; el atributo no es una restricción de jerarquía."},{"label":"D","text":"No pueden tener una ID asociada en el archivo activity_main.xml.","isCorrect":false,"rationale":"Todos los elementos View necesitan un ID para ser referenciados en el código."}]},{"question":"¿Cuál es la función del atributo android:layout_gravity en un componente de interfaz Android?","hint":"Piense en cómo se 'alinea' un objeto dentro de una caja más grande.","options":[{"label":"A","text":"Establece la distancia absoluta en píxeles respecto al borde superior.","isCorrect":false,"rationale":"Esa es la función de los márgenes o posiciones específicas en RelativeLayout, no de la gravedad."},{"label":"B","text":"Determina la posición en la que debe situarse un elemento dentro de su contenedor.","isCorrect":true,"rationale":"La gravedad controla la alineación (centrado, arriba, derecha, etc.) del elemento respecto al espacio que le otorga su padre."},{"label":"C","text":"Define el orden de tabulación para la navegación por teclado.","isCorrect":false,"rationale":"El orden de navegación se gestiona mediante otros atributos de enfoque, no mediante el layout_gravity."},{"label":"D","text":"Determina el peso del componente para la aceleración de hardware.","isCorrect":false,"rationale":"La 'gravedad' en layouts no tiene relación con la física de procesamiento de hardware."}]},{"question":"¿Qué herramienta permite transformar un paquete de tipo JAR (Java) en un ejecutable de tipo EXE para Windows?","hint":"Identifique la utilidad que actúa como un 'lanzador' para aplicaciones multiplataforma en entornos Windows.","options":[{"label":"A","text":"AptUrl.","isCorrect":false,"rationale":"AptUrl es una herramienta para la descarga e instalación de paquetes desde servidores web."},{"label":"B","text":"InstallBuilder.","isCorrect":false,"rationale":"Es un instalador general, no una herramienta de conversión de tipos de archivo específicos de Java."},{"label":"C","text":"Launch4j.","isCorrect":true,"rationale":"Es la herramienta específica mencionada para realizar el empaquetado de aplicaciones Java como ejecutables nativos de Windows."},{"label":"D","text":"Dpkg.","isCorrect":false,"rationale":"Dpkg es una herramienta de gestión de paquetes para sistemas basados en Debian (Linux)."}]},{"question":"En el ciclo de vida de un proyecto, ¿cuál es la consecuencia económica de detectar un error en la fase de producción frente a la fase de diseño?","hint":"Considere la forma de la gráfica de costes mencionada en la resolución del caso práctico.","options":[{"label":"A","text":"No hay impacto económico si se dispone de una buena estrategia de pruebas de aceptación.","isCorrect":false,"rationale":"Las pruebas de aceptación ocurren antes de producción; un error en producción ya implica fallos en el servicio real y costes de redepliegue."},{"label":"B","text":"El coste crece de forma exponencial, siendo mucho más caro solucionarlo en producción.","isCorrect":true,"rationale":"Tal como indica el material, cuanto más tarde se detecta un error, más fases hay que desandar, disparando los costes económicos."},{"label":"C","text":"El coste se mantiene constante gracias a los contratos de mantenimiento.","isCorrect":false,"rationale":"Los costes de corrección varían drásticamente dependiendo de la fase en la que se encuentre el proyecto."},{"label":"D","text":"El coste aumenta de forma lineal a medida que avanza el tiempo.","isCorrect":false,"rationale":"La progresión no es lineal, sino mucho más agresiva."}]},{"question":"Al crear un cuadro de diálogo en Android mediante AlertDialog.Builder, ¿qué método se utiliza para que el usuario no pueda cerrar la ventana pulsando fuera de ella?","hint":"Busque el término que indica si una acción es 'anulable' o no.","options":[{"label":"A","text":".create()","isCorrect":false,"rationale":"Es el método que instancia el objeto final tras configurar todas las propiedades, pero no controla la persistencia."},{"label":"B","text":".setCancelable(false)","isCorrect":true,"rationale":"Este método bloquea la posibilidad de ignorar el diálogo, forzando al usuario a elegir una de las opciones (Yes/No)."},{"label":"C","text":".finish()","isCorrect":false,"rationale":"Este método cierra la actividad actual de la aplicación, no el diálogo emergente."},{"label":"D","text":".setPositiveButton()","isCorrect":false,"rationale":"Este método define la acción del botón de afirmación, no el comportamiento de cierre del cuadro."}]},{"question":"En la instalación de Android Studio, ¿cuál es el fichero principal que se abre por defecto al iniciar un proyecto nuevo?","hint":"Piense en el nombre de la 'clase' que gestiona la actividad principal de la aplicación.","options":[{"label":"A","text":"activity_main.xml","isCorrect":false,"rationale":"Este es el fichero de diseño de la interfaz, pero no es el que el entorno muestra primero por defecto."},{"label":"B","text":"MainActivity.kt","isCorrect":true,"rationale":"Android Studio abre por defecto la clase principal de la actividad (en Kotlin o Java) al cargar el proyecto."},{"label":"C","text":"AndroidManifest.xml","isCorrect":false,"rationale":"Es el fichero de configuración global de la aplicación, pero no es la pantalla de inicio del desarrollador."},{"label":"D","text":"content_main.xml","isCorrect":false,"rationale":"Es un fichero secundario de diseño que a veces se incluye en plantillas, pero no es el principal por defecto."}]},{"question":"¿Qué diferencia existe entre una versión Alfa y una versión Beta en cuanto al entorno de ejecución de las pruebas?","hint":"Considere dónde se encuentra el 'grupo de control' en cada etapa.","options":[{"label":"A","text":"La Alfa se prueba en servidores reales y la Beta en simuladores.","isCorrect":false,"rationale":"Es al revés; la Alfa suele ser controlada (simulada o interna) y la Beta busca entornos reales de cliente."},{"label":"B","text":"La versión Alfa se prueba en las oficinas de los desarrolladores y la Beta fuera de dicho entorno.","isCorrect":true,"rationale":"La Alfa es interna (laboratorio) con expertos, mientras que la Beta es externa con clientes o usuarios finales para evitar condicionamientos."},{"label":"C","text":"No hay diferencia de entorno, solo cambia el número de errores permitidos.","isCorrect":false,"rationale":"El entorno es crucial para detectar errores que el equipo de desarrollo podría pasar por alto debido al sesgo de conocimiento."},{"label":"D","text":"La versión Beta es solo para dispositivos móviles y la Alfa para web.","isCorrect":false,"rationale":"Ambos tipos de versiones son aplicables a cualquier desarrollo de software independientemente de la plataforma."}]},{"question":"¿Qué elemento de la paleta de Android permite implementar un menú desplegable?","hint":"Piense en el término en inglés para algo que 'gira' o 'despliega' opciones.","options":[{"label":"A","text":"Spinner.","isCorrect":true,"rationale":"Es el componente estándar en Android para representar listas desplegables y se encuentra en la carpeta Containers."},{"label":"B","text":"CheckBox.","isCorrect":false,"rationale":"Se usa para selección múltiple de opciones visibles, no para desplegables."},{"label":"C","text":"ToggleButton.","isCorrect":false,"rationale":"Este componente es un conmutador de dos estados."},{"label":"D","text":"TextField.","isCorrect":false,"rationale":"Su función principal es la entrada de texto por parte del usuario."}]},{"question":"En el formato de ayuda HLP, ¿qué contiene habitualmente el fichero con extensión .gid?","hint":"Se trata de un archivo que acompaña al manual pero que el desarrollador no escribe directamente.","options":[{"label":"A","text":"La tabla de contenido interactiva.","isCorrect":false,"rationale":"Esta función la cumple el fichero con extensión .cnt."},{"label":"B","text":"El código fuente en RTF.","isCorrect":false,"rationale":"El RTF es el archivo de texto plano con formato, no el de soporte extra del sistema."},{"label":"C","text":"Información adicional de soporte generada por el sistema.","isCorrect":true,"rationale":"Los archivos .gid son ficheros auxiliares que Windows crea para gestionar el índice y la búsqueda rápida en archivos HLP."},{"label":"D","text":"El mapa de navegación de URL.","isCorrect":false,"rationale":"El mapa de navegación es un concepto lógico implementado en el propio fichero compilado, no un .gid externo."}]},{"question":"¿Cuál es la función del organismo FNMT en el proceso de distribución de aplicaciones?","hint":"Relacione el organismo con la seguridad y la identidad legal digital.","options":[{"label":"A","text":"Emitir certificados de firma digital para garantizar la autenticidad.","isCorrect":true,"rationale":"La Fábrica Nacional de Moneda y Timbre es una autoridad certificadora mencionada para validar la identidad del software."},{"label":"B","text":"Alojar paquetes en servidores web para su descarga.","isCorrect":false,"rationale":"El alojamiento depende de servidores del desarrollador o de terceros, no de la FNMT."},{"label":"C","text":"Compilar ficheros Java en ejecutables.","isCorrect":false,"rationale":"Esa tarea corresponde a herramientas como Launch4j."},{"label":"D","text":"Gestionar las actualizaciones automáticas de Windows.","isCorrect":false,"rationale":"Windows Update es gestionado por Microsoft; la FNMT se limita a la certificación de identidad."}]},{"question":"En el diseño de tablas de contenido, ¿cuál es una de las pautas críticas para evitar la confusión del usuario?","hint":"Piense en los principios de economía de información y claridad expositiva.","options":[{"label":"A","text":"Utilizar títulos crípticos que obliguen a consultar el manual de referencia.","isCorrect":false,"rationale":"Los títulos deben ser lo suficientemente claros para no necesitar documentos adicionales de apoyo."},{"label":"B","text":"Situar la tabla siempre al final del documento como un apéndice.","isCorrect":false,"rationale":"Las tablas de contenido deben situarse al inicio, como el índice de un libro."},{"label":"C","text":"Asegurar que los títulos sean claros y que no se duplique la información.","isCorrect":true,"rationale":"La claridad y la falta de redundancia son pilares para un índice útil y profesional."},{"label":"D","text":"Duplicar la información clave en varios niveles para asegurar su lectura.","isCorrect":false,"rationale":"El material indica explícitamente que no debe duplicarse la información."}]},{"question":"¿Qué herramienta gratuita se destaca por permitir exportar toda la documentación de ayuda en un único archivo PDF?","hint":"Es la herramienta que destaca por su capacidad de unificar todo el manual en un solo documento estándar de lectura.","options":[{"label":"A","text":"Help Maker.","isCorrect":true,"rationale":"Se menciona específicamente que Help Maker permite contener todo en un único fichero exportable a PDF."},{"label":"B","text":"Help Workshop.","isCorrect":false,"rationale":"Esta herramienta se centra en formatos nativos de Windows (HLP/CHM), no en PDF."},{"label":"C","text":"JavaHelp.","isCorrect":false,"rationale":"JavaHelp es un sistema para aplicaciones Java, no una herramienta de exportación documental a PDF."},{"label":"D","text":"Shalom Help Maker.","isCorrect":false,"rationale":"Aunque es un editor potente, la característica de exportación a PDF único se atribuye a Help Maker."}]},{"question":"En las pruebas de usuario, ¿qué número mínimo de participantes se recomienda para garantizar una tasa de detección de errores cercana al 100%?","hint":"Recuerde la cifra estadística mencionada en el Tema 12 para la fiabilidad de los tests.","options":[{"label":"A","text":"Cien usuarios elegidos al azar.","isCorrect":false,"rationale":"El azar no es eficiente; los usuarios deben coincidir con el perfil al que va dirigida la aplicación."},{"label":"B","text":"Un solo experto en Diseño Centrado en el Usuario (DCU).","isCorrect":false,"rationale":"Las pruebas de expertos son distintas a las de usuarios; los expertos pueden pasar por alto lo que es intuitivo para un novato."},{"label":"C","text":"Al menos quince usuarios representativos.","isCorrect":true,"rationale":"El material establece que con quince usuarios se alcanza una probabilidad muy alta de detectar la totalidad de fallos de interfaz."},{"label":"D","text":"Cinco usuarios expertos.","isCorrect":false,"rationale":"Cinco usuarios son insuficientes para cubrir todos los escenarios y perfiles según el estándar mencionado."}]},{"question":"Al utilizar un LinearLayout en Android, ¿qué atributo define si los elementos se apilan uno al lado del otro o uno debajo del otro?","hint":"Piense en el concepto de 'rumbo' o 'sentido' que toman los componentes al ser añadidos.","options":[{"label":"A","text":"android:orientation","isCorrect":true,"rationale":"Aunque no se detalla el nombre exacto en el texto del extracto, se menciona que el layout permite alinear en dirección vertical u horizontal."},{"label":"B","text":"android:layout_margin","isCorrect":false,"rationale":"Define la separación entre elementos o bordes, no la dirección del flujo."},{"label":"C","text":"android:layout_gravity","isCorrect":false,"rationale":"Este atributo controla la posición dentro del espacio asignado, no la dirección del layout."},{"label":"D","text":"android:layout_width","isCorrect":false,"rationale":"Solo define el ancho del elemento, no la lógica de apilamiento del contenedor."}]},{"question":"En la distribución TableLayout, ¿qué objeto específico se requiere para definir cada una de las filas de la tabla?","hint":"Es el nombre directo en inglés para una 'fila de tabla'.","options":[{"label":"A","text":"LinearLayout.","isCorrect":false,"rationale":"Es un tipo de layout independiente, aunque podría usarse dentro de una tabla, no es el objeto estándar para definir filas."},{"label":"B","text":"ViewRow.","isCorrect":false,"rationale":"Es una denominación incorrecta para los elementos de estructura de tabla."},{"label":"C","text":"GridRow.","isCorrect":false,"rationale":"Este término no pertenece a la nomenclatura de TableLayout en Android."},{"label":"D","text":"TableRow.","isCorrect":true,"rationale":"Tal como indica el Código 7 y el texto, los objetos TableRow son los contenedores de nivel secundario que estructuran la tabla."}]},{"question":"¿Qué formato de empaquetado es el estándar para aplicaciones desarrolladas en lenguaje Java?","hint":"Piense en el acrónimo que representa un archivo comprimido de Java.","options":[{"label":"A","text":".deb","isCorrect":false,"rationale":"Es un formato de paquetes para sistemas Linux Debian."},{"label":"B","text":".exe","isCorrect":false,"rationale":"Es el ejecutable de Windows, pero Java usa un formato propio portable."},{"label":"C","text":".msi","isCorrect":false,"rationale":"Es el instalador de Microsoft Windows, no nativo de Java."},{"label":"D","text":".jar","isCorrect":true,"rationale":"El Java ARchive (.jar) es el formato nativo para agrupar clases y recursos de Java."}]},{"question":"¿Cuál es la función principal de la herramienta Apache JMeter dentro de una estrategia de pruebas?","hint":"Relacione la herramienta con la simulación de múltiples peticiones al sistema.","options":[{"label":"A","text":"Realizar pruebas de carga para evaluar el rendimiento.","isCorrect":true,"rationale":"JMeter se especializa en simular cargas de trabajo para ver cómo responde la aplicación ante el uso masivo."},{"label":"B","text":"Documentar los manuales de usuario en formato PDF.","isCorrect":false,"rationale":"JMeter es una herramienta de testing técnico, no de documentación documental."},{"label":"C","text":"Realizar pruebas unitarias de código en Java.","isCorrect":false,"rationale":"Esa es la función principal de JUnit."},{"label":"D","text":"Hacer el seguimiento de defectos y versiones.","isCorrect":false,"rationale":"Esa es la función de Bugzilla."}]},{"question":"En el entorno Android Studio, ¿qué se visualiza específicamente en la zona 'Split' de la interfaz?","hint":"Traduzca el término inglés para entender qué hace con la pantalla principal.","options":[{"label":"A","text":"La consola de errores y el depurador.","isCorrect":false,"rationale":"Estas herramientas suelen estar en la parte inferior, no en la conmutación de visualización central."},{"label":"B","text":"Una combinación del código de desarrollo y el lienzo de diseño.","isCorrect":true,"rationale":"La vista 'Split' permite ver simultáneamente el XML y la previsualización visual de la interfaz."},{"label":"C","text":"Solo el explorador de proyectos.","isCorrect":false,"rationale":"El explorador es una zona fija a la izquierda, no el contenido central de 'Split'."},{"label":"D","text":"El código Kotlin y el código Java traducido.","isCorrect":false,"rationale":"La vista 'Split' se refiere a la relación entre el diseño visual y su código XML subyacente."}]},{"question":"¿Qué tipo de prueba funcional evalúa si la aplicación cumple con los requisitos mínimos para poder integrarse con otros sistemas software?","hint":"Busque el término que describe la cooperación entre diferentes softwares.","options":[{"label":"A","text":"Exactitud.","isCorrect":false,"rationale":"La exactitud se refiere a la precisión de los resultados devueltos por la aplicación."},{"label":"B","text":"Seguridad.","isCorrect":false,"rationale":"La seguridad evalúa la protección de datos y accesos, no la capacidad de conexión técnica."},{"label":"C","text":"Interoperabilidad.","isCorrect":true,"rationale":"Es la capacidad de un sistema para interactuar con otros, tal como se muestra en el diagrama de la norma ISO 25010."},{"label":"D","text":"Idoneidad.","isCorrect":false,"rationale":"La idoneidad mide si las funciones son apropiadas para las tareas especificadas."}]}];
-const tr = {"correct":"Correct!","incorrect":"Incorrect","next":"Siguiente Question →","seeResults":"See Results","complete":"Quiz Complete!","scoreText":"You got {correct} out of {total} correct","tryAgain":"Try Again","rightAnswer":"Correctas answer","notQuite":"Not quite"};
-let currentQ = 0, correctCount = 0, answered = false;
+    <div class="quiz-container">
+        <div id="quiz-content">
+            <!-- Dynamic Content -->
+        </div>
+        <div id="results-content" class="hidden"></div>
 
-function init() {
-  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === 0));
-  updateProgress();
-  document.querySelectorAll('.option').forEach(opt => opt.addEventListener('click', () => selectOption(opt)));
-  document.querySelectorAll('.next-btn').forEach(btn => btn.addEventListener('click', nextQuestion));
-}
+        <div id="hint-box" class="hint-content">
+            <div class="hint-icon-box">💡</div>
+            <div id="hint-text"></div>
+        </div>
 
-function selectOption(opt) {
-  if (answered) return;
-  answered = true;
-  const q = opt.closest('.question');
-  const options = q.querySelectorAll('.option');
-  const nextBtn = q.querySelector('.next-btn');
-  const isCorrect = opt.dataset.correct === 'true';
-  
-  // Mark all options as disabled
-  options.forEach(o => o.classList.add('disabled'));
-  
-  // Style selected option
-  opt.classList.add('selected', isCorrect ? 'correct' : 'incorrect');
-  
-  // Show correct answer if wrong
-  if (!isCorrect) {
-    const correctOpt = [...options].find(o => o.dataset.correct === 'true');
-    if (correctOpt) correctOpt.classList.add('show-correct');
-  }
-  
-  if (isCorrect) correctCount++;
-  
-  // Show feedback for ALL options that have rationale
-  options.forEach(o => {
-    const wrapper = o.closest('.option-wrapper');
-    const feedback = wrapper.querySelector('.option-feedback');
-    const rationale = o.dataset.rationale;
-    const isThisCorrect = o.dataset.correct === 'true';
-    
-    if (rationale && rationale.trim()) {
-      feedback.classList.remove('hidden');
-      feedback.classList.add(isThisCorrect ? 'correct-feedback' : 'incorrect-feedback');
-      
-      const statusEl = feedback.querySelector('.feedback-status');
-      statusEl.className = 'feedback-status ' + (isThisCorrect ? 'correct' : 'incorrect');
-      statusEl.innerHTML = isThisCorrect 
-        ? '✓ ' + tr.rightAnswer
-        : '✗ ' + tr.notQuite;
-    }
-  });
-  
-  nextBtn.classList.remove('hidden');
-  if (currentQ === quizData.length - 1) nextBtn.textContent = tr.seeResults;
-}
+        <div class="navigation">
+            <button id="hint-toggle" class="hint-toggle">
+                <span>Hint</span>
+                <span id="hint-icon-arrow">▼</span>
+            </button>
+            <div class="nav-buttons">
+                <button id="prev-btn" class="btn btn-prev">Previous</button>
+                <button id="next-btn" class="btn btn-next">Next</button>
+            </div>
+        </div>
+    </div>
 
-function nextQuestion() {
-  answered = false;
-  currentQ++;
-  if (currentQ >= quizData.length) { showResults(); return; }
-  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === currentQ));
-  updateProgress();
-}
+    <script>
+        const quizData = [{"answerOptions":[{"isCorrect":false,"rationale":"Ambos conceptos son componentes estructurales del software de ayuda en formato digital.","text":"El mapa de fichero es exclusivo del soporte físico, mientras que la vista de información es para el soporte digital."},{"isCorrect":true,"rationale":"El mapa actúa como el motor de redireccionamiento interno del sistema, mientras que la vista es la capa visual de interacción que incluye el índice y buscador.","text":"El mapa de fichero asocia identificadores a URL, mientras que la vista de información presenta la interfaz de navegación al usuario."},{"isCorrect":false,"rationale":"Se invierten las funciones; los identificadores pertenecen al mapa para permitir la navegación lógica.","text":"La vista de información contiene los identificadores de los temas, mientras que el mapa de fichero es el glosario final."},{"isCorrect":false,"rationale":"Esta es una confusión sobre formatos de archivo específicos de HLP y no define la arquitectura general de los sistemas de ayuda.","text":"La vista de información gestiona las tablas de contenido .cnt, mientras que el mapa de fichero genera los archivos RTF."}],"hint":"Considere cuál de los dos elementos actúa como un esquema de navegación interno frente al que interactúa directamente con el lector.","question":"¿Cuál es la distinción técnica principal entre el mapa de fichero y la vista de información en un sistema de ayuda digital?"},{"answerOptions":[{"isCorrect":false,"rationale":"Un archivo .shg es un recurso de datos, no una herramienta de procesamiento como un compilador.","text":"Actúan como el compilador del proyecto de ayuda."},{"isCorrect":false,"rationale":"Esta es una característica típica de los archivos .gid en el formato HLP.","text":"Almacenan la información extra de soporte para Windows."},{"isCorrect":false,"rationale":"Esa función corresponde a los ficheros de tipo .cnt.","text":"Representan la estructura de la tabla de contenidos."},{"isCorrect":true,"rationale":"Dentro de la estructura de Help Workshop para HPJ, los archivos .shg están destinados específicamente al contenido visual o gráfico.","text":"Se encargan de la representación de elementos gráficos."}],"hint":"Relacione la extensión con el tipo de contenido que no es puramente textual ni estructural.","question":"En el contexto del formato de ayuda HPJ, ¿qué función cumplen específicamente los ficheros con extensión .shg?"},{"answerOptions":[{"isCorrect":false,"rationale":"Incluso para expertos, la complejidad de la aplicación dicta la necesidad de manuales más extensos que una simple guía.","text":"Cuando el perfil del usuario es exclusivamente de diseño o soporte técnico."},{"isCorrect":false,"rationale":"El soporte no determina si la guía puede actuar como manual único.","text":"Solo cuando se incluye en formato físico y digital simultáneamente."},{"isCorrect":false,"rationale":"En aplicaciones complejas, la guía de referencia es solo un complemento del manual de usuario, no un sustituto.","text":"Cuando la aplicación es extremadamente compleja y requiere fragmentación."},{"isCorrect":true,"rationale":"La especificidad y brevedad de una guía de referencia es suficiente para cubrir la totalidad de una herramienta con funcionalidades limitadas.","text":"En aplicaciones muy sencillas donde los procedimientos son directos y concretos."}],"hint":"Piense en la relación entre la complejidad del software y el detalle de la documentación necesaria.","question":"De acuerdo con las pautas de diseño, ¿cuándo se considera que una guía de referencia puede constituir por sí misma un manual completo?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los errores de compilación son detectados automáticamente por el compilador al no respetar la sintaxis.","text":"Error de compilación."},{"isCorrect":false,"rationale":"Aunque la sintaxis sea correcta, los errores de ejecución suelen interrumpir el programa con una excepción o mensaje.","text":"Error de ejecución."},{"isCorrect":false,"rationale":"Este término se refiere a una fase de pruebas, no a una categoría de error sintáctico o funcional del código.","text":"Error de integración ascendente."},{"isCorrect":true,"rationale":"Estos errores ocurren cuando el programa funciona pero el resultado no es el esperado, requiriendo pruebas exhaustivas para su identificación.","text":"Error de lógica."}],"hint":"Busque el fallo que reside en el razonamiento del desarrollador más que en la escritura del código.","question":"¿Qué tipo de error se caracteriza por no devolver un mensaje de error explícito, siendo su detección la más compleja durante el desarrollo?"},{"answerOptions":[{"isCorrect":false,"rationale":"Ambos enfoques pueden automatizarse; la diferencia radica en el flujo jerárquico de las pruebas.","text":"El descendente utiliza herramientas automáticas y el ascendente es estrictamente manual."},{"isCorrect":true,"rationale":"Las pruebas ascendentes suben en la jerarquía necesitando coordinación, mientras que las descendentes bajan desde el núcleo hacia los subordinados.","text":"El enfoque ascendente requiere un controlador para coordinar entradas y salidas, mientras que el descendente inicia desde el módulo principal."},{"isCorrect":false,"rationale":"Ambos son tipos de pruebas de integración que pueden involucrar tanto caja blanca como caja negra dependiendo del módulo.","text":"El ascendente solo evalúa la interfaz y el descendente solo evalúa el código interno."},{"isCorrect":false,"rationale":"Las pruebas de sistema son las que requieren la integración total; las de integración evalúan la unión progresiva de módulos.","text":"El descendente requiere que todos los módulos estén finalizados y el ascendente se hace por separado."}],"hint":"Identifique el elemento de coordinación necesario cuando se empieza desde los niveles más bajos de la aplicación.","question":"En una estrategia de pruebas de integración, ¿cuál es la diferencia operativa fundamental entre el enfoque ascendente y el descendente?"},{"answerOptions":[{"isCorrect":false,"rationale":"La regresión local se refiere a errores introducidos directamente por los cambios recientes en la misma zona.","text":"Regresión local."},{"isCorrect":false,"rationale":"La regresión remota surge de problemas de integración entre diferentes partes que funcionan bien por separado.","text":"Regresión remota."},{"isCorrect":false,"rationale":"Este no es un término técnico tipificado en el material; se refiere generalmente a pruebas de regresión globales.","text":"Regresión de sistema."},{"isCorrect":true,"rationale":"Se define así cuando los cambios nuevos exponen fallos preexistentes que no tenían relación directa con la modificación.","text":"Regresión desenmascarada."}],"hint":"Piense en errores que ya estaban allí pero cuya presencia solo se hace evidente tras alterar el entorno.","question":"Si tras introducir un cambio para solucionar un defecto, aparecen errores en partes del código que no han sido modificadas pero que antes estaban ocultos, ¿ante qué tipo de prueba de regresión nos encontramos?"},{"answerOptions":[{"isCorrect":true,"rationale":"El estrés busca el punto de ruptura y recuperación, mientras que el volumen se enfoca en la magnitud de los datos procesados.","text":"El estrés evalúa la capacidad de recuperación ante sobrecargas, mientras que el volumen analiza el manejo de grandes cantidades de datos."},{"isCorrect":false,"rationale":"Aunque relacionadas con la capacidad, cada una mide un aspecto distinto del comportamiento bajo presión.","text":"No existe diferencia; son sinónimos dentro de las pruebas de capacidad."},{"isCorrect":false,"rationale":"Ambas son generalmente consideradas pruebas no funcionales de caja negra.","text":"El volumen es una prueba de caja blanca y el estrés es de caja negra."},{"isCorrect":false,"rationale":"La velocidad es objetivo de las pruebas de rendimiento, no de estrés.","text":"El estrés evalúa la velocidad de procesamiento y el volumen la seguridad."}],"hint":"Diferencie entre la 'cantidad' de información y la 'reacción' del sistema ante un colapso inminente.","question":"¿Cuál es la característica principal de las pruebas de estrés en comparación con las pruebas de volumen?"},{"answerOptions":[{"isCorrect":false,"rationale":"El XML puede ser válido sin layouts complejos, pero el resultado visual será incorrecto.","text":"La aplicación no podrá compilarse por errores de sintaxis en el XML."},{"isCorrect":false,"rationale":"Android no tiene un sistema de ordenación alfabética automática para la interfaz.","text":"Los elementos se distribuirán automáticamente siguiendo un orden alfabético."},{"isCorrect":false,"rationale":"El desarrollador debe declarar explícitamente el tipo de layout; no hay una asignación automática de lógica de distribución.","text":"Se activará por defecto el RelativeLayout para evitar el colapso."},{"isCorrect":true,"rationale":"Los layouts son necesarios para definir dimensiones y posiciones; sin ellos, el sistema no sabe cómo distribuir el espacio.","text":"Los elementos ocuparían todo el contenedor, solapándose o perdiendo su posición pretendida."}],"hint":"Piense en la función de los Layouts como guías de distribución espacial.","question":"En el desarrollo con Android Studio, ¿qué sucede si un desarrollador no utiliza ningún objeto Layout para organizar sus componentes?"},{"answerOptions":[{"isCorrect":false,"rationale":"Pueden usar wrap_content o medidas fijas; el atributo no es una restricción de jerarquía.","text":"Requieren obligatoriamente el atributo match_parent para visualizarse."},{"isCorrect":false,"rationale":"Todos los elementos View necesitan un ID para ser referenciados en el código.","text":"No pueden tener una ID asociada en el archivo activity_main.xml."},{"isCorrect":true,"rationale":"A diferencia de los ViewGroup, los View son componentes finales (átomos) que implementan una función pero no actúan como contenedores.","text":"No pueden contener en su interior otros elementos View ni ViewGroup."},{"isCorrect":false,"rationale":"Los elementos View pueden residir en cualquier tipo de layout o contenedor ViewGroup.","text":"Solo pueden ser utilizados dentro de un LinearLayout vertical."}],"hint":"Considere la diferencia entre un 'contenedor' y un 'componente simple'.","question":"Dentro de la jerarquía de componentes de Android, ¿cuál es la restricción principal de los objetos de tipo View?"},{"answerOptions":[{"isCorrect":false,"rationale":"El orden de navegación se gestiona mediante otros atributos de enfoque, no mediante el layout_gravity.","text":"Define el orden de tabulación para la navegación por teclado."},{"isCorrect":false,"rationale":"Esa es la función de los márgenes o posiciones específicas en RelativeLayout, no de la gravedad.","text":"Establece la distancia absoluta en píxeles respecto al borde superior."},{"isCorrect":false,"rationale":"La 'gravedad' en layouts no tiene relación con la física de procesamiento de hardware.","text":"Determina el peso del componente para la aceleración de hardware."},{"isCorrect":true,"rationale":"La gravedad controla la alineación (centrado, arriba, derecha, etc.) del elemento respecto al espacio que le otorga su padre.","text":"Determina la posición en la que debe situarse un elemento dentro de su contenedor."}],"hint":"Piense en cómo se 'alinea' un objeto dentro de una caja más grande.","question":"¿Cuál es la función del atributo android:layout_gravity en un componente de interfaz Android?"},{"answerOptions":[{"isCorrect":false,"rationale":"Es un instalador general, no una herramienta de conversión de tipos de archivo específicos de Java.","text":"InstallBuilder."},{"isCorrect":true,"rationale":"Es la herramienta específica mencionada para realizar el empaquetado de aplicaciones Java como ejecutables nativos de Windows.","text":"Launch4j."},{"isCorrect":false,"rationale":"Dpkg es una herramienta de gestión de paquetes para sistemas basados en Debian (Linux).","text":"Dpkg."},{"isCorrect":false,"rationale":"AptUrl es una herramienta para la descarga e instalación de paquetes desde servidores web.","text":"AptUrl."}],"hint":"Identifique la utilidad que actúa como un 'lanzador' para aplicaciones multiplataforma en entornos Windows.","question":"¿Qué herramienta permite transformar un paquete de tipo JAR (Java) en un ejecutable de tipo EXE para Windows?"},{"answerOptions":[{"isCorrect":false,"rationale":"La progresión no es lineal, sino mucho más agresiva.","text":"El coste aumenta de forma lineal a medida que avanza el tiempo."},{"isCorrect":false,"rationale":"Los costes de corrección varían drásticamente dependiendo de la fase en la que se encuentre el proyecto.","text":"El coste se mantiene constante gracias a los contratos de mantenimiento."},{"isCorrect":true,"rationale":"Tal como indica el material, cuanto más tarde se detecta un error, más fases hay que desandar, disparando los costes económicos.","text":"El coste crece de forma exponencial, siendo mucho más caro solucionarlo en producción."},{"isCorrect":false,"rationale":"Las pruebas de aceptación ocurren antes de producción; un error en producción ya implica fallos en el servicio real y costes de redepliegue.","text":"No hay impacto económico si se dispone de una buena estrategia de pruebas de aceptación."}],"hint":"Considere la forma de la gráfica de costes mencionada en la resolución del caso práctico.","question":"En el ciclo de vida de un proyecto, ¿cuál es la consecuencia económica de detectar un error en la fase de producción frente a la fase de diseño?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este método cierra la actividad actual de la aplicación, no el diálogo emergente.","text":".finish()"},{"isCorrect":false,"rationale":"Es el método que instancia el objeto final tras configurar todas las propiedades, pero no controla la persistencia.","text":".create()"},{"isCorrect":true,"rationale":"Este método bloquea la posibilidad de ignorar el diálogo, forzando al usuario a elegir una de las opciones (Yes/No).","text":".setCancelable(false)"},{"isCorrect":false,"rationale":"Este método define la acción del botón de afirmación, no el comportamiento de cierre del cuadro.","text":".setPositiveButton()"}],"hint":"Busque el término que indica si una acción es 'anulable' o no.","question":"Al crear un cuadro de diálogo en Android mediante AlertDialog.Builder, ¿qué método se utiliza para que el usuario no pueda cerrar la ventana pulsando fuera de ella?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este es el fichero de diseño de la interfaz, pero no es el que el entorno muestra primero por defecto.","text":"activity_main.xml"},{"isCorrect":false,"rationale":"Es el fichero de configuración global de la aplicación, pero no es la pantalla de inicio del desarrollador.","text":"AndroidManifest.xml"},{"isCorrect":true,"rationale":"Android Studio abre por defecto la clase principal de la actividad (en Kotlin o Java) al cargar el proyecto.","text":"MainActivity.kt"},{"isCorrect":false,"rationale":"Es un fichero secundario de diseño que a veces se incluye en plantillas, pero no es el principal por defecto.","text":"content_main.xml"}],"hint":"Piense en el nombre de la 'clase' que gestiona la actividad principal de la aplicación.","question":"En la instalación de Android Studio, ¿cuál es el fichero principal que se abre por defecto al iniciar un proyecto nuevo?"},{"answerOptions":[{"isCorrect":true,"rationale":"La Alfa es interna (laboratorio) con expertos, mientras que la Beta es externa con clientes o usuarios finales para evitar condicionamientos.","text":"La versión Alfa se prueba en las oficinas de los desarrolladores y la Beta fuera de dicho entorno."},{"isCorrect":false,"rationale":"El entorno es crucial para detectar errores que el equipo de desarrollo podría pasar por alto debido al sesgo de conocimiento.","text":"No hay diferencia de entorno, solo cambia el número de errores permitidos."},{"isCorrect":false,"rationale":"Ambos tipos de versiones son aplicables a cualquier desarrollo de software independientemente de la plataforma.","text":"La versión Beta es solo para dispositivos móviles y la Alfa para web."},{"isCorrect":false,"rationale":"Es al revés; la Alfa suele ser controlada (simulada o interna) y la Beta busca entornos reales de cliente.","text":"La Alfa se prueba en servidores reales y la Beta en simuladores."}],"hint":"Considere dónde se encuentra el 'grupo de control' en cada etapa.","question":"¿Qué diferencia existe entre una versión Alfa y una versión Beta en cuanto al entorno de ejecución de las pruebas?"},{"answerOptions":[{"isCorrect":true,"rationale":"Es el componente estándar en Android para representar listas desplegables y se encuentra en la carpeta Containers.","text":"Spinner."},{"isCorrect":false,"rationale":"Este componente es un conmutador de dos estados.","text":"ToggleButton."},{"isCorrect":false,"rationale":"Su función principal es la entrada de texto por parte del usuario.","text":"TextField."},{"isCorrect":false,"rationale":"Se usa para selección múltiple de opciones visibles, no para desplegables.","text":"CheckBox."}],"hint":"Piense en el término en inglés para algo que 'gira' o 'despliega' opciones.","question":"¿Qué elemento de la paleta de Android permite implementar un menú desplegable?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esta función la cumple el fichero con extensión .cnt.","text":"La tabla de contenido interactiva."},{"isCorrect":false,"rationale":"El mapa de navegación es un concepto lógico implementado en el propio fichero compilado, no un .gid externo.","text":"El mapa de navegación de URL."},{"isCorrect":false,"rationale":"El RTF es el archivo de texto plano con formato, no el de soporte extra del sistema.","text":"El código fuente en RTF."},{"isCorrect":true,"rationale":"Los archivos .gid son ficheros auxiliares que Windows crea para gestionar el índice y la búsqueda rápida en archivos HLP.","text":"Información adicional de soporte generada por el sistema."}],"hint":"Se trata de un archivo que acompaña al manual pero que el desarrollador no escribe directamente.","question":"En el formato de ayuda HLP, ¿qué contiene habitualmente el fichero con extensión .gid?"},{"answerOptions":[{"isCorrect":false,"rationale":"Windows Update es gestionado por Microsoft; la FNMT se limita a la certificación de identidad.","text":"Gestionar las actualizaciones automáticas de Windows."},{"isCorrect":false,"rationale":"Esa tarea corresponde a herramientas como Launch4j.","text":"Compilar ficheros Java en ejecutables."},{"isCorrect":true,"rationale":"La Fábrica Nacional de Moneda y Timbre es una autoridad certificadora mencionada para validar la identidad del software.","text":"Emitir certificados de firma digital para garantizar la autenticidad."},{"isCorrect":false,"rationale":"El alojamiento depende de servidores del desarrollador o de terceros, no de la FNMT.","text":"Alojar paquetes en servidores web para su descarga."}],"hint":"Relacione el organismo con la seguridad y la identidad legal digital.","question":"¿Cuál es la función del organismo FNMT en el proceso de distribución de aplicaciones?"},{"answerOptions":[{"isCorrect":false,"rationale":"El material indica explícitamente que no debe duplicarse la información.","text":"Duplicar la información clave en varios niveles para asegurar su lectura."},{"isCorrect":false,"rationale":"Las tablas de contenido deben situarse al inicio, como el índice de un libro.","text":"Situar la tabla siempre al final del documento como un apéndice."},{"isCorrect":true,"rationale":"La claridad y la falta de redundancia son pilares para un índice útil y profesional.","text":"Asegurar que los títulos sean claros y que no se duplique la información."},{"isCorrect":false,"rationale":"Los títulos deben ser lo suficientemente claros para no necesitar documentos adicionales de apoyo.","text":"Utilizar títulos crípticos que obliguen a consultar el manual de referencia."}],"hint":"Piense en los principios de economía de información y claridad expositiva.","question":"En el diseño de tablas de contenido, ¿cuál es una de las pautas críticas para evitar la confusión del usuario?"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque es un editor potente, la característica de exportación a PDF único se atribuye a Help Maker.","text":"Shalom Help Maker."},{"isCorrect":true,"rationale":"Se menciona específicamente que Help Maker permite contener todo en un único fichero exportable a PDF.","text":"Help Maker."},{"isCorrect":false,"rationale":"Esta herramienta se centra en formatos nativos de Windows (HLP/CHM), no en PDF.","text":"Help Workshop."},{"isCorrect":false,"rationale":"JavaHelp es un sistema para aplicaciones Java, no una herramienta de exportación documental a PDF.","text":"JavaHelp."}],"hint":"Es la herramienta que destaca por su capacidad de unificar todo el manual en un solo documento estándar de lectura.","question":"¿Qué herramienta gratuita se destaca por permitir exportar toda la documentación de ayuda en un único archivo PDF?"},{"answerOptions":[{"isCorrect":false,"rationale":"El azar no es eficiente; los usuarios deben coincidir con el perfil al que va dirigida la aplicación.","text":"Cien usuarios elegidos al azar."},{"isCorrect":false,"rationale":"Cinco usuarios son insuficientes para cubrir todos los escenarios y perfiles según el estándar mencionado.","text":"Cinco usuarios expertos."},{"isCorrect":false,"rationale":"Las pruebas de expertos son distintas a las de usuarios; los expertos pueden pasar por alto lo que es intuitivo para un novato.","text":"Un solo experto en Diseño Centrado en el Usuario (DCU)."},{"isCorrect":true,"rationale":"El material establece que con quince usuarios se alcanza una probabilidad muy alta de detectar la totalidad de fallos de interfaz.","text":"Al menos quince usuarios representativos."}],"hint":"Recuerde la cifra estadística mencionada en el Tema 12 para la fiabilidad de los tests.","question":"En las pruebas de usuario, ¿qué número mínimo de participantes se recomienda para garantizar una tasa de detección de errores cercana al 100%?"},{"answerOptions":[{"isCorrect":false,"rationale":"Solo define el ancho del elemento, no la lógica de apilamiento del contenedor.","text":"android:layout_width"},{"isCorrect":true,"rationale":"Aunque no se detalla el nombre exacto en el texto del extracto, se menciona que el layout permite alinear en dirección vertical u horizontal.","text":"android:orientation"},{"isCorrect":false,"rationale":"Este atributo controla la posición dentro del espacio asignado, no la dirección del layout.","text":"android:layout_gravity"},{"isCorrect":false,"rationale":"Define la separación entre elementos o bordes, no la dirección del flujo.","text":"android:layout_margin"}],"hint":"Piense en el concepto de 'rumbo' o 'sentido' que toman los componentes al ser añadidos.","question":"Al utilizar un LinearLayout en Android, ¿qué atributo define si los elementos se apilan uno al lado del otro o uno debajo del otro?"},{"answerOptions":[{"isCorrect":true,"rationale":"Tal como indica el Código 7 y el texto, los objetos TableRow son los contenedores de nivel secundario que estructuran la tabla.","text":"TableRow."},{"isCorrect":false,"rationale":"Es una denominación incorrecta para los elementos de estructura de tabla.","text":"ViewRow."},{"isCorrect":false,"rationale":"Es un tipo de layout independiente, aunque podría usarse dentro de una tabla, no es el objeto estándar para definir filas.","text":"LinearLayout."},{"isCorrect":false,"rationale":"Este término no pertenece a la nomenclatura de TableLayout en Android.","text":"GridRow."}],"hint":"Es el nombre directo en inglés para una 'fila de tabla'.","question":"En la distribución TableLayout, ¿qué objeto específico se requiere para definir cada una de las filas de la tabla?"},{"answerOptions":[{"isCorrect":false,"rationale":"Es el instalador de Microsoft Windows, no nativo de Java.","text":".msi"},{"isCorrect":false,"rationale":"Es un formato de paquetes para sistemas Linux Debian.","text":".deb"},{"isCorrect":false,"rationale":"Es el ejecutable de Windows, pero Java usa un formato propio portable.","text":".exe"},{"isCorrect":true,"rationale":"El Java ARchive (.jar) es el formato nativo para agrupar clases y recursos de Java.","text":".jar"}],"hint":"Piense en el acrónimo que representa un archivo comprimido de Java.","question":"¿Qué formato de empaquetado es el estándar para aplicaciones desarrolladas en lenguaje Java?"},{"answerOptions":[{"isCorrect":false,"rationale":"JMeter es una herramienta de testing técnico, no de documentación documental.","text":"Documentar los manuales de usuario en formato PDF."},{"isCorrect":false,"rationale":"Esa es la función principal de JUnit.","text":"Realizar pruebas unitarias de código en Java."},{"isCorrect":true,"rationale":"JMeter se especializa en simular cargas de trabajo para ver cómo responde la aplicación ante el uso masivo.","text":"Realizar pruebas de carga para evaluar el rendimiento."},{"isCorrect":false,"rationale":"Esa es la función de Bugzilla.","text":"Hacer el seguimiento de defectos y versiones."}],"hint":"Relacione la herramienta con la simulación de múltiples peticiones al sistema.","question":"¿Cuál es la función principal de la herramienta Apache JMeter dentro de una estrategia de pruebas?"},{"answerOptions":[{"isCorrect":true,"rationale":"La vista 'Split' permite ver simultáneamente el XML y la previsualización visual de la interfaz.","text":"Una combinación del código de desarrollo y el lienzo de diseño."},{"isCorrect":false,"rationale":"Estas herramientas suelen estar en la parte inferior, no en la conmutación de visualización central.","text":"La consola de errores y el depurador."},{"isCorrect":false,"rationale":"La vista 'Split' se refiere a la relación entre el diseño visual y su código XML subyacente.","text":"El código Kotlin y el código Java traducido."},{"isCorrect":false,"rationale":"El explorador es una zona fija a la izquierda, no el contenido central de 'Split'.","text":"Solo el explorador de proyectos."}],"hint":"Traduzca el término inglés para entender qué hace con la pantalla principal.","question":"En el entorno Android Studio, ¿qué se visualiza específicamente en la zona 'Split' de la interfaz?"},{"answerOptions":[{"isCorrect":true,"rationale":"Es la capacidad de un sistema para interactuar con otros, tal como se muestra en el diagrama de la norma ISO 25010.","text":"Interoperabilidad."},{"isCorrect":false,"rationale":"La seguridad evalúa la protección de datos y accesos, no la capacidad de conexión técnica.","text":"Seguridad."},{"isCorrect":false,"rationale":"La idoneidad mide si las funciones son apropiadas para las tareas especificadas.","text":"Idoneidad."},{"isCorrect":false,"rationale":"La exactitud se refiere a la precisión de los resultados devueltos por la aplicación.","text":"Exactitud."}],"hint":"Busque el término que describe la cooperación entre diferentes softwares.","question":"¿Qué tipo de prueba funcional evalúa si la aplicación cumple con los requisitos mínimos para poder integrarse con otros sistemas software?"}];
+        let currentIndex = 0;
+        let mode = 'quiz';
+        let state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
 
-function updateProgress() {
-  document.querySelector('.progress-fill').style.width = (currentQ / quizData.length * 100) + '%';
-}
+        function getStats() {
+            const answered = state.filter((s) => s.selectedIndex !== null).length;
+            const correct = state.filter((s, i) => s.selectedIndex !== null && quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const wrong = state.filter((s, i) => s.selectedIndex !== null && !quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const skipped = quizData.length - answered;
+            const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+            return { answered, correct, wrong, skipped, accuracy };
+        }
 
-function showResults() {
-  document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
-  document.getElementById('results').classList.add('active');
-  const pct = Math.round((correctCount / quizData.length) * 100);
-  document.getElementById('score').textContent = pct + '%';
-  document.getElementById('score-text').textContent = tr.scoreText.replace('{correct}', correctCount).replace('{total}', quizData.length);
-  document.querySelector('.progress-fill').style.width = '100%';
-}
+        function shuffleAnswers() {
+            quizData.forEach((q) => {
+                for (let i = q.answerOptions.length - 1; i > 0; i -= 1) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.answerOptions[i], q.answerOptions[j]] = [q.answerOptions[j], q.answerOptions[i]];
+                }
+            });
+        }
 
-function restart() {
-  currentQ = 0; correctCount = 0; answered = false;
-  document.getElementById('results').classList.remove('active');
-  document.querySelectorAll('.question').forEach((q, i) => {
-    q.classList.toggle('active', i === 0);
-    q.querySelectorAll('.option').forEach(o => o.classList.remove('selected', 'correct', 'incorrect', 'disabled', 'show-correct'));
-    q.querySelectorAll('.option-feedback').forEach(f => {
-      f.classList.add('hidden');
-      f.classList.remove('correct-feedback', 'incorrect-feedback');
-    });
-    const btn = q.querySelector('.next-btn');
-    btn.classList.add('hidden');
-    btn.textContent = tr.next;
-  });
-  updateProgress();
-}
+        function shuffleQuestions() {
+            for (let i = quizData.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [quizData[i], quizData[j]] = [quizData[j], quizData[i]];
+            }
+        }
 
-init();
-</script>
+        function resetState() {
+            state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+        }
+
+        function renderQuestion() {
+            const q = quizData[currentIndex];
+            const s = state[currentIndex];
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+
+            let optionsHtml = '';
+            const correctIndex = q.answerOptions.findIndex((o) => o.isCorrect);
+            const selectedCorrect = s.selectedIndex !== null && q.answerOptions[s.selectedIndex].isCorrect;
+            q.answerOptions.forEach((opt, idx) => {
+                const isSelected = s.selectedIndex === idx;
+                const statusClass = isSelected ? (opt.isCorrect ? 'correct' : 'incorrect') : '';
+                const selectedClass = isSelected ? 'selected' : '';
+                const revealCorrect = (s.selectedIndex !== null && !selectedCorrect && opt.isCorrect) || (mode === 'review' && opt.isCorrect);
+                const revealClass = revealCorrect ? 'revealed-correct' : '';
+
+                optionsHtml += `
+                    <li class="option-item ${selectedClass} ${statusClass} ${revealClass}" onclick="selectOption(${idx})">
+                        <div class="option-label">
+                            <span>${String.fromCharCode(65 + idx)}. ${opt.text}</span>
+                        </div>
+                        <div class="feedback-state">
+                            ${opt.isCorrect ? '✓ Right answer' : '✕ Not quite'}
+                        </div>
+                        ${opt.rationale ? '<div class="rationale">' + opt.rationale + '</div>' : ''}
+                    </li>
+                `;
+            });
+
+            const stats = getStats();
+
+            content.innerHTML = `
+                <div class="progress-container">
+                    <div class="progress-text">${currentIndex + 1} / ${quizData.length}</div>
+                    <div class="status-bar">
+                        <div class="status-item status-correct">
+                            <span>✓</span>
+                            <span>${stats.correct}</span>
+                        </div>
+                        <div class="status-item status-wrong">
+                            <span>✕</span>
+                            <span>${stats.wrong}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="question-text">${q.question}</div>
+                <ul class="options-list">
+                    ${optionsHtml}
+                </ul>
+            `;
+
+            // Update Hint Box
+            const hintText = document.getElementById('hint-text');
+            hintText.innerText = q.hint || 'No hint available for this question.';
+            if (s.hintVisible) {
+                hintBox.classList.add('active');
+            } else {
+                hintBox.classList.remove('active');
+            }
+
+            results.classList.add('hidden');
+            content.classList.remove('hidden');
+            hintBox.classList.remove('hidden');
+            nav.classList.remove('hidden');
+
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = false;
+            if (mode === 'review') {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Back to Results' : 'Next';
+            } else {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finish' : 'Next';
+            }
+            document.getElementById('hint-icon-arrow').innerText = s.hintVisible ? '▲' : '▼';
+        }
+
+        function selectOption(idx) {
+            if (mode !== 'quiz') return;
+            if (state[currentIndex].selectedIndex !== null) return; // Prevent re-selection
+            state[currentIndex].selectedIndex = idx;
+            renderQuestion();
+        }
+
+        function toggleHint() {
+            if (mode === 'results') return;
+            state[currentIndex].hintVisible = !state[currentIndex].hintVisible;
+            renderQuestion();
+        }
+
+        function renderResults() {
+            const stats = getStats();
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+
+            const score = `${stats.correct} / ${quizData.length}`;
+
+            results.innerHTML = `
+                <div class="results-screen">
+                    <div>
+                        <h1 class="results-title">You did it! Quiz Complete.</h1>
+                        <p class="results-subtitle">Review your score or take another run.</p>
+                    </div>
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-label">Score</div>
+                            <div class="result-value">${score}</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Accuracy</div>
+                            <div class="result-value">${stats.accuracy}%</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-metrics">
+                                <div>Right <strong>${stats.correct}</strong></div>
+                                <div>Wrong <strong>${stats.wrong}</strong></div>
+                                <div>Skipped <strong>${stats.skipped}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="results-actions">
+                        <button id="review-btn" class="btn btn-ghost">Review Quiz</button>
+                        <button id="retake-btn" class="btn btn-next">Retake Quiz</button>
+                    </div>
+                </div>
+            `;
+
+            content.classList.add('hidden');
+            results.classList.remove('hidden');
+            hintBox.classList.add('hidden');
+            nav.classList.add('hidden');
+
+            document.getElementById('review-btn').onclick = () => {
+                mode = 'review';
+                currentIndex = 0;
+                renderQuestion();
+            };
+
+            document.getElementById('retake-btn').onclick = () => {
+                mode = 'quiz';
+                currentIndex = 0;
+                shuffleQuestions();
+                shuffleAnswers();
+                resetState();
+                renderQuestion();
+            };
+        }
+
+        document.getElementById('prev-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        };
+
+        document.getElementById('next-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (mode === 'review') {
+                if (currentIndex < quizData.length - 1) {
+                    currentIndex++;
+                    renderQuestion();
+                } else {
+                    mode = 'results';
+                    renderResults();
+                }
+                return;
+            }
+            if (currentIndex < quizData.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                mode = 'results';
+                renderResults();
+            }
+        };
+
+        document.getElementById('hint-toggle').onclick = toggleHint;
+
+        renderQuestion();
+    </script>
 </body>
 </html>
