@@ -346,6 +346,7 @@ let translated = 0;
 quizFiles.forEach(file => {
   const filePath = path.join(QUIZ_DIR, file);
   let content = fs.readFileSync(filePath, "utf8");
+  const original = content;
 
   // Build heading label: "Programación de Servicios y Procesos · Quiz 4"
   const prefix = file.split("-")[0];
@@ -361,31 +362,22 @@ quizFiles.forEach(file => {
 
   // Always inject heading if not already present
   if (!content.includes('class="quiz-heading"')) {
-    content = content.replace('<div id="quiz-content">', `<div id="quiz-content">${heading}`);
+    content = content.replace('<div id="quiz-content">', `${heading}<div id="quiz-content">`);
   }
 
-  // Skip translation if already done
-  if (content.includes("Pista") || content.includes("Siguiente")) {
-    const original2 = fs.readFileSync(filePath, "utf8");
-    if (content !== original2) {
-      fs.writeFileSync(filePath, content, "utf8");
-      console.log(`  ✔ ${file} (heading añadido)`);
-    } else {
-      console.log(`  ↷ ${file} (ya traducido)`);
-    }
-    return;
+  // Translate if not already done
+  if (!content.includes("Pista") && !content.includes("Siguiente")) {
+    TRANSLATIONS.forEach(([pattern, replacement]) => {
+      content = content.replace(pattern, replacement);
+    });
   }
-
-  const original = content;
-
-  TRANSLATIONS.forEach(([pattern, replacement]) => {
-    content = content.replace(pattern, replacement);
-  });
 
   if (content !== original) {
     fs.writeFileSync(filePath, content, "utf8");
     translated++;
     console.log(`  ✔ ${file}`);
+  } else {
+    console.log(`  ↷ ${file} (sin cambios)`);
   }
 });
 
