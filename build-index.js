@@ -38,20 +38,33 @@ Object.values(groups).forEach(list => list.sort());
 
 function buildSection(prefix, files) {
   const title = PREFIXES[prefix];
+  const count = files.length;
+
   let html = `
 <section class="section">
-  <h2>${title} <span class="tag">${prefix.toUpperCase()}</span></h2>
+  <h2>${title} <span class="tag">${prefix.toUpperCase()}</span>
+      <span class="count">(${count} quizzes)</span>
+  </h2>
   <ul class="quiz-list">
 `;
 
   files.forEach(file => {
     const label = file.replace(".html", "").toUpperCase();
-    html += `    <li class="quiz-item"><a href="./quizzes/${file}">${label}</a></li>\n`;
+    const searchText = `${title.toLowerCase()} ${label.toLowerCase()}`;
+
+    html += `
+      <li class="quiz-item" data-search="${searchText}">
+        <a href="./quizzes/${file}">${label}</a>
+      </li>`;
   });
 
-  html += `  </ul>\n</section>\n`;
+  html += `
+  </ul>
+</section>
+`;
   return html;
 }
+
 
 const html = `<!DOCTYPE html>
 <html lang="es">
@@ -63,17 +76,17 @@ const html = `<!DOCTYPE html>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* LIGHT MODE VARIABLES */
+/* LIGHT MODE */
 :root {
   --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --text: #fff;
   --card-bg: #ffffff;
   --card-text: #222;
   --accent: #667eea;
-  --translucent: rgba(255,255,255,0.3);
+  --glass: rgba(255,255,255,0.3);
 }
 
-/* DARK MODE OVERRIDE */
+/* DARK MODE */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0f0f14;
@@ -81,7 +94,7 @@ const html = `<!DOCTYPE html>
     --card-bg: #1b1b22;
     --card-text: #eee;
     --accent: #9fa8ff;
-    --translucent: rgba(255,255,255,0.15);
+    --glass: rgba(255,255,255,0.15);
   }
 }
 
@@ -106,7 +119,7 @@ h1 {
   text-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
 
-/* SEARCH BAR — same style as progress bar background */
+/* Search bar (glass style) */
 #search {
   width: 100%;
   padding: 14px;
@@ -115,7 +128,7 @@ h1 {
   border-radius: 10px;
   border: none;
   outline: none;
-  background: var(--translucent);
+  background: var(--glass);
   color: var(--text);
   backdrop-filter: blur(6px);
 }
@@ -133,7 +146,7 @@ h1 {
 }
 
 .tag {
-  background: var(--translucent);
+  background: var(--glass);
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 14px;
@@ -146,7 +159,7 @@ h1 {
   margin-left: 8px;
 }
 
-/* QUIZ CARDS — same style family as quiz UI */
+/* Quiz cards */
 .quiz-list {
   list-style: none;
   padding: 0;
@@ -182,46 +195,32 @@ h1 {
 
 <h1>📚 Índice de Quizzes</h1>
 
-<input type="text" id="search" placeholder="Buscar… (ej: sge, psp 2, ciber)" />
+<input type="text" id="search" placeholder="Buscar por nombre completo…" />
 
 ${Object.keys(groups)
   .sort()
-  .map(prefix => {
-    const count = groups[prefix].length;
-    return `
-<section class="section">
-  <h2>${PREFIXES[prefix]} 
-      <span class="tag">${prefix.toUpperCase()}</span> 
-      <span class="count">(${count} quizzes)</span>
-  </h2>
-  <ul class="quiz-list">
-    ${groups[prefix].map(file => {
-      const label = file.replace(".html", "").toUpperCase();
-      return `<li class="quiz-item"><a href="quizzes/${file}">${label}</a></li>`;
-    }).join("")}
-  </ul>
-</section>`;
-  })
+  .map(prefix => buildSection(prefix, groups[prefix]))
   .join("\n")}
 
 </div>
 
 <script>
-// Search filter
+// Improved search: searches long names + labels
 const search = document.getElementById("search");
 search.addEventListener("input", () => {
     const term = search.value.toLowerCase();
     const items = document.querySelectorAll(".quiz-item");
 
     items.forEach(li => {
-        const text = li.innerText.toLowerCase();
+        const text = li.dataset.search;
         li.style.display = text.includes(term) ? "" : "none";
     });
 });
 </script>
 
 </body>
-</html>`;
+</html>
+`;
 
 fs.writeFileSync(path.join(__dirname, "index.html"), html, "utf8");
 

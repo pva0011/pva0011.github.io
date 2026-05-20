@@ -8,17 +8,17 @@
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* LIGHT MODE VARIABLES */
+/* LIGHT MODE */
 :root {
   --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --text: #fff;
   --card-bg: #ffffff;
   --card-text: #222;
   --accent: #667eea;
-  --translucent: rgba(255,255,255,0.3);
+  --glass: rgba(255,255,255,0.3);
 }
 
-/* DARK MODE OVERRIDE */
+/* DARK MODE */
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0f0f14;
@@ -26,7 +26,7 @@
     --card-bg: #1b1b22;
     --card-text: #eee;
     --accent: #9fa8ff;
-    --translucent: rgba(255,255,255,0.15);
+    --glass: rgba(255,255,255,0.15);
   }
 }
 
@@ -51,7 +51,7 @@ h1 {
   text-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
 
-/* SEARCH BAR — same style as progress bar background */
+/* Search bar (glass style) */
 #search {
   width: 100%;
   padding: 14px;
@@ -60,7 +60,7 @@ h1 {
   border-radius: 10px;
   border: none;
   outline: none;
-  background: var(--translucent);
+  background: var(--glass);
   color: var(--text);
   backdrop-filter: blur(6px);
 }
@@ -78,7 +78,7 @@ h1 {
 }
 
 .tag {
-  background: var(--translucent);
+  background: var(--glass);
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 14px;
@@ -91,7 +91,7 @@ h1 {
   margin-left: 8px;
 }
 
-/* QUIZ CARDS — same style family as quiz UI */
+/* Quiz cards */
 .quiz-list {
   list-style: none;
   padding: 0;
@@ -127,50 +127,77 @@ h1 {
 
 <h1>📚 Índice de Quizzes</h1>
 
-<input type="text" id="search" placeholder="Buscar… (ej: sge, psp 2, ciber)" />
+<input type="text" id="search" placeholder="Buscar por nombre completo…" />
 
 
 <section class="section">
-  <h2>Desarrollo de Interfaces 
-      <span class="tag">DI</span> 
+  <h2>Desarrollo de Interfaces <span class="tag">DI</span>
       <span class="count">(2 quizzes)</span>
   </h2>
   <ul class="quiz-list">
-    <li class="quiz-item"><a href="quizzes/di-1.html">DI-1</a></li><li class="quiz-item"><a href="quizzes/di-2.html">DI-2</a></li>
+
+      <li class="quiz-item" data-search="desarrollo de interfaces di-1">
+        <a href="./quizzes/di-1.html">DI-1</a>
+      </li>
+      <li class="quiz-item" data-search="desarrollo de interfaces di-2">
+        <a href="./quizzes/di-2.html">DI-2</a>
+      </li>
   </ul>
 </section>
 
+
 <section class="section">
-  <h2>Programación de Servicios y Procesos 
-      <span class="tag">PSP</span> 
+  <h2>Programación de Servicios y Procesos <span class="tag">PSP</span>
       <span class="count">(3 quizzes)</span>
   </h2>
   <ul class="quiz-list">
-    <li class="quiz-item"><a href="quizzes/psp-1.html">PSP-1</a></li><li class="quiz-item"><a href="quizzes/psp-2.html">PSP-2</a></li><li class="quiz-item"><a href="quizzes/psp-3.html">PSP-3</a></li>
+
+      <li class="quiz-item" data-search="programación de servicios y procesos psp-1">
+        <a href="./quizzes/psp-1.html">PSP-1</a>
+      </li>
+      <li class="quiz-item" data-search="programación de servicios y procesos psp-2">
+        <a href="./quizzes/psp-2.html">PSP-2</a>
+      </li>
+      <li class="quiz-item" data-search="programación de servicios y procesos psp-3">
+        <a href="./quizzes/psp-3.html">PSP-3</a>
+      </li>
   </ul>
 </section>
 
+
 <section class="section">
-  <h2>Sistemas de Gestión Empresarial 
-      <span class="tag">SGE</span> 
+  <h2>Sistemas de Gestión Empresarial <span class="tag">SGE</span>
       <span class="count">(4 quizzes)</span>
   </h2>
   <ul class="quiz-list">
-    <li class="quiz-item"><a href="quizzes/sge-1.html">SGE-1</a></li><li class="quiz-item"><a href="quizzes/sge-2.html">SGE-2</a></li><li class="quiz-item"><a href="quizzes/sge-3.html">SGE-3</a></li><li class="quiz-item"><a href="quizzes/sge-4.html">SGE-4</a></li>
+
+      <li class="quiz-item" data-search="sistemas de gestión empresarial sge-1">
+        <a href="./quizzes/sge-1.html">SGE-1</a>
+      </li>
+      <li class="quiz-item" data-search="sistemas de gestión empresarial sge-2">
+        <a href="./quizzes/sge-2.html">SGE-2</a>
+      </li>
+      <li class="quiz-item" data-search="sistemas de gestión empresarial sge-3">
+        <a href="./quizzes/sge-3.html">SGE-3</a>
+      </li>
+      <li class="quiz-item" data-search="sistemas de gestión empresarial sge-4">
+        <a href="./quizzes/sge-4.html">SGE-4</a>
+      </li>
   </ul>
 </section>
+
 
 </div>
 
 <script>
-// Search filter
+// Improved search: searches long names + labels
 const search = document.getElementById("search");
 search.addEventListener("input", () => {
     const term = search.value.toLowerCase();
     const items = document.querySelectorAll(".quiz-item");
 
     items.forEach(li => {
-        const text = li.innerText.toLowerCase();
+        const text = li.dataset.search;
         li.style.display = text.includes(term) ? "" : "none";
     });
 });

@@ -1,0 +1,16 @@
+{
+  "name": "pva0011.github.io",
+  "version": "1.0.0",
+  "description": "",
+  "main": "build-index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com-pva0011:pva0011/pva0011.github.io.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
