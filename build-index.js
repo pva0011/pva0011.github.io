@@ -36,193 +36,327 @@ files.forEach(file => {
 
 Object.values(groups).forEach(list => list.sort());
 
-function buildSection(prefix, files) {
-  const title = PREFIXES[prefix];
-  const count = files.length;
-
-  let html = `
-<section class="section">
-  <h2>${title} <span class="tag">${prefix.toUpperCase()}</span>
-      <span class="count">(${count} quizzes)</span>
-  </h2>
-  <ul class="quiz-list">
-`;
-
-  files.forEach(file => {
-    const label = file.replace(".html", "").toUpperCase();
-    const searchText = `${title.toLowerCase()} ${label.toLowerCase()}`;
-
-    html += `
-      <li class="quiz-item" data-search="${searchText}">
-        <a href="./quizzes/${file}">${label}</a>
-      </li>`;
-  });
-
-  html += `
-  </ul>
-</section>
-`;
-  return html;
-}
-
-
 const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
 <title>Índice de Quizzes</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-/* LIGHT MODE */
-:root {
-  --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --text: #fff;
-  --card-bg: #ffffff;
-  --card-text: #222;
-  --accent: #667eea;
-  --glass: rgba(255,255,255,0.3);
-}
-
-/* DARK MODE */
-@media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f0f14;
-    --text: #eee;
-    --card-bg: #1b1b22;
-    --card-text: #eee;
-    --accent: #9fa8ff;
-    --glass: rgba(255,255,255,0.15);
+    --bg: #f6f1e7;
+    --bg-deep: #efe4d6;
+    --ink: #171717;
+    --muted: #5b5b5b;
+    --accent: #d3542c;
+    --accent-light: #ff8f5a;
+    --accent-dark: #b14320;
+    --teal: #1f6f78;
+    --card: #fff7ef;
+    --stroke: #e3d6c5;
+    --shadow: 0 18px 40px rgba(23, 23, 23, 0.12);
+    --radius-md: 12px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+    --radius-2xl: 22px;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'IBM Plex Sans', sans-serif;
   }
-}
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background: var(--bg);
-  min-height: 100vh;
-  padding: 20px;
-  color: var(--text);
-}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-.container {
-  max-width: 700px;
-  margin: 0 auto;
-}
+  body {
+    font-family: var(--font-body);
+    background:
+      radial-gradient(240px 140px at 10% -10%, #ffd2b9 0%, transparent 70%),
+      radial-gradient(220px 160px at 90% 0%, #cfe7e6 0%, transparent 65%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 48px 20px;
+  }
 
-h1 {
-  text-align: center;
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-}
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+  }
 
-/* Search bar (glass style) */
-#search {
-  width: 100%;
-  padding: 14px;
-  margin: 20px 0 30px 0;
-  font-size: 18px;
-  border-radius: 10px;
-  border: none;
-  outline: none;
-  background: var(--glass);
-  color: var(--text);
-  backdrop-filter: blur(6px);
-}
+  h1 {
+    font-family: var(--font-display);
+    font-size: 2.2em;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 8px;
+    color: var(--ink);
+  }
 
-.section {
-  margin-bottom: 40px;
-}
+  .subtitle {
+    text-align: center;
+    color: var(--muted);
+    font-size: 1em;
+    margin-bottom: 12px;
+  }
 
-.section h2 {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 14px;
-  color: var(--text);
-  text-shadow: 0 1px 6px rgba(0,0,0,0.2);
-}
+  .badge-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
 
-.tag {
-  background: var(--glass);
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 14px;
-  margin-left: 6px;
-}
+  .badge {
+    background: rgba(31, 111, 120, 0.1);
+    color: var(--teal);
+    border: 1px solid rgba(31, 111, 120, 0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.82em;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
 
-.count {
-  font-size: 14px;
-  opacity: 0.85;
-  margin-left: 8px;
-}
+  #search {
+    width: 100%;
+    padding: 14px 18px;
+    margin-bottom: 40px;
+    font-family: var(--font-body);
+    font-size: 1em;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--stroke);
+    background: #fff;
+    color: var(--ink);
+    outline: none;
+    box-shadow: 0 4px 16px rgba(23,23,23,0.07);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
 
-/* Quiz cards */
-.quiz-list {
-  list-style: none;
-  padding: 0;
-}
+  #search::placeholder { color: #aaa; }
 
-.quiz-item {
-  background: var(--card-bg);
-  margin: 12px 0;
-  padding: 18px;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-  font-size: 18px;
-  transition: transform 0.2s, box-shadow 0.2s;
-  color: var(--card-text);
-}
+  #search:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(211, 84, 44, 0.12);
+  }
 
-.quiz-item:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 50px rgba(0,0,0,0.25);
-}
+  .section {
+    margin-bottom: 44px;
+  }
 
-.quiz-item a {
-  text-decoration: none;
-  color: var(--accent);
-  font-weight: 600;
-  display: block;
-}
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .section-header h2 {
+    font-family: var(--font-display);
+    font-size: 1.05em;
+    font-weight: 700;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .tag {
+    background: rgba(211, 84, 44, 0.1);
+    color: var(--accent-dark);
+    padding: 2px 8px;
+    border-radius: 5px;
+    font-size: 0.72em;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .count {
+    color: var(--muted);
+    font-size: 0.8em;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .quiz-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .quiz-item {
+    background: var(--card);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 16px rgba(23,23,23,0.07);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .quiz-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+  }
+
+  .quiz-item a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    text-decoration: none;
+    color: var(--ink);
+    font-weight: 500;
+    font-size: 0.97em;
+  }
+
+  .quiz-item a::after {
+    content: '→';
+    color: var(--accent);
+    font-size: 1.1em;
+    opacity: 0.7;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+
+  .quiz-item:hover a::after {
+    opacity: 1;
+    transform: translateX(3px);
+  }
+
+  .no-results {
+    text-align: center;
+    color: var(--muted);
+    padding: 40px 0;
+    font-size: 0.95em;
+    display: none;
+  }
+
+  @media (max-width: 520px) {
+    h1 { font-size: 1.7em; }
+    body { padding: 32px 16px; }
+  }
 </style>
 </head>
 
 <body>
 <div class="container">
 
-<h1>📚 Índice de Quizzes</h1>
+  <h1>📚 Índice de Quizzes</h1>
+  <p class="subtitle">Selecciona un quiz para comenzar a practicar</p>
+  <p class="badge-row"><span class="badge">DAM · 2º año</span><span class="badge">Temas 8 – 15</span></p>
 
-<input type="text" id="search" placeholder="Buscar por nombre completo…" />
+  <input type="text" id="search" placeholder="Buscar… (ej: sge, psp 2, ciber)" autocomplete="off" />
 
-${Object.keys(groups)
-  .sort()
-  .map(prefix => buildSection(prefix, groups[prefix]))
-  .join("\n")}
+  ${Object.keys(groups)
+    .sort()
+    .map(prefix => {
+      const count = groups[prefix].length;
+      return `
+<section class="section" data-prefix="${prefix}">
+  <div class="section-header">
+    <h2>${PREFIXES[prefix]}</h2>
+    <span class="tag">${prefix.toUpperCase()}</span>
+    <span class="count">${count} quiz${count !== 1 ? 'zes' : ''}</span>
+  </div>
+  <ul class="quiz-list">
+    ${groups[prefix].map((file, idx) => {
+      const num = (file.match(/(\d+)/) || [])[1];
+      const label = num
+        ? `${prefix.toUpperCase()} · Quiz ${num}`
+        : `${prefix.toUpperCase()} · Quiz ${idx + 1}`;
+      return `<li class="quiz-item" data-subject="${PREFIXES[prefix].toLowerCase()}"><a href="quizzes/${file}">${label}</a></li>`;
+    }).join("")}
+  </ul>
+</section>`;
+    })
+    .join("\n")}
+
+  <p class="no-results" id="no-results">No se encontraron quizzes para "<span id="no-results-term"></span>".</p>
 
 </div>
 
 <script>
-// Improved search: searches long names + labels
-const search = document.getElementById("search");
-search.addEventListener("input", () => {
-    const term = search.value.toLowerCase();
-    const items = document.querySelectorAll(".quiz-item");
+  const search = document.getElementById("search");
+  const noResults = document.getElementById("no-results");
+  const noResultsTerm = document.getElementById("no-results-term");
 
-    items.forEach(li => {
-        const text = li.dataset.search;
-        li.style.display = text.includes(term) ? "" : "none";
+  search.addEventListener("input", () => {
+    const term = search.value.toLowerCase().trim();
+    let visible = 0;
+
+    document.querySelectorAll(".quiz-item").forEach(li => {
+      const text = li.innerText.toLowerCase();
+      const subject = (li.dataset.subject || "");
+      const show = !term || text.includes(term) || subject.includes(term);
+      li.style.display = show ? "" : "none";
+      if (show) visible++;
     });
-});
+
+    // Hide sections where all items are hidden
+    document.querySelectorAll(".section").forEach(section => {
+      const anyVisible = [...section.querySelectorAll(".quiz-item")]
+        .some(li => li.style.display !== "none");
+      section.style.display = anyVisible ? "" : "none";
+    });
+
+    if (term && visible === 0) {
+      noResults.style.display = "block";
+      noResultsTerm.textContent = search.value;
+    } else {
+      noResults.style.display = "none";
+    }
+  });
 </script>
 
 </body>
-</html>
-`;
+</html>`;
 
 fs.writeFileSync(path.join(__dirname, "index.html"), html, "utf8");
 
 console.log("index.html actualizado ✔️");
+// Translate hardcoded English strings in quiz files
+const TRANSLATIONS = [
+  [/\bHint\b/g,                                "Pista"],
+  [/✓ Right answer/g,                          "✓ Correcto"],
+  [/✕ Not quite/g,                             "✕ Incorrecto"],
+  [/Back to Results/g,                         "Volver a resultados"],
+  [/Review Quiz/g,                             "Revisar Quiz"],
+  [/Retake Quiz/g,                             "Repetir Quiz"],
+  [/You did it! Quiz Complete\./g,             "¡Lo lograste! Quiz completado."],
+  [/Review your score or take another run\./g, "Revisa tu puntuación o inténtalo de nuevo."],
+  [/\bScore\b/g,                               "Puntuación"],
+  [/\bAccuracy\b/g,                            "Precisión"],
+  [/\bRight\b/g,                               "Correctas"],
+  [/\bWrong\b/g,                               "Incorrectas"],
+  [/\bSkipped\b/g,                             "Omitidas"],
+  [/\bFinish\b/g,                              "Finalizar"],
+  [/\bPrevious\b/g,                            "Anterior"],
+  [/\bNext\b/g,                                "Siguiente"],
+  [/No hint available for this question\./g,   "No hay pista disponible para esta pregunta."],
+];
 
+const quizFiles = fs.readdirSync(QUIZ_DIR).filter(f => f.endsWith(".html"));
+let translated = 0;
+
+quizFiles.forEach(file => {
+  const filePath = path.join(QUIZ_DIR, file);
+  let content = fs.readFileSync(filePath, "utf8");
+  const original = content;
+
+  TRANSLATIONS.forEach(([pattern, replacement]) => {
+    content = content.replace(pattern, replacement);
+  });
+
+  if (content !== original) {
+    fs.writeFileSync(filePath, content, "utf8");
+    translated++;
+    console.log(`  ✔ ${file}`);
+  }
+});
+
+console.log(`Traducidos ${translated} archivo(s) ✔️`);
