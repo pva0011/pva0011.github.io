@@ -1,15 +1,16 @@
 name: Build Index
-
 on:
   push:
     branches:
       - main
       - master
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -22,14 +23,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build index.html
+      - name: Build index.html + translate quizzes
         run: node build-index.js
 
-      - name: Commit updated index.html
+      - name: Commit changes
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add index.html
-          git commit -m "Auto-build index" || echo "No changes"
+          git add index.html quizzes/
+          git commit -m "Auto-build index + translate quizzes" || echo "No changes"
           git push
-
