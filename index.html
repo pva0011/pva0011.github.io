@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>Índice de Quizzes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* LIGHT MODE VARIABLES */
+:root {
+  --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --text: #fff;
+  --card-bg: #ffffff;
+  --card-text: #222;
+  --accent: #667eea;
+  --translucent: rgba(255,255,255,0.3);
+}
+
+/* DARK MODE OVERRIDE */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f0f14;
+    --text: #eee;
+    --card-bg: #1b1b22;
+    --card-text: #eee;
+    --accent: #9fa8ff;
+    --translucent: rgba(255,255,255,0.15);
+  }
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  padding: 20px;
+  color: var(--text);
+}
+
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+h1 {
+  text-align: center;
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+/* SEARCH BAR — same style as progress bar background */
+#search {
+  width: 100%;
+  padding: 14px;
+  margin: 20px 0 30px 0;
+  font-size: 18px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  background: var(--translucent);
+  color: var(--text);
+  backdrop-filter: blur(6px);
+}
+
+.section {
+  margin-bottom: 40px;
+}
+
+.section h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  color: var(--text);
+  text-shadow: 0 1px 6px rgba(0,0,0,0.2);
+}
+
+.tag {
+  background: var(--translucent);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-left: 6px;
+}
+
+.count {
+  font-size: 14px;
+  opacity: 0.85;
+  margin-left: 8px;
+}
+
+/* QUIZ CARDS — same style family as quiz UI */
+.quiz-list {
+  list-style: none;
+  padding: 0;
+}
+
+.quiz-item {
+  background: var(--card-bg);
+  margin: 12px 0;
+  padding: 18px;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  font-size: 18px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  color: var(--card-text);
+}
+
+.quiz-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 50px rgba(0,0,0,0.25);
+}
+
+.quiz-item a {
+  text-decoration: none;
+  color: var(--accent);
+  font-weight: 600;
+  display: block;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>📚 Índice de Quizzes</h1>
+
+<input type="text" id="search" placeholder="Buscar… (ej: sge, psp 2, ciber)" />
+
+
+<section class="section">
+  <h2>Desarrollo de Interfaces 
+      <span class="tag">DI</span> 
+      <span class="count">(2 quizzes)</span>
+  </h2>
+  <ul class="quiz-list">
+    <li class="quiz-item"><a href="quizzes/di-1.html">DI-1</a></li><li class="quiz-item"><a href="quizzes/di-2.html">DI-2</a></li>
+  </ul>
+</section>
+
+<section class="section">
+  <h2>Programación de Servicios y Procesos 
+      <span class="tag">PSP</span> 
+      <span class="count">(3 quizzes)</span>
+  </h2>
+  <ul class="quiz-list">
+    <li class="quiz-item"><a href="quizzes/psp-1.html">PSP-1</a></li><li class="quiz-item"><a href="quizzes/psp-2.html">PSP-2</a></li><li class="quiz-item"><a href="quizzes/psp-3.html">PSP-3</a></li>
+  </ul>
+</section>
+
+<section class="section">
+  <h2>Sistemas de Gestión Empresarial 
+      <span class="tag">SGE</span> 
+      <span class="count">(4 quizzes)</span>
+  </h2>
+  <ul class="quiz-list">
+    <li class="quiz-item"><a href="quizzes/sge-1.html">SGE-1</a></li><li class="quiz-item"><a href="quizzes/sge-2.html">SGE-2</a></li><li class="quiz-item"><a href="quizzes/sge-3.html">SGE-3</a></li><li class="quiz-item"><a href="quizzes/sge-4.html">SGE-4</a></li>
+  </ul>
+</section>
+
+</div>
+
+<script>
+// Search filter
+const search = document.getElementById("search");
+search.addEventListener("input", () => {
+    const term = search.value.toLowerCase();
+    const items = document.querySelectorAll(".quiz-item");
+
+    items.forEach(li => {
+        const text = li.innerText.toLowerCase();
+        li.style.display = text.includes(term) ? "" : "none";
+    });
+});
+</script>
+
+</body>
+</html>

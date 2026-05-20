@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Servicios Cuestionario</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh; padding: 20px; color: #333;
+}
+.container { max-width: 700px; margin: 0 auto; }
+.header { text-align: center; color: #fff; padding: 30px 20px; }
+.header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+.header .meta { font-size: 14px; opacity: 0.9; }
+.progress-bar { background: rgba(255,255,255,0.3); border-radius: 10px; height: 8px; margin: 20px 0; overflow: hidden; }
+.progress-fill { background: #fff; height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 10px; }
+.question { background: #fff; border-radius: 16px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
+.question.active { display: block; }
+.q-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: #888; }
+.q-number { font-weight: 600; color: #667eea; }
+.q-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 25px; color: #222; }
+.options { display: flex; flex-direction: column; gap: 12px; }
+.option-wrapper { display: flex; flex-direction: column; }
+.option {
+  display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
+  border: 2px solid #e8e8e8; border-radius: 12px; background: #fafafa;
+  cursor: pointer; transition: all 0.2s; text-align: left; font-size: 15px; width: 100%;
+}
+[dir="rtl"] .option { text-align: right; flex-direction: row-reverse; }
+.option:hover:not(.disabled) { border-color: #667eea; background: #f5f3ff; }
+.option.selected { border-color: #667eea; background: #ede9fe; }
+.option.correct { border-color: #22c55e; background: #dcfce7; }
+.option.incorrect { border-color: #ef4444; background: #fee2e2; }
+.option.disabled { cursor: default; }
+.option.show-correct { border-color: #22c55e; background: #dcfce7; }
+.opt-label {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%; background: #e8e8e8;
+  font-weight: 700; font-size: 14px; flex-shrink: 0;
+}
+.option.selected .opt-label { background: #667eea; color: #fff; }
+.option.correct .opt-label { background: #22c55e; color: #fff; }
+.option.incorrect .opt-label { background: #ef4444; color: #fff; }
+.option.show-correct .opt-label { background: #22c55e; color: #fff; }
+.opt-text { padding-top: 5px; line-height: 1.5; }
+
+/* Individual option feedback */
+.option-feedback {
+  margin: 8px 0 4px 46px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+[dir="rtl"] .option-feedback { margin-left: 0; margin-right: 46px; }
+.option-feedback.correct-feedback {
+  background: #dcfce7;
+  border-left: 3px solid #22c55e;
+}
+.option-feedback.incorrect-feedback {
+  background: #fef3f2;
+  border-left: 3px solid #fca5a5;
+}
+[dir="rtl"] .option-feedback.correct-feedback,
+[dir="rtl"] .option-feedback.incorrect-feedback {
+  border-left: none;
+  border-right: 3px solid;
+}
+[dir="rtl"] .option-feedback.correct-feedback { border-right-color: #22c55e; }
+[dir="rtl"] .option-feedback.incorrect-feedback { border-right-color: #fca5a5; }
+.feedback-status {
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.feedback-status.correct { color: #166534; }
+.feedback-status.incorrect { color: #991b1b; }
+.feedback-rationale { color: #444; }
+
+/* Hint box */
+.hint-box {
+  margin: 12px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+}
+.hint-toggle {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hint-toggle:hover { background: #fef3c7; }
+.hint-content {
+  padding: 0 16px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s, padding 0.3s;
+  font-size: 14px;
+  color: #78350f;
+  line-height: 1.5;
+}
+.hint-box.show .hint-content {
+  padding: 0 16px 12px;
+  max-height: 200px;
+}
+
+.next-btn {
+  margin-top: 20px; width: 100%; padding: 14px;
+  background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none;
+  border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.next-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+.hidden { display: none !important; }
+.results { background: #fff; border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
+.results.active { display: block; }
+.results h2 { font-size: 28px; margin-bottom: 10px; color: #333; }
+.results .score { font-size: 64px; font-weight: 700; color: #667eea; margin: 20px 0; }
+.results .score-text { font-size: 18px; color: #666; margin-bottom: 30px; }
+.restart-btn {
+  padding: 14px 40px; background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+
+/* Math CSS */
+.math, .math-block { font-family: "Cambria Math", "Times New Roman", Times, serif; font-style: italic; }
+.math-block { display: block; text-align: center; margin: 10px 0; font-size: 110%; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 3px; font-size: 0.9em; }
+.frac-num { border-bottom: 1px solid currentColor; padding: 0 4px 2px; line-height: 1.2; }
+.frac-den { padding: 2px 4px 0; line-height: 1.2; }
+.sqrt { white-space: nowrap; }
+.sqrt-content { border-top: 1px solid currentColor; padding: 0 3px; margin-left: 2px; }
+sup, sub { font-size: 0.75em; }
+sup { vertical-align: super; }
+sub { vertical-align: sub; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Servicios Cuestionario</h1>
+    <div class="meta">26 questions</div>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+  <div id="quiz-container">
+        <div class="question" data-index="0">
+          <div class="q-header">
+            <span class="q-number">Question 1</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">¿Cuál es la función principal del formato XML en la arquitectura de los servicios web?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en la necesidad de que sistemas heterogéneos intercambien información de forma estructurada.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La gestión de direcciones IP es tarea de protocolos de red como DHCP, no de un lenguaje de representación de datos.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Gestionar la asignación de direcciones IP dinámicas a los nodos del sistema.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La gestión de direcciones IP es tarea de protocolos de red como DHCP, no de un lenguaje de representación de datos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="XML es un formato de marcado de texto y no está diseñado específicamente para la optimización de velocidad o cifrado por sí solo.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Optimizar la velocidad de transmisión de datos cifrados en redes de área local.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">XML es un formato de marcado de texto y no está diseñado específicamente para la optimización de velocidad o cifrado por sí solo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="El uso de XML garantiza que el cliente y el servidor puedan entenderse independientemente del sistema operativo o lenguaje que utilicen.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Actuar como un estándar de representación de datos independiente de la plataforma para permitir la comunicación.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El uso de XML garantiza que el cliente y el servidor puedan entenderse independientemente del sistema operativo o lenguaje que utilicen.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="XML funciona sobre protocolos como HTTP, pero no lo reemplaza en la pila de protocolos.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Sustituir al protocolo HTTP en la capa de transporte del modelo TCP/IP.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">XML funciona sobre protocolos como HTTP, pero no lo reemplaza en la pila de protocolos.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="1">
+          <div class="q-header">
+            <span class="q-number">Question 2</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">En la arquitectura SOA, ¿qué diferencia fundamental existe entre SOA y SOAP?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Relacione los términos con 'modelo' versus 'herramienta de comunicación'.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Ambas tecnologías son aplicables tanto en redes locales como en Internet para sistemas distribuidos.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">SOA solo se utiliza en redes locales y SOAP es exclusivo para Internet.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Ambas tecnologías son aplicables tanto en redes locales como en Internet para sistemas distribuidos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="SOAP sigue siendo una tecnología clave utilizada dentro de las implementaciones de SOA.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">SOAP ha quedado obsoleto con la llegada de la arquitectura SOA de segunda generación.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">SOAP sigue siendo una tecnología clave utilizada dentro de las implementaciones de SOA.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="SOA define la estrategia de diseño basada en servicios, y SOAP es una de las formas técnicas de implementar la comunicación en dicho modelo.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">SOA es el modelo de arquitectura, mientras que SOAP es el protocolo de comunicación.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">SOA define la estrategia de diseño basada en servicios, y SOAP es una de las formas técnicas de implementar la comunicación en dicho modelo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Ninguno es un lenguaje de programación; son conceptos arquitectónicos y protocolos de intercambio de mensajes.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">SOA es un lenguaje de programación y SOAP es un servidor de aplicaciones.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Ninguno es un lenguaje de programación; son conceptos arquitectónicos y protocolos de intercambio de mensajes.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="2">
+          <div class="q-header">
+            <span class="q-number">Question 3</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">Según el material, ¿qué caracteriza a la 'Arquitectura Orientada a Servicios de segunda generación'?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en las mejoras de 'calidad de servicio' que no estaban presentes en el modelo tradicional.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="SOA se basa inherentemente en la distribución de servicios, no en la centralización física absoluta.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">La centralización de todos los servicios en un único servidor de hardware para evitar la latencia.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">SOA se basa inherentemente en la distribución de servicios, no en la centralización física absoluta.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="La interoperabilidad de SOA se basa precisamente en el uso de estándares abiertos.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">El uso exclusivo de protocolos propietarios en lugar de estándares abiertos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La interoperabilidad de SOA se basa precisamente en el uso de estándares abiertos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Esta generación amplía la funcionalidad básica añadiendo políticas de calidad de servicio aprobadas por organismos como OASIS.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">La inclusión de características avanzadas como seguridad, transaccionalidad y gestión según los estándares WS.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta generación amplía la funcionalidad básica añadiendo políticas de calidad de servicio aprobadas por organismos como OASIS.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="XML sigue siendo fundamental en los estándares WS de segunda generación.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">La eliminación del uso de XML para mejorar la velocidad de procesamiento en el cliente.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">XML sigue siendo fundamental en los estándares WS de segunda generación.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="3">
+          <div class="q-header">
+            <span class="q-number">Question 4</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">Si Pilar implementa el método Java para calcular el volumen de una esfera, ¿qué anotación es necesaria para que el método sea accesible como una operación del Web Service?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Revise el código de ejemplo donde se define la operación 'volumen'.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Aunque suena lógica, la anotación estándar utilizada en los ejemplos del código es @WebMethod.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">@ServiceOperation</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque suena lógica, la anotación estándar utilizada en los ejemplos del código es @WebMethod.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Se refiere a una propiedad de la cabecera del protocolo, no a la anotación del método en el código Java mostrado.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">@SoapAction</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Se refiere a una propiedad de la cabecera del protocolo, no a la anotación del método en el código Java mostrado.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Esta anotación de Java indica específicamente que un método público debe ser expuesto como una operación del servicio web.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">@WebMethod</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta anotación de Java indica específicamente que un método público debe ser expuesto como una operación del servicio web.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Esta anotación no existe en el estándar JAX-WS para definir operaciones de servicio.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">@WebAttribute</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta anotación no existe en el estándar JAX-WS para definir operaciones de servicio.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="4">
+          <div class="q-header">
+            <span class="q-number">Question 5</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">En el modelo Cliente/Servidor, ¿qué significa que el servidor tenga un 'rol pasivo'?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere quién inicia la comunicación en este paradigma.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Es el servidor quien suele realizar el procesamiento pesado, a pesar de su rol reactivo.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Que no puede realizar cálculos complejos y delega el procesamiento en el cliente.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Es el servidor quien suele realizar el procesamiento pesado, a pesar de su rol reactivo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="El servidor debe estar permanentemente disponible, independientemente del volumen de peticiones.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Que se apaga automáticamente si no recibe peticiones en un tiempo determinado.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El servidor debe estar permanentemente disponible, independientemente del volumen de peticiones.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="En esta arquitectura, la acción siempre la inicia el cliente; el servidor solo reacciona a las solicitudes entrantes.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Que permanece a la espera de que los clientes inicien las peticiones de servicio.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">En esta arquitectura, la acción siempre la inicia el cliente; el servidor solo reacciona a las solicitudes entrantes.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Un servidor puede ser pasivo y atender a múltiples clientes de forma concurrente.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Que solo puede atender a un cliente a la vez para mantener la integridad.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Un servidor puede ser pasivo y atender a múltiples clientes de forma concurrente.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="5">
+          <div class="q-header">
+            <span class="q-number">Question 6</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">¿Cuál es la principal motivación para evolucionar de un sistema de 2 capas a uno de 3 capas?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en las limitaciones del modelo tradicional ante un gran volumen de clientes.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="El número de capas no afecta directamente al mecanismo de ACK de la capa de transporte.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Reducir el número de mensajes de confirmación (ACK) necesarios en la red.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El número de capas no afecta directamente al mecanismo de ACK de la capa de transporte.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="HTTP siempre requiere una URL para identificar recursos, independientemente de las capas.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Garantizar que el protocolo HTTP no necesite una dirección URL.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">HTTP siempre requiere una URL para identificar recursos, independientemente de las capas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Al añadir una capa intermedia (servidor de aplicaciones), se evita sobrecargar un único punto y se facilita el crecimiento del sistema.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Mejorar la escalabilidad y separar la lógica de negocio de la gestión de datos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Al añadir una capa intermedia (servidor de aplicaciones), se evita sobrecargar un único punto y se facilita el crecimiento del sistema.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Eso describe un sistema de 1 capa, no uno de 3.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Permitir que el cliente y el servidor se ejecuten en el mismo ordenador.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Eso describe un sistema de 1 capa, no uno de 3.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="6">
+          <div class="q-header">
+            <span class="q-number">Question 7</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">En el contexto de la fiabilidad de red, ¿qué función cumple el 'vector de ACK'?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Relaciónelo con el envío de mensajes en grupo en lugar de uno por uno.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="El control de flujo y errores mediante ACK no es una técnica de cifrado.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Codificar los datos del cliente para que solo el servidor de aplicaciones pueda leerlos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El control de flujo y errores mediante ACK no es una técnica de cifrado.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Es una técnica de software de comunicaciones, no afecta al hardware físico de la CPU.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Acelerar la velocidad de la CPU del servidor durante picos de concurrencia.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Es una técnica de software de comunicaciones, no afecta al hardware físico de la CPU.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Permite al emisor saber exactamente qué paquetes reenviar en una transmisión por ráfagas.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Llevar un control de qué mensajes de un grupo han sido recibidos correctamente para gestionar errores.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Permite al emisor saber exactamente qué paquetes reenviar en una transmisión por ráfagas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El vector de ACK es un mecanismo de confirmación, no de resolución de nombres.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Identificar la dirección IP del próximo salto en el protocolo DNS.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El vector de ACK es un mecanismo de confirmación, no de resolución de nombres.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="7">
+          <div class="q-header">
+            <span class="q-number">Question 8</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">¿Por qué es fundamental el uso de un diagrama de estados (autómata) en la programación del servidor?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en cómo controlar el orden lógico de una conversación entre programas.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Los diagramas de estados gestionan lógica de control, no la generación de interfaces de usuario.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Para convertir automáticamente el código Java en páginas HTML visuales.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los diagramas de estados gestionan lógica de control, no la generación de interfaces de usuario.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="El autómata define qué comandos son válidos en cada fase de la comunicación, reforzando la seguridad y consistencia.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Para evitar que los clientes realicen operaciones no autorizadas o envíen mensajes mal formados según el contexto.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El autómata define qué comandos son válidos en cada fase de la comunicación, reforzando la seguridad y consistencia.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Un servidor requiere red para su propósito, el autómata solo gestiona la lógica de la sesión.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Para permitir que el servidor funcione sin necesidad de una conexión de red activa.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Un servidor requiere red para su propósito, el autómata solo gestiona la lógica de la sesión.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El diseño lógico mediante autómatas no influye en la necesidad física de almacenamiento.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Para reducir el hardware necesario mediante la eliminación de la capa de datos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El diseño lógico mediante autómatas no influye en la necesidad física de almacenamiento.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="8">
+          <div class="q-header">
+            <span class="q-number">Question 9</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">Dentro de la clasificación de servicios en red, ¿a qué categoría pertenecen DHCP y DNS?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere qué aspecto de la infraestructura de red gestionan estos protocolos.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Se refiere a sistemas como FTP destinados al almacenamiento y transferencia de archivos.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Servicios de ficheros.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Se refiere a sistemas como FTP destinados al almacenamiento y transferencia de archivos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Estos servicios facilitan la gestión técnica de la red asignando direcciones y resolviendo nombres.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Servicios de administración y configuración.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Estos servicios facilitan la gestión técnica de la red asignando direcciones y resolviendo nombres.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Esa categoría incluye servicios como HTTP, que entregan contenido según la solicitud del usuario.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Servicios de información.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esa categoría incluye servicios como HTTP, que entregan contenido según la solicitud del usuario.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Incluiría Telnet o SSH, que permiten controlar máquinas a distancia.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Servicios de acceso remoto.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Incluiría Telnet o SSH, que permiten controlar máquinas a distancia.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="9">
+          <div class="q-header">
+            <span class="q-number">Question 10</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">¿Cuál es la principal desventaja del protocolo FTP tradicional en términos de seguridad?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en cómo viaja la información a través del cable o el aire.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="Esto lo hace vulnerable a interceptaciones (sniffing), ya que los datos no viajan cifrados.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Transmite toda la información, incluyendo credenciales, en formato de texto plano.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esto lo hace vulnerable a interceptaciones (sniffing), ya que los datos no viajan cifrados.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="FTP funciona directamente sobre el sistema de archivos del servidor.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Requiere obligatoriamente el uso de una base de datos distribuida para funcionar.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">FTP funciona directamente sobre el sistema de archivos del servidor.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="FTP es muy rápido; su debilidad no es la velocidad, sino la falta de codificación.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Limita la velocidad de transferencia a solo 3 MB por mensaje.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">FTP es muy rápido; su debilidad no es la velocidad, sino la falta de codificación.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Los servidores FTP suelen soportar múltiples conexiones concurrentes.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Solo permite la conexión de un único usuario de forma simultánea.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los servidores FTP suelen soportar múltiples conexiones concurrentes.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="10">
+          <div class="q-header">
+            <span class="q-number">Question 11</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">¿Qué protocolo se utiliza cuando un usuario desea consultar sus correos electrónicos directamente en el servidor sin descargarlos permanentemente a su máquina local?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Existen dos protocolos de recepción; uno descarga y el otro sincroniza.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="POP3 está diseñado típicamente para descargar los mensajes y eliminarlos del servidor.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">POP3</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">POP3 está diseñado típicamente para descargar los mensajes y eliminarlos del servidor.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="A diferencia de POP3, IMAP permite la gestión y consulta de mensajes manteniendo la sincronización con el servidor.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">IMAP</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A diferencia de POP3, IMAP permite la gestión y consulta de mensajes manteniendo la sincronización con el servidor.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="SMTP se encarga exclusivamente del transporte y envío de correos, no de la recepción o consulta por parte del cliente final.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">SMTP</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">SMTP se encarga exclusivamente del transporte y envío de correos, no de la recepción o consulta por parte del cliente final.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="DNS resuelve nombres de dominio y no tiene relación directa con la gestión de buzones de correo.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">DNS</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">DNS resuelve nombres de dominio y no tiene relación directa con la gestión de buzones de correo.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="11">
+          <div class="q-header">
+            <span class="q-number">Question 12</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">Al programar un cliente HTTP en Java, ¿qué clase representa específicamente la dirección de la página web?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Diferencie entre el 'objeto dirección' y el 'objeto conexión'.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Se utiliza para comunicaciones basadas en UDP, mientras que HTTP utiliza TCP.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">DatagramSocket</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Se utiliza para comunicaciones basadas en UDP, mientras que HTTP utiliza TCP.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="La clase URL se utiliza para encapsular y representar el identificador de un recurso en la red.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">URL</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La clase URL se utiliza para encapsular y representar el identificador de un recurso en la red.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Esta clase se utiliza para realizar la conexión y operaciones de lectura/escritura sobre la URL, no para representarla.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">URLConnection</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta clase se utiliza para realizar la conexión y operaciones de lectura/escritura sobre la URL, no para representarla.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Este término se refiere al rol del cliente en el protocolo, pero no es la clase de representación de direcciones en Java SE.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">HttpAgent</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este término se refiere al rol del cliente en el protocolo, pero no es la clase de representación de direcciones en Java SE.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="12">
+          <div class="q-header">
+            <span class="q-number">Question 13</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">¿Qué característica define al protocolo HTTP como 'sin estado' (stateless)?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere qué sucede entre una petición y la siguiente desde el punto de vista del protocolo puro.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="HTTP puede transferir cualquier tipo de recurso (imágenes, PDF, etc.) identificado por una URL.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Impide la transferencia de archivos binarios, permitiendo solo texto HTML.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">HTTP puede transferir cualquier tipo de recurso (imágenes, PDF, etc.) identificado por una URL.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="HTTP usa normalmente el puerto 80 de forma estándar.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">No utiliza puertos de comunicación fijos, sino que los cambia aleatoriamente.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">HTTP usa normalmente el puerto 80 de forma estándar.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Cada petición se procesa de forma independiente, lo que simplifica el diseño del servidor pero requiere mecanismos externos como cookies para mantener sesiones.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">No recuerda ninguna información de conexiones anteriores del mismo cliente.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Cada petición se procesa de forma independiente, lo que simplifica el diseño del servidor pero requiere mecanismos externos como cookies para mantener sesiones.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Es el protocolo base de la Web global, diseñado para redes de larga distancia.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Solo funciona si el cliente y el servidor están en la misma red local.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Es el protocolo base de la Web global, diseñado para redes de larga distancia.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="13">
+          <div class="q-header">
+            <span class="q-number">Question 14</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">En el desarrollo de servicios web SOAP con Java, ¿cuál es el objetivo del organismo JPC?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Relacione las siglas con las peticiones de especificación de Java.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Se dedica a estándares de software y especificaciones, no a la fabricación de hardware.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Fabricar el hardware necesario para ejecutar servidores GlassFish.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Se dedica a estándares de software y especificaciones, no a la fabricación de hardware.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="W3C sigue siendo el referente para estándares web generales; JPC se enfoca en el entorno Java.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Sustituir al consorcio W3C en la definición del lenguaje HTML.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">W3C sigue siendo el referente para estándares web generales; JPC se enfoca en el entorno Java.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Este organismo estandariza las peticiones de especificación para asegurar la compatibilidad en el ecosistema Java.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Definir conjuntos de especificaciones tecnológicas denominadas JSR.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este organismo estandariza las peticiones de especificación para asegurar la compatibilidad en el ecosistema Java.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El cifrado es una implementación técnica de seguridad, no el propósito de las JSR.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Cifrar las conexiones de red mediante el protocolo SSL de forma obligatoria.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El cifrado es una implementación técnica de seguridad, no el propósito de las JSR.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="14">
+          <div class="q-header">
+            <span class="q-number">Question 15</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">Si se desea implementar seguridad en una aplicación de sockets en Java, ¿qué clase proporciona la funcionalidad de encriptación de datos?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en el término técnico para un algoritmo de cifrado.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="La clase Cipher es el motor central para realizar operaciones de cifrado y descifrado en el framework de criptografía de Java.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Cipher</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La clase Cipher es el motor central para realizar operaciones de cifrado y descifrado en el framework de criptografía de Java.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="No existe tal clase en la biblioteca estándar para realizar encriptación.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">SSLScanner</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">No existe tal clase en la biblioteca estándar para realizar encriptación.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="No es una clase estándar de la JDK para el cifrado de datos.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">SecretSocket</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">No es una clase estándar de la JDK para el cifrado de datos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Se utiliza para contener los datos de un datagrama UDP, pero no tiene funciones de cifrado integradas.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">DatagramPacket</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Se utiliza para contener los datos de un datagrama UDP, pero no tiene funciones de cifrado integradas.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="15">
+          <div class="q-header">
+            <span class="q-number">Question 16</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">Cuando hablamos de que 'únicamente las personas autorizadas puedan acceder al sistema', nos referimos al principio de:</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Diferencie entre 'ver' (acceder) y 'cambiar' (modificar).</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La integridad se refiere a asegurar que la información no sea modificada por personas no autorizadas.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Integridad</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La integridad se refiere a asegurar que la información no sea modificada por personas no autorizadas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Este principio garantiza que la información o el sistema solo sean accesibles por quienes tienen permiso expreso.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Confidencialidad</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este principio garantiza que la información o el sistema solo sean accesibles por quienes tienen permiso expreso.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Garantiza que un emisor no pueda negar el envío de un mensaje.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">No repudio</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Garantiza que un emisor no pueda negar el envío de un mensaje.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Se refiere a que el sistema esté operativo cuando se necesite, no al control de acceso per se.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Disponibilidad</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Se refiere a que el sistema esté operativo cuando se necesite, no al control de acceso per se.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="16">
+          <div class="q-header">
+            <span class="q-number">Question 17</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">Dentro de la clasificación de amenazas, ¿cuál de ellas consiste específicamente en conseguir acceder a un recurso de otra persona?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en un ataque que compromete la confidencialidad.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Implica no solo acceder, sino también alterar el contenido del recurso.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Modificación</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Implica no solo acceder, sino también alterar el contenido del recurso.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Consiste en hacer que un recurso deje de estar disponible o sea destruido.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Interrupción</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Consiste en hacer que un recurso deje de estar disponible o sea destruido.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Es la creación de objetos falsos en un sistema por parte de un atacante.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Fabricación</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Es la creación de objetos falsos en un sistema por parte de un atacante.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="La intercepción ocurre cuando un tercero no autorizado accede a la información o recursos que fluyen entre emisor y receptor.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Intercepción</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La intercepción ocurre cuando un tercero no autorizado accede a la información o recursos que fluyen entre emisor y receptor.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="17">
+          <div class="q-header">
+            <span class="q-number">Question 18</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">¿Qué protocolo surgió como una evolución directa para mejorar la seguridad del protocolo SSL?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Busque el acrónimo que suele acompañar a SSL en las configuraciones modernas.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="SSH es un protocolo independiente para acceso remoto seguro, no una evolución de SSL.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">SSH</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">SSH es un protocolo independiente para acceso remoto seguro, no una evolución de SSL.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="SFTP es una versión segura de FTP que utiliza SSH, no es el sucesor directo del protocolo de capa de transporte SSL.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">SFTP</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">SFTP es una versión segura de FTP que utiliza SSH, no es el sucesor directo del protocolo de capa de transporte SSL.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="TLS (Transport Layer Security) es el sucesor más seguro y actualizado de SSL para el cifrado de comunicaciones.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">TLS</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">TLS (Transport Layer Security) es el sucesor más seguro y actualizado de SSL para el cifrado de comunicaciones.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="HTTPS es el uso de HTTP sobre SSL/TLS, pero no es el protocolo de cifrado en sí mismo.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">HTTPS</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">HTTPS es el uso de HTTP sobre SSL/TLS, pero no es el protocolo de cifrado en sí mismo.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="18">
+          <div class="q-header">
+            <span class="q-number">Question 19</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">En Java, si estamos trabajando con Sockets UDP, ¿qué método de la clase DatagramPacket debemos usar para obtener los datos recibidos?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere el nombre más directo para obtener la información almacenada.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Es común en otras clases de red, pero no en DatagramPacket para acceder al array de bytes.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">getContent()</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Es común en otras clases de red, pero no en DatagramPacket para acceder al array de bytes.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Este método no pertenece a la clase DatagramPacket.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">readBytes()</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este método no pertenece a la clase DatagramPacket.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Este método devuelve el buffer (array de bytes) que contiene los datos transportados en el paquete.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">getData()</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este método devuelve el buffer (array de bytes) que contiene los datos transportados en el paquete.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Aunque es un término técnico correcto en redes, el nombre del método en la API de Java es getData().">
+            <span class="opt-label">D</span>
+            <span class="opt-text">getPayload()</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque es un término técnico correcto en redes, el nombre del método en la API de Java es getData().</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="19">
+          <div class="q-header">
+            <span class="q-number">Question 20</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">Según el caso práctico del 'Conversor de medidas', ¿cuál es una comprobación crítica que debe realizar el servicio SOAP para evitar excepciones en el servidor?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en qué tipo de entrada rompería un proceso de multiplicación aritmética.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La interfaz visual del cliente es irrelevante para la estabilidad lógica del servicio en el servidor.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Asegurar que el cliente utilice una interfaz gráfica basada en CSS.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La interfaz visual del cliente es irrelevante para la estabilidad lógica del servicio en el servidor.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Los servicios web son independientes de la plataforma por definición.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Comprobar que el sistema operativo del cliente sea igual al del servidor.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los servicios web son independientes de la plataforma por definición.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Si el cliente envía letras o un campo nulo, el intento de realizar un cálculo matemático provocará un error de ejecución inmediato.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Validar que el dato enviado por el cliente sea numérico y no esté vacío.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Si el cliente envía letras o un campo nulo, el intento de realizar un cálculo matemático provocará un error de ejecución inmediato.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El servidor no suele comprobar si el cliente tiene el WSDL; es el cliente quien usa el WSDL para saber cómo llamar al servidor.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Verificar que el cliente haya descargado previamente el WSDL completo.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El servidor no suele comprobar si el cliente tiene el WSDL; es el cliente quien usa el WSDL para saber cómo llamar al servidor.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="20">
+          <div class="q-header">
+            <span class="q-number">Question 21</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">Si el volumen de una esfera se calcula como <span class="math">V = <span class="frac"><span class="frac-num">4.0</span><span class="frac-den">3.0</span></span> π r<sup>3</sup></span>, ¿cuál de los siguientes fragmentos de código Java implementa correctamente esta lógica según el material?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Recuerde cómo se maneja la precisión decimal y las potencias en Java.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="Utiliza las constantes y funciones de la clase Math de Java para representar correctamente la fórmula matemática.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">return (4.0/3.0) * Math.PI * Math.pow(radio, 3);</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Utiliza las constantes y funciones de la clase Math de Java para representar correctamente la fórmula matemática.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="La división entera (4/3) daría 1 en Java, y multiplicar el radio por 3 no es lo mismo que elevarlo al cubo.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">return (4/3) * 3.14 * (radio * 3);</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La división entera (4/3) daría 1 en Java, y multiplicar el radio por 3 no es lo mismo que elevarlo al cubo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="La clase Math no dispone de un método estático llamado 'volume'.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">return Math.volume(radio, 3);</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La clase Math no dispone de un método estático llamado 'volume'.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El operador '^' no se utiliza para potencias en Java (se usa Math.pow) y PI debe ser Math.PI.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">return 1.33 * PI * radio^3;</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El operador '^' no se utiliza para potencias en Java (se usa Math.pow) y PI debe ser Math.PI.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="21">
+          <div class="q-header">
+            <span class="q-number">Question 22</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">En una aplicación cliente/servidor concurrente, ¿dónde se ejecutan las hebras (threads) que atienden a los múltiples clientes?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en qué parte del sistema necesita 'multiplicarse' para dar soporte a millones de usuarios.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="El servidor DNS solo traduce nombres, no gestiona la lógica de concurrencia de otras aplicaciones.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">En el nodo DNS de la red.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El servidor DNS solo traduce nombres, no gestiona la lógica de concurrencia de otras aplicaciones.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="El cliente suele ser ligero y solo gestiona su propia conexión; el soporte multi-usuario reside en el servidor.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">En el cliente.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El cliente suele ser ligero y solo gestiona su propia conexión; el soporte multi-usuario reside en el servidor.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="El navegador es una aplicación cliente; la gestión de múltiples sesiones concurrentes ocurre en el servidor remoto.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">En el navegador web (User Agent) exclusivamente.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El navegador es una aplicación cliente; la gestión de múltiples sesiones concurrentes ocurre en el servidor remoto.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="El servidor crea una hebra por cada conexión entrante para poder procesar las peticiones simultáneamente sin bloquearse.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">En el servidor.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El servidor crea una hebra por cada conexión entrante para poder procesar las peticiones simultáneamente sin bloquearse.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="22">
+          <div class="q-header">
+            <span class="q-number">Question 23</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">¿Cuál es la función del puerto 21 en el protocolo FTP?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Diferencie entre 'controlar la conexión' y 'mover los datos'.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La transmisión de los datos brutos se realiza habitualmente por el puerto 20 en modo activo.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Envío de los bits que componen el archivo físico.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La transmisión de los datos brutos se realiza habitualmente por el puerto 20 en modo activo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="FTP utiliza dos canales; el 21 es para el control de la sesión y el 20 es para la transmisión efectiva de los datos.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Transferencia de órdenes y comandos de control.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">FTP utiliza dos canales; el 21 es para el control de la sesión y el 20 es para la transmisión efectiva de los datos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="SSH utiliza típicamente el puerto 22, y FTP tradicional no está cifrado.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Cifrado de la conexión mediante el estándar SSH.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">SSH utiliza típicamente el puerto 22, y FTP tradicional no está cifrado.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Esa función corresponde al puerto 53 del protocolo DNS.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Resolución de nombres de dominio asociados al servidor.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esa función corresponde al puerto 53 del protocolo DNS.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="23">
+          <div class="q-header">
+            <span class="q-number">Question 24</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">Al monitorizar el tiempo de respuesta del servidor, ¿qué dos factores deben sumarse obligatoriamente?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en lo que tarda el servidor en 'pensar' y el cable en 'llevar'.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Aunque influyen en la experiencia global, no definen el 'tiempo de respuesta' de una transacción específica.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">El tiempo de arranque del cliente y la resolución del DNS.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque influyen en la experiencia global, no definen el 'tiempo de respuesta' de una transacción específica.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Estos son parámetros de hardware, no medidas de tiempo de una transacción.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">La velocidad de la CPU y la cantidad de memoria RAM disponible.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Estos son parámetros de hardware, no medidas de tiempo de una transacción.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="La latencia total percibida por el usuario incluye tanto el cálculo interno como el viaje de los datos.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">El tiempo de proceso del servidor y el tiempo de transmisión por la red.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La latencia total percibida por el usuario incluye tanto el cálculo interno como el viaje de los datos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Estos factores pueden influir indirectamente, pero no son los componentes directos del cálculo del tiempo de respuesta.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">El número de hilos activos y el tamaño del archivo WSDL.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Estos factores pueden influir indirectamente, pero no son los componentes directos del cálculo del tiempo de respuesta.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="24">
+          <div class="q-header">
+            <span class="q-number">Question 25</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">En el modelo Cliente/Servidor, ¿qué ventaja aporta que los clientes sean 'ligeros'?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere la relación entre los recursos de hardware del dispositivo del usuario y el servidor.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Los clientes ligeros siguen necesitando protocolos estándar para comunicarse con el servidor.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Eliminan la necesidad de utilizar protocolos como HTTP o XML.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los clientes ligeros siguen necesitando protocolos estándar para comunicarse con el servidor.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Esto permite que dispositivos con pocos recursos (como móviles antiguos o terminales básicos) utilicen servicios complejos.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">No requieren hardware potente ya que el procesamiento pesado recae en el servidor.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esto permite que dispositivos con pocos recursos (como móviles antiguos o terminales básicos) utilicen servicios complejos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Al contrario, que el cliente sea ligero suele implicar que el servidor debe ser más potente y complejo.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Permiten que el servidor sea más sencillo y barato de mantener.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Al contrario, que el cliente sea ligero suele implicar que el servidor debe ser más potente y complejo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Si un cliente es ligero, depende totalmente del servidor, por lo que la conexión es vital.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Pueden funcionar sin necesidad de conectarse a Internet.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Si un cliente es ligero, depende totalmente del servidor, por lo que la conexión es vital.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="25">
+          <div class="q-header">
+            <span class="q-number">Question 26</span>
+            <span class="q-of">/ 26</span>
+          </div>
+          <div class="q-text">¿Cuál es el objetivo principal del protocolo DNS en una red TCP/IP?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en por qué escribimos 'google.es' en lugar de una dirección como '142.250.184.3'.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Esa es la función del protocolo DHCP, no del DNS.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Asignar automáticamente una dirección IP a cada dispositivo que se conecta.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esa es la función del protocolo DHCP, no del DNS.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Facilita el acceso a los servicios evitando que los usuarios tengan que memorizar secuencias de números.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Traducir direcciones IP numéricas a nombres de dominio legibles por humanos y viceversa.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Facilita el acceso a los servicios evitando que los usuarios tengan que memorizar secuencias de números.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="La seguridad del correo depende de protocolos como SSL/TLS o PGP, no del DNS.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Garantizar que los correos electrónicos lleguen a su destino sin ser interceptados.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La seguridad del correo depende de protocolos como SSL/TLS o PGP, no del DNS.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="DNS solo se encarga de la localización del servidor, no de la gestión de la descarga del contenido.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Acelerar la descarga de archivos grandes mediante el uso de múltiples hilos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">DNS solo se encarga de la localización del servidor, no de la gestión de la descarga del contenido.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      </div>
+  <div class="results" id="results">
+    <h2>Quiz Complete!</h2>
+    <div class="score" id="score">0%</div>
+    <div class="score-text" id="score-text"></div>
+    <button class="restart-btn" onclick="restart()">Try Again</button>
+  </div>
+</div>
+<script>
+const quizData = [{"question":"¿Cuál es la función principal del formato XML en la arquitectura de los servicios web?","hint":"Piense en la necesidad de que sistemas heterogéneos intercambien información de forma estructurada.","options":[{"label":"A","text":"Gestionar la asignación de direcciones IP dinámicas a los nodos del sistema.","isCorrect":false,"rationale":"La gestión de direcciones IP es tarea de protocolos de red como DHCP, no de un lenguaje de representación de datos."},{"label":"B","text":"Optimizar la velocidad de transmisión de datos cifrados en redes de área local.","isCorrect":false,"rationale":"XML es un formato de marcado de texto y no está diseñado específicamente para la optimización de velocidad o cifrado por sí solo."},{"label":"C","text":"Actuar como un estándar de representación de datos independiente de la plataforma para permitir la comunicación.","isCorrect":true,"rationale":"El uso de XML garantiza que el cliente y el servidor puedan entenderse independientemente del sistema operativo o lenguaje que utilicen."},{"label":"D","text":"Sustituir al protocolo HTTP en la capa de transporte del modelo TCP/IP.","isCorrect":false,"rationale":"XML funciona sobre protocolos como HTTP, pero no lo reemplaza en la pila de protocolos."}]},{"question":"En la arquitectura SOA, ¿qué diferencia fundamental existe entre SOA y SOAP?","hint":"Relacione los términos con 'modelo' versus 'herramienta de comunicación'.","options":[{"label":"A","text":"SOA solo se utiliza en redes locales y SOAP es exclusivo para Internet.","isCorrect":false,"rationale":"Ambas tecnologías son aplicables tanto en redes locales como en Internet para sistemas distribuidos."},{"label":"B","text":"SOAP ha quedado obsoleto con la llegada de la arquitectura SOA de segunda generación.","isCorrect":false,"rationale":"SOAP sigue siendo una tecnología clave utilizada dentro de las implementaciones de SOA."},{"label":"C","text":"SOA es el modelo de arquitectura, mientras que SOAP es el protocolo de comunicación.","isCorrect":true,"rationale":"SOA define la estrategia de diseño basada en servicios, y SOAP es una de las formas técnicas de implementar la comunicación en dicho modelo."},{"label":"D","text":"SOA es un lenguaje de programación y SOAP es un servidor de aplicaciones.","isCorrect":false,"rationale":"Ninguno es un lenguaje de programación; son conceptos arquitectónicos y protocolos de intercambio de mensajes."}]},{"question":"Según el material, ¿qué caracteriza a la 'Arquitectura Orientada a Servicios de segunda generación'?","hint":"Piense en las mejoras de 'calidad de servicio' que no estaban presentes en el modelo tradicional.","options":[{"label":"A","text":"La centralización de todos los servicios en un único servidor de hardware para evitar la latencia.","isCorrect":false,"rationale":"SOA se basa inherentemente en la distribución de servicios, no en la centralización física absoluta."},{"label":"B","text":"El uso exclusivo de protocolos propietarios en lugar de estándares abiertos.","isCorrect":false,"rationale":"La interoperabilidad de SOA se basa precisamente en el uso de estándares abiertos."},{"label":"C","text":"La inclusión de características avanzadas como seguridad, transaccionalidad y gestión según los estándares WS.","isCorrect":true,"rationale":"Esta generación amplía la funcionalidad básica añadiendo políticas de calidad de servicio aprobadas por organismos como OASIS."},{"label":"D","text":"La eliminación del uso de XML para mejorar la velocidad de procesamiento en el cliente.","isCorrect":false,"rationale":"XML sigue siendo fundamental en los estándares WS de segunda generación."}]},{"question":"Si Pilar implementa el método Java para calcular el volumen de una esfera, ¿qué anotación es necesaria para que el método sea accesible como una operación del Web Service?","hint":"Revise el código de ejemplo donde se define la operación 'volumen'.","options":[{"label":"A","text":"@ServiceOperation","isCorrect":false,"rationale":"Aunque suena lógica, la anotación estándar utilizada en los ejemplos del código es @WebMethod."},{"label":"B","text":"@SoapAction","isCorrect":false,"rationale":"Se refiere a una propiedad de la cabecera del protocolo, no a la anotación del método en el código Java mostrado."},{"label":"C","text":"@WebMethod","isCorrect":true,"rationale":"Esta anotación de Java indica específicamente que un método público debe ser expuesto como una operación del servicio web."},{"label":"D","text":"@WebAttribute","isCorrect":false,"rationale":"Esta anotación no existe en el estándar JAX-WS para definir operaciones de servicio."}]},{"question":"En el modelo Cliente/Servidor, ¿qué significa que el servidor tenga un 'rol pasivo'?","hint":"Considere quién inicia la comunicación en este paradigma.","options":[{"label":"A","text":"Que no puede realizar cálculos complejos y delega el procesamiento en el cliente.","isCorrect":false,"rationale":"Es el servidor quien suele realizar el procesamiento pesado, a pesar de su rol reactivo."},{"label":"B","text":"Que se apaga automáticamente si no recibe peticiones en un tiempo determinado.","isCorrect":false,"rationale":"El servidor debe estar permanentemente disponible, independientemente del volumen de peticiones."},{"label":"C","text":"Que permanece a la espera de que los clientes inicien las peticiones de servicio.","isCorrect":true,"rationale":"En esta arquitectura, la acción siempre la inicia el cliente; el servidor solo reacciona a las solicitudes entrantes."},{"label":"D","text":"Que solo puede atender a un cliente a la vez para mantener la integridad.","isCorrect":false,"rationale":"Un servidor puede ser pasivo y atender a múltiples clientes de forma concurrente."}]},{"question":"¿Cuál es la principal motivación para evolucionar de un sistema de 2 capas a uno de 3 capas?","hint":"Piense en las limitaciones del modelo tradicional ante un gran volumen de clientes.","options":[{"label":"A","text":"Reducir el número de mensajes de confirmación (ACK) necesarios en la red.","isCorrect":false,"rationale":"El número de capas no afecta directamente al mecanismo de ACK de la capa de transporte."},{"label":"B","text":"Garantizar que el protocolo HTTP no necesite una dirección URL.","isCorrect":false,"rationale":"HTTP siempre requiere una URL para identificar recursos, independientemente de las capas."},{"label":"C","text":"Mejorar la escalabilidad y separar la lógica de negocio de la gestión de datos.","isCorrect":true,"rationale":"Al añadir una capa intermedia (servidor de aplicaciones), se evita sobrecargar un único punto y se facilita el crecimiento del sistema."},{"label":"D","text":"Permitir que el cliente y el servidor se ejecuten en el mismo ordenador.","isCorrect":false,"rationale":"Eso describe un sistema de 1 capa, no uno de 3."}]},{"question":"En el contexto de la fiabilidad de red, ¿qué función cumple el 'vector de ACK'?","hint":"Relaciónelo con el envío de mensajes en grupo en lugar de uno por uno.","options":[{"label":"A","text":"Codificar los datos del cliente para que solo el servidor de aplicaciones pueda leerlos.","isCorrect":false,"rationale":"El control de flujo y errores mediante ACK no es una técnica de cifrado."},{"label":"B","text":"Acelerar la velocidad de la CPU del servidor durante picos de concurrencia.","isCorrect":false,"rationale":"Es una técnica de software de comunicaciones, no afecta al hardware físico de la CPU."},{"label":"C","text":"Llevar un control de qué mensajes de un grupo han sido recibidos correctamente para gestionar errores.","isCorrect":true,"rationale":"Permite al emisor saber exactamente qué paquetes reenviar en una transmisión por ráfagas."},{"label":"D","text":"Identificar la dirección IP del próximo salto en el protocolo DNS.","isCorrect":false,"rationale":"El vector de ACK es un mecanismo de confirmación, no de resolución de nombres."}]},{"question":"¿Por qué es fundamental el uso de un diagrama de estados (autómata) en la programación del servidor?","hint":"Piense en cómo controlar el orden lógico de una conversación entre programas.","options":[{"label":"A","text":"Para convertir automáticamente el código Java en páginas HTML visuales.","isCorrect":false,"rationale":"Los diagramas de estados gestionan lógica de control, no la generación de interfaces de usuario."},{"label":"B","text":"Para evitar que los clientes realicen operaciones no autorizadas o envíen mensajes mal formados según el contexto.","isCorrect":true,"rationale":"El autómata define qué comandos son válidos en cada fase de la comunicación, reforzando la seguridad y consistencia."},{"label":"C","text":"Para permitir que el servidor funcione sin necesidad de una conexión de red activa.","isCorrect":false,"rationale":"Un servidor requiere red para su propósito, el autómata solo gestiona la lógica de la sesión."},{"label":"D","text":"Para reducir el hardware necesario mediante la eliminación de la capa de datos.","isCorrect":false,"rationale":"El diseño lógico mediante autómatas no influye en la necesidad física de almacenamiento."}]},{"question":"Dentro de la clasificación de servicios en red, ¿a qué categoría pertenecen DHCP y DNS?","hint":"Considere qué aspecto de la infraestructura de red gestionan estos protocolos.","options":[{"label":"A","text":"Servicios de ficheros.","isCorrect":false,"rationale":"Se refiere a sistemas como FTP destinados al almacenamiento y transferencia de archivos."},{"label":"B","text":"Servicios de administración y configuración.","isCorrect":true,"rationale":"Estos servicios facilitan la gestión técnica de la red asignando direcciones y resolviendo nombres."},{"label":"C","text":"Servicios de información.","isCorrect":false,"rationale":"Esa categoría incluye servicios como HTTP, que entregan contenido según la solicitud del usuario."},{"label":"D","text":"Servicios de acceso remoto.","isCorrect":false,"rationale":"Incluiría Telnet o SSH, que permiten controlar máquinas a distancia."}]},{"question":"¿Cuál es la principal desventaja del protocolo FTP tradicional en términos de seguridad?","hint":"Piense en cómo viaja la información a través del cable o el aire.","options":[{"label":"A","text":"Transmite toda la información, incluyendo credenciales, en formato de texto plano.","isCorrect":true,"rationale":"Esto lo hace vulnerable a interceptaciones (sniffing), ya que los datos no viajan cifrados."},{"label":"B","text":"Requiere obligatoriamente el uso de una base de datos distribuida para funcionar.","isCorrect":false,"rationale":"FTP funciona directamente sobre el sistema de archivos del servidor."},{"label":"C","text":"Limita la velocidad de transferencia a solo 3 MB por mensaje.","isCorrect":false,"rationale":"FTP es muy rápido; su debilidad no es la velocidad, sino la falta de codificación."},{"label":"D","text":"Solo permite la conexión de un único usuario de forma simultánea.","isCorrect":false,"rationale":"Los servidores FTP suelen soportar múltiples conexiones concurrentes."}]},{"question":"¿Qué protocolo se utiliza cuando un usuario desea consultar sus correos electrónicos directamente en el servidor sin descargarlos permanentemente a su máquina local?","hint":"Existen dos protocolos de recepción; uno descarga y el otro sincroniza.","options":[{"label":"A","text":"POP3","isCorrect":false,"rationale":"POP3 está diseñado típicamente para descargar los mensajes y eliminarlos del servidor."},{"label":"B","text":"IMAP","isCorrect":true,"rationale":"A diferencia de POP3, IMAP permite la gestión y consulta de mensajes manteniendo la sincronización con el servidor."},{"label":"C","text":"SMTP","isCorrect":false,"rationale":"SMTP se encarga exclusivamente del transporte y envío de correos, no de la recepción o consulta por parte del cliente final."},{"label":"D","text":"DNS","isCorrect":false,"rationale":"DNS resuelve nombres de dominio y no tiene relación directa con la gestión de buzones de correo."}]},{"question":"Al programar un cliente HTTP en Java, ¿qué clase representa específicamente la dirección de la página web?","hint":"Diferencie entre el 'objeto dirección' y el 'objeto conexión'.","options":[{"label":"A","text":"DatagramSocket","isCorrect":false,"rationale":"Se utiliza para comunicaciones basadas en UDP, mientras que HTTP utiliza TCP."},{"label":"B","text":"URL","isCorrect":true,"rationale":"La clase URL se utiliza para encapsular y representar el identificador de un recurso en la red."},{"label":"C","text":"URLConnection","isCorrect":false,"rationale":"Esta clase se utiliza para realizar la conexión y operaciones de lectura/escritura sobre la URL, no para representarla."},{"label":"D","text":"HttpAgent","isCorrect":false,"rationale":"Este término se refiere al rol del cliente en el protocolo, pero no es la clase de representación de direcciones en Java SE."}]},{"question":"¿Qué característica define al protocolo HTTP como 'sin estado' (stateless)?","hint":"Considere qué sucede entre una petición y la siguiente desde el punto de vista del protocolo puro.","options":[{"label":"A","text":"Impide la transferencia de archivos binarios, permitiendo solo texto HTML.","isCorrect":false,"rationale":"HTTP puede transferir cualquier tipo de recurso (imágenes, PDF, etc.) identificado por una URL."},{"label":"B","text":"No utiliza puertos de comunicación fijos, sino que los cambia aleatoriamente.","isCorrect":false,"rationale":"HTTP usa normalmente el puerto 80 de forma estándar."},{"label":"C","text":"No recuerda ninguna información de conexiones anteriores del mismo cliente.","isCorrect":true,"rationale":"Cada petición se procesa de forma independiente, lo que simplifica el diseño del servidor pero requiere mecanismos externos como cookies para mantener sesiones."},{"label":"D","text":"Solo funciona si el cliente y el servidor están en la misma red local.","isCorrect":false,"rationale":"Es el protocolo base de la Web global, diseñado para redes de larga distancia."}]},{"question":"En el desarrollo de servicios web SOAP con Java, ¿cuál es el objetivo del organismo JPC?","hint":"Relacione las siglas con las peticiones de especificación de Java.","options":[{"label":"A","text":"Fabricar el hardware necesario para ejecutar servidores GlassFish.","isCorrect":false,"rationale":"Se dedica a estándares de software y especificaciones, no a la fabricación de hardware."},{"label":"B","text":"Sustituir al consorcio W3C en la definición del lenguaje HTML.","isCorrect":false,"rationale":"W3C sigue siendo el referente para estándares web generales; JPC se enfoca en el entorno Java."},{"label":"C","text":"Definir conjuntos de especificaciones tecnológicas denominadas JSR.","isCorrect":true,"rationale":"Este organismo estandariza las peticiones de especificación para asegurar la compatibilidad en el ecosistema Java."},{"label":"D","text":"Cifrar las conexiones de red mediante el protocolo SSL de forma obligatoria.","isCorrect":false,"rationale":"El cifrado es una implementación técnica de seguridad, no el propósito de las JSR."}]},{"question":"Si se desea implementar seguridad en una aplicación de sockets en Java, ¿qué clase proporciona la funcionalidad de encriptación de datos?","hint":"Piense en el término técnico para un algoritmo de cifrado.","options":[{"label":"A","text":"Cipher","isCorrect":true,"rationale":"La clase Cipher es el motor central para realizar operaciones de cifrado y descifrado en el framework de criptografía de Java."},{"label":"B","text":"SSLScanner","isCorrect":false,"rationale":"No existe tal clase en la biblioteca estándar para realizar encriptación."},{"label":"C","text":"SecretSocket","isCorrect":false,"rationale":"No es una clase estándar de la JDK para el cifrado de datos."},{"label":"D","text":"DatagramPacket","isCorrect":false,"rationale":"Se utiliza para contener los datos de un datagrama UDP, pero no tiene funciones de cifrado integradas."}]},{"question":"Cuando hablamos de que 'únicamente las personas autorizadas puedan acceder al sistema', nos referimos al principio de:","hint":"Diferencie entre 'ver' (acceder) y 'cambiar' (modificar).","options":[{"label":"A","text":"Integridad","isCorrect":false,"rationale":"La integridad se refiere a asegurar que la información no sea modificada por personas no autorizadas."},{"label":"B","text":"Confidencialidad","isCorrect":true,"rationale":"Este principio garantiza que la información o el sistema solo sean accesibles por quienes tienen permiso expreso."},{"label":"C","text":"No repudio","isCorrect":false,"rationale":"Garantiza que un emisor no pueda negar el envío de un mensaje."},{"label":"D","text":"Disponibilidad","isCorrect":false,"rationale":"Se refiere a que el sistema esté operativo cuando se necesite, no al control de acceso per se."}]},{"question":"Dentro de la clasificación de amenazas, ¿cuál de ellas consiste específicamente en conseguir acceder a un recurso de otra persona?","hint":"Piense en un ataque que compromete la confidencialidad.","options":[{"label":"A","text":"Modificación","isCorrect":false,"rationale":"Implica no solo acceder, sino también alterar el contenido del recurso."},{"label":"B","text":"Interrupción","isCorrect":false,"rationale":"Consiste en hacer que un recurso deje de estar disponible o sea destruido."},{"label":"C","text":"Fabricación","isCorrect":false,"rationale":"Es la creación de objetos falsos en un sistema por parte de un atacante."},{"label":"D","text":"Intercepción","isCorrect":true,"rationale":"La intercepción ocurre cuando un tercero no autorizado accede a la información o recursos que fluyen entre emisor y receptor."}]},{"question":"¿Qué protocolo surgió como una evolución directa para mejorar la seguridad del protocolo SSL?","hint":"Busque el acrónimo que suele acompañar a SSL en las configuraciones modernas.","options":[{"label":"A","text":"SSH","isCorrect":false,"rationale":"SSH es un protocolo independiente para acceso remoto seguro, no una evolución de SSL."},{"label":"B","text":"SFTP","isCorrect":false,"rationale":"SFTP es una versión segura de FTP que utiliza SSH, no es el sucesor directo del protocolo de capa de transporte SSL."},{"label":"C","text":"TLS","isCorrect":true,"rationale":"TLS (Transport Layer Security) es el sucesor más seguro y actualizado de SSL para el cifrado de comunicaciones."},{"label":"D","text":"HTTPS","isCorrect":false,"rationale":"HTTPS es el uso de HTTP sobre SSL/TLS, pero no es el protocolo de cifrado en sí mismo."}]},{"question":"En Java, si estamos trabajando con Sockets UDP, ¿qué método de la clase DatagramPacket debemos usar para obtener los datos recibidos?","hint":"Considere el nombre más directo para obtener la información almacenada.","options":[{"label":"A","text":"getContent()","isCorrect":false,"rationale":"Es común en otras clases de red, pero no en DatagramPacket para acceder al array de bytes."},{"label":"B","text":"readBytes()","isCorrect":false,"rationale":"Este método no pertenece a la clase DatagramPacket."},{"label":"C","text":"getData()","isCorrect":true,"rationale":"Este método devuelve el buffer (array de bytes) que contiene los datos transportados en el paquete."},{"label":"D","text":"getPayload()","isCorrect":false,"rationale":"Aunque es un término técnico correcto en redes, el nombre del método en la API de Java es getData()."}]},{"question":"Según el caso práctico del 'Conversor de medidas', ¿cuál es una comprobación crítica que debe realizar el servicio SOAP para evitar excepciones en el servidor?","hint":"Piense en qué tipo de entrada rompería un proceso de multiplicación aritmética.","options":[{"label":"A","text":"Asegurar que el cliente utilice una interfaz gráfica basada en CSS.","isCorrect":false,"rationale":"La interfaz visual del cliente es irrelevante para la estabilidad lógica del servicio en el servidor."},{"label":"B","text":"Comprobar que el sistema operativo del cliente sea igual al del servidor.","isCorrect":false,"rationale":"Los servicios web son independientes de la plataforma por definición."},{"label":"C","text":"Validar que el dato enviado por el cliente sea numérico y no esté vacío.","isCorrect":true,"rationale":"Si el cliente envía letras o un campo nulo, el intento de realizar un cálculo matemático provocará un error de ejecución inmediato."},{"label":"D","text":"Verificar que el cliente haya descargado previamente el WSDL completo.","isCorrect":false,"rationale":"El servidor no suele comprobar si el cliente tiene el WSDL; es el cliente quien usa el WSDL para saber cómo llamar al servidor."}]},{"question":"Si el volumen de una esfera se calcula como $V = \\frac{4.0}{3.0} \\pi r^3$, ¿cuál de los siguientes fragmentos de código Java implementa correctamente esta lógica según el material?","hint":"Recuerde cómo se maneja la precisión decimal y las potencias en Java.","options":[{"label":"A","text":"return (4.0/3.0) * Math.PI * Math.pow(radio, 3);","isCorrect":true,"rationale":"Utiliza las constantes y funciones de la clase Math de Java para representar correctamente la fórmula matemática."},{"label":"B","text":"return (4/3) * 3.14 * (radio * 3);","isCorrect":false,"rationale":"La división entera (4/3) daría 1 en Java, y multiplicar el radio por 3 no es lo mismo que elevarlo al cubo."},{"label":"C","text":"return Math.volume(radio, 3);","isCorrect":false,"rationale":"La clase Math no dispone de un método estático llamado 'volume'."},{"label":"D","text":"return 1.33 * PI * radio^3;","isCorrect":false,"rationale":"El operador '^' no se utiliza para potencias en Java (se usa Math.pow) y PI debe ser Math.PI."}]},{"question":"En una aplicación cliente/servidor concurrente, ¿dónde se ejecutan las hebras (threads) que atienden a los múltiples clientes?","hint":"Piense en qué parte del sistema necesita 'multiplicarse' para dar soporte a millones de usuarios.","options":[{"label":"A","text":"En el nodo DNS de la red.","isCorrect":false,"rationale":"El servidor DNS solo traduce nombres, no gestiona la lógica de concurrencia de otras aplicaciones."},{"label":"B","text":"En el cliente.","isCorrect":false,"rationale":"El cliente suele ser ligero y solo gestiona su propia conexión; el soporte multi-usuario reside en el servidor."},{"label":"C","text":"En el navegador web (User Agent) exclusivamente.","isCorrect":false,"rationale":"El navegador es una aplicación cliente; la gestión de múltiples sesiones concurrentes ocurre en el servidor remoto."},{"label":"D","text":"En el servidor.","isCorrect":true,"rationale":"El servidor crea una hebra por cada conexión entrante para poder procesar las peticiones simultáneamente sin bloquearse."}]},{"question":"¿Cuál es la función del puerto 21 en el protocolo FTP?","hint":"Diferencie entre 'controlar la conexión' y 'mover los datos'.","options":[{"label":"A","text":"Envío de los bits que componen el archivo físico.","isCorrect":false,"rationale":"La transmisión de los datos brutos se realiza habitualmente por el puerto 20 en modo activo."},{"label":"B","text":"Transferencia de órdenes y comandos de control.","isCorrect":true,"rationale":"FTP utiliza dos canales; el 21 es para el control de la sesión y el 20 es para la transmisión efectiva de los datos."},{"label":"C","text":"Cifrado de la conexión mediante el estándar SSH.","isCorrect":false,"rationale":"SSH utiliza típicamente el puerto 22, y FTP tradicional no está cifrado."},{"label":"D","text":"Resolución de nombres de dominio asociados al servidor.","isCorrect":false,"rationale":"Esa función corresponde al puerto 53 del protocolo DNS."}]},{"question":"Al monitorizar el tiempo de respuesta del servidor, ¿qué dos factores deben sumarse obligatoriamente?","hint":"Piense en lo que tarda el servidor en 'pensar' y el cable en 'llevar'.","options":[{"label":"A","text":"El tiempo de arranque del cliente y la resolución del DNS.","isCorrect":false,"rationale":"Aunque influyen en la experiencia global, no definen el 'tiempo de respuesta' de una transacción específica."},{"label":"B","text":"La velocidad de la CPU y la cantidad de memoria RAM disponible.","isCorrect":false,"rationale":"Estos son parámetros de hardware, no medidas de tiempo de una transacción."},{"label":"C","text":"El tiempo de proceso del servidor y el tiempo de transmisión por la red.","isCorrect":true,"rationale":"La latencia total percibida por el usuario incluye tanto el cálculo interno como el viaje de los datos."},{"label":"D","text":"El número de hilos activos y el tamaño del archivo WSDL.","isCorrect":false,"rationale":"Estos factores pueden influir indirectamente, pero no son los componentes directos del cálculo del tiempo de respuesta."}]},{"question":"En el modelo Cliente/Servidor, ¿qué ventaja aporta que los clientes sean 'ligeros'?","hint":"Considere la relación entre los recursos de hardware del dispositivo del usuario y el servidor.","options":[{"label":"A","text":"Eliminan la necesidad de utilizar protocolos como HTTP o XML.","isCorrect":false,"rationale":"Los clientes ligeros siguen necesitando protocolos estándar para comunicarse con el servidor."},{"label":"B","text":"No requieren hardware potente ya que el procesamiento pesado recae en el servidor.","isCorrect":true,"rationale":"Esto permite que dispositivos con pocos recursos (como móviles antiguos o terminales básicos) utilicen servicios complejos."},{"label":"C","text":"Permiten que el servidor sea más sencillo y barato de mantener.","isCorrect":false,"rationale":"Al contrario, que el cliente sea ligero suele implicar que el servidor debe ser más potente y complejo."},{"label":"D","text":"Pueden funcionar sin necesidad de conectarse a Internet.","isCorrect":false,"rationale":"Si un cliente es ligero, depende totalmente del servidor, por lo que la conexión es vital."}]},{"question":"¿Cuál es el objetivo principal del protocolo DNS en una red TCP/IP?","hint":"Piense en por qué escribimos 'google.es' en lugar de una dirección como '142.250.184.3'.","options":[{"label":"A","text":"Asignar automáticamente una dirección IP a cada dispositivo que se conecta.","isCorrect":false,"rationale":"Esa es la función del protocolo DHCP, no del DNS."},{"label":"B","text":"Traducir direcciones IP numéricas a nombres de dominio legibles por humanos y viceversa.","isCorrect":true,"rationale":"Facilita el acceso a los servicios evitando que los usuarios tengan que memorizar secuencias de números."},{"label":"C","text":"Garantizar que los correos electrónicos lleguen a su destino sin ser interceptados.","isCorrect":false,"rationale":"La seguridad del correo depende de protocolos como SSL/TLS o PGP, no del DNS."},{"label":"D","text":"Acelerar la descarga de archivos grandes mediante el uso de múltiples hilos.","isCorrect":false,"rationale":"DNS solo se encarga de la localización del servidor, no de la gestión de la descarga del contenido."}]}];
+const tr = {"correct":"Correct!","incorrect":"Incorrect","next":"Next Question →","seeResults":"See Results","complete":"Quiz Complete!","scoreText":"You got {correct} out of {total} correct","tryAgain":"Try Again","rightAnswer":"Right answer","notQuite":"Not quite"};
+let currentQ = 0, correctCount = 0, answered = false;
+
+function init() {
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === 0));
+  updateProgress();
+  document.querySelectorAll('.option').forEach(opt => opt.addEventListener('click', () => selectOption(opt)));
+  document.querySelectorAll('.next-btn').forEach(btn => btn.addEventListener('click', nextQuestion));
+}
+
+function selectOption(opt) {
+  if (answered) return;
+  answered = true;
+  const q = opt.closest('.question');
+  const options = q.querySelectorAll('.option');
+  const nextBtn = q.querySelector('.next-btn');
+  const isCorrect = opt.dataset.correct === 'true';
+  
+  // Mark all options as disabled
+  options.forEach(o => o.classList.add('disabled'));
+  
+  // Style selected option
+  opt.classList.add('selected', isCorrect ? 'correct' : 'incorrect');
+  
+  // Show correct answer if wrong
+  if (!isCorrect) {
+    const correctOpt = [...options].find(o => o.dataset.correct === 'true');
+    if (correctOpt) correctOpt.classList.add('show-correct');
+  }
+  
+  if (isCorrect) correctCount++;
+  
+  // Show feedback for ALL options that have rationale
+  options.forEach(o => {
+    const wrapper = o.closest('.option-wrapper');
+    const feedback = wrapper.querySelector('.option-feedback');
+    const rationale = o.dataset.rationale;
+    const isThisCorrect = o.dataset.correct === 'true';
+    
+    if (rationale && rationale.trim()) {
+      feedback.classList.remove('hidden');
+      feedback.classList.add(isThisCorrect ? 'correct-feedback' : 'incorrect-feedback');
+      
+      const statusEl = feedback.querySelector('.feedback-status');
+      statusEl.className = 'feedback-status ' + (isThisCorrect ? 'correct' : 'incorrect');
+      statusEl.innerHTML = isThisCorrect 
+        ? '✓ ' + tr.rightAnswer
+        : '✗ ' + tr.notQuite;
+    }
+  });
+  
+  nextBtn.classList.remove('hidden');
+  if (currentQ === quizData.length - 1) nextBtn.textContent = tr.seeResults;
+}
+
+function nextQuestion() {
+  answered = false;
+  currentQ++;
+  if (currentQ >= quizData.length) { showResults(); return; }
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === currentQ));
+  updateProgress();
+}
+
+function updateProgress() {
+  document.querySelector('.progress-fill').style.width = (currentQ / quizData.length * 100) + '%';
+}
+
+function showResults() {
+  document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
+  document.getElementById('results').classList.add('active');
+  const pct = Math.round((correctCount / quizData.length) * 100);
+  document.getElementById('score').textContent = pct + '%';
+  document.getElementById('score-text').textContent = tr.scoreText.replace('{correct}', correctCount).replace('{total}', quizData.length);
+  document.querySelector('.progress-fill').style.width = '100%';
+}
+
+function restart() {
+  currentQ = 0; correctCount = 0; answered = false;
+  document.getElementById('results').classList.remove('active');
+  document.querySelectorAll('.question').forEach((q, i) => {
+    q.classList.toggle('active', i === 0);
+    q.querySelectorAll('.option').forEach(o => o.classList.remove('selected', 'correct', 'incorrect', 'disabled', 'show-correct'));
+    q.querySelectorAll('.option-feedback').forEach(f => {
+      f.classList.add('hidden');
+      f.classList.remove('correct-feedback', 'incorrect-feedback');
+    });
+    const btn = q.querySelector('.next-btn');
+    btn.classList.add('hidden');
+    btn.textContent = tr.next;
+  });
+  updateProgress();
+}
+
+init();
+</script>
+</body>
+</html>

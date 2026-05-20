@@ -1,0 +1,2002 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Odoo Cuestionario</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh; padding: 20px; color: #333;
+}
+.container { max-width: 700px; margin: 0 auto; }
+.header { text-align: center; color: #fff; padding: 30px 20px; }
+.header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+.header .meta { font-size: 14px; opacity: 0.9; }
+.progress-bar { background: rgba(255,255,255,0.3); border-radius: 10px; height: 8px; margin: 20px 0; overflow: hidden; }
+.progress-fill { background: #fff; height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 10px; }
+.question { background: #fff; border-radius: 16px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
+.question.active { display: block; }
+.q-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: #888; }
+.q-number { font-weight: 600; color: #667eea; }
+.q-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 25px; color: #222; }
+.options { display: flex; flex-direction: column; gap: 12px; }
+.option-wrapper { display: flex; flex-direction: column; }
+.option {
+  display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
+  border: 2px solid #e8e8e8; border-radius: 12px; background: #fafafa;
+  cursor: pointer; transition: all 0.2s; text-align: left; font-size: 15px; width: 100%;
+}
+[dir="rtl"] .option { text-align: right; flex-direction: row-reverse; }
+.option:hover:not(.disabled) { border-color: #667eea; background: #f5f3ff; }
+.option.selected { border-color: #667eea; background: #ede9fe; }
+.option.correct { border-color: #22c55e; background: #dcfce7; }
+.option.incorrect { border-color: #ef4444; background: #fee2e2; }
+.option.disabled { cursor: default; }
+.option.show-correct { border-color: #22c55e; background: #dcfce7; }
+.opt-label {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%; background: #e8e8e8;
+  font-weight: 700; font-size: 14px; flex-shrink: 0;
+}
+.option.selected .opt-label { background: #667eea; color: #fff; }
+.option.correct .opt-label { background: #22c55e; color: #fff; }
+.option.incorrect .opt-label { background: #ef4444; color: #fff; }
+.option.show-correct .opt-label { background: #22c55e; color: #fff; }
+.opt-text { padding-top: 5px; line-height: 1.5; }
+
+/* Individual option feedback */
+.option-feedback {
+  margin: 8px 0 4px 46px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+[dir="rtl"] .option-feedback { margin-left: 0; margin-right: 46px; }
+.option-feedback.correct-feedback {
+  background: #dcfce7;
+  border-left: 3px solid #22c55e;
+}
+.option-feedback.incorrect-feedback {
+  background: #fef3f2;
+  border-left: 3px solid #fca5a5;
+}
+[dir="rtl"] .option-feedback.correct-feedback,
+[dir="rtl"] .option-feedback.incorrect-feedback {
+  border-left: none;
+  border-right: 3px solid;
+}
+[dir="rtl"] .option-feedback.correct-feedback { border-right-color: #22c55e; }
+[dir="rtl"] .option-feedback.incorrect-feedback { border-right-color: #fca5a5; }
+.feedback-status {
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.feedback-status.correct { color: #166534; }
+.feedback-status.incorrect { color: #991b1b; }
+.feedback-rationale { color: #444; }
+
+/* Hint box */
+.hint-box {
+  margin: 12px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+}
+.hint-toggle {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hint-toggle:hover { background: #fef3c7; }
+.hint-content {
+  padding: 0 16px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s, padding 0.3s;
+  font-size: 14px;
+  color: #78350f;
+  line-height: 1.5;
+}
+.hint-box.show .hint-content {
+  padding: 0 16px 12px;
+  max-height: 200px;
+}
+
+.next-btn {
+  margin-top: 20px; width: 100%; padding: 14px;
+  background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none;
+  border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.next-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+.hidden { display: none !important; }
+.results { background: #fff; border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
+.results.active { display: block; }
+.results h2 { font-size: 28px; margin-bottom: 10px; color: #333; }
+.results .score { font-size: 64px; font-weight: 700; color: #667eea; margin: 20px 0; }
+.results .score-text { font-size: 18px; color: #666; margin-bottom: 30px; }
+.restart-btn {
+  padding: 14px 40px; background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+
+/* Math CSS */
+.math, .math-block { font-family: "Cambria Math", "Times New Roman", Times, serif; font-style: italic; }
+.math-block { display: block; text-align: center; margin: 10px 0; font-size: 110%; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 3px; font-size: 0.9em; }
+.frac-num { border-bottom: 1px solid currentColor; padding: 0 4px 2px; line-height: 1.2; }
+.frac-den { padding: 2px 4px 0; line-height: 1.2; }
+.sqrt { white-space: nowrap; }
+.sqrt-content { border-top: 1px solid currentColor; padding: 0 3px; margin-left: 2px; }
+sup, sub { font-size: 0.75em; }
+sup { vertical-align: super; }
+sub { vertical-align: sub; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Odoo Cuestionario</h1>
+    <div class="meta">28 questions</div>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+  <div id="quiz-container">
+        <div class="question" data-index="0">
+          <div class="q-header">
+            <span class="q-number">Question 1</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">¿Cuál es la característica principal de Python como lenguaje de programación según los materiales proporcionados?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Observa el modo en que se procesa el código y la variedad de estilos de programación que admite.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Aunque soporta objetos, su naturaleza multiparadigma le permite utilizar programación funcional o imperativa.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Solamente orientado a objetos</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque soporta objetos, su naturaleza multiparadigma le permite utilizar programación funcional o imperativa.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Confunde el método de ejecución; Python es interpretado, lo que facilita la portabilidad y el desarrollo rápido.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Compilado y multiparadigma</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Confunde el método de ejecución; Python es interpretado, lo que facilita la portabilidad y el desarrollo rápido.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="A diferencia de lenguajes como C, Python no requiere una compilación previa a lenguaje máquina por parte del usuario y es de alto nivel.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Compilado y de bajo nivel</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">A diferencia de lenguajes como C, Python no requiere una compilación previa a lenguaje máquina por parte del usuario y es de alto nivel.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Python se define por su naturaleza de ejecución mediante un intérprete y su capacidad de soportar diversos estilos de programación.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Interpreted y multiparadigma</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Python se define por su naturaleza de ejecución mediante un intérprete y su capacidad de soportar diversos estilos de programación.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="1">
+          <div class="q-header">
+            <span class="q-number">Question 2</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">En el sistema ERP Odoo, ¿desde qué herramientas se pueden consultar y modificar los datos de la base de datos?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considera tanto la plataforma principal como el gestor de la base de datos subyacente.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Estas son herramientas de desarrollo de código, no las interfaces estándar de consulta de datos para un usuario o administrador de base de datos.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">A través de Python y PyCharm exclusivamente</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Estas son herramientas de desarrollo de código, no las interfaces estándar de consulta de datos para un usuario o administrador de base de datos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Ignora que la base de datos subyacente puede ser manipulada externamente por administradores de sistemas.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Solamente desde el backend de Odoo</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Ignora que la base de datos subyacente puede ser manipulada externamente por administradores de sistemas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Los ficheros Excel se usan para importación/exportación, pero no son el método de consulta directa del sistema en tiempo real.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Únicamente mediante ficheros Excel</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los ficheros Excel se usan para importación/exportación, pero no son el método de consulta directa del sistema en tiempo real.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Los datos son accesibles tanto a través de la interfaz de usuario del ERP como mediante herramientas de gestión de bases de datos PostgreSQL.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Desde Odoo y PgAdmin</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los datos son accesibles tanto a través de la interfaz de usuario del ERP como mediante herramientas de gestión de bases de datos PostgreSQL.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="2">
+          <div class="q-header">
+            <span class="q-number">Question 3</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">Para poder imprimir facturas a solicitud del cliente en el Punto de Venta (PdV), ¿qué configuración es imprescindible activar?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Busca una opción que relacione la venta con el registro financiero de la empresa.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Aunque existen módulos externos, la funcionalidad básica de facturas en el PdV de Odoo depende de la configuración interna de contabilidad.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">El módulo de Facturación Electrónica externa</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque existen módulos externos, la funcionalidad básica de facturas en el PdV de Odoo depende de la configuración interna de contabilidad.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Esta opción vincula las operaciones de venta con el módulo contable para generar documentos legales como facturas.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">El checkbox de Contabilidad en los ajustes del PdV</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta opción vincula las operaciones de venta con el módulo contable para generar documentos legales como facturas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Las rutas de producción pertenecen al módulo de fabricación y no tienen relación con la generación de documentos de venta.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">La ruta de producción de facturas</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Las rutas de producción pertenecen al módulo de fabricación y no tienen relación con la generación de documentos de venta.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="La capacidad de imprimir facturas es independiente del método de pago seleccionado por el cliente.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">El método de pago por transferencia bancaria</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La capacidad de imprimir facturas es independiente del método de pago seleccionado por el cliente.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="3">
+          <div class="q-header">
+            <span class="q-number">Question 4</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">Al importar productos desde un archivo Excel al PdV, ¿cuál es la utilidad del botón <span class="math">textTest</span>?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Es una medida de seguridad previa para evitar errores de base de datos.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Los impuestos se definen en la ficha del producto o la configuración fiscal, no durante el test de carga de datos.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Calcular los impuestos automáticamente</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los impuestos se definen en la ficha del producto o la configuración fiscal, no durante el test de carga de datos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Permite validar formatos, referencias y columnas para asegurar que el sistema acepte los registros sin errores.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Comprobar que no hay problemas en los datos antes de la importación definitiva</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Permite validar formatos, referencias y columnas para asegurar que el sistema acepte los registros sin errores.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="El proceso de importación no realiza transacciones comerciales, solo registra datos maestros de productos.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Ejecutar una venta de prueba en el sistema</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El proceso de importación no realiza transacciones comerciales, solo registra datos maestros de productos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="La validación es sobre la estructura del fichero local, no sobre la infraestructura de red del ERP.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Verificar la conexión con el almacén central</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La validación es sobre la estructura del fichero local, no sobre la infraestructura de red del ERP.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="4">
+          <div class="q-header">
+            <span class="q-number">Question 5</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">Según el caso práctico, ¿por qué no se recomienda realizar la devolución de un producto desde el backend del sistema?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piensa en quién opera la tienda y en la normativa vigente en algunos países.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="El sistema permite ajustes en el backend, pero rompe la trazabilidad esperada en el punto de venta físico.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Porque el backend no permite introducir cantidades negativas</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El sistema permite ajustes en el backend, pero rompe la trazabilidad esperada en el punto de venta físico.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Las operaciones de almacén y ventas nunca requieren un reinicio del servicio del ERP.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Porque requiere reiniciar el servidor de Odoo</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Las operaciones de almacén y ventas nunca requieren un reinicio del servicio del ERP.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="La interfaz del PdV está diseñada para cajeros y garantiza que el flujo de caja y la legalidad local se mantengan correctamente.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Porque no es intuitivo para el usuario final y puede ser legalmente cuestionable</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La interfaz del PdV está diseñada para cajeros y garantiza que el flujo de caja y la legalidad local se mantengan correctamente.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El stock se actualizaría, pero el problema reside en la formación del usuario y el cumplimiento normativo.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Debido a que el stock no se actualiza si se hace fuera del PdV</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El stock se actualizaría, pero el problema reside en la formación del usuario y el cumplimiento normativo.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="5">
+          <div class="q-header">
+            <span class="q-number">Question 6</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">¿Qué sucede con las ventas realizadas en Odoo si se pierde la conexión a Internet durante la sesión del PdV?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considera la capacidad de trabajar en modo 'offline'.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Esto sería ineficiente para entornos minoristas; el PdV está diseñado para ser resiliente a fallos de red.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">El sistema se bloquea y se pierden los datos no guardados</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esto sería ineficiente para entornos minoristas; el PdV está diseñado para ser resiliente a fallos de red.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Odoo utiliza almacenamiento local en el navegador para permitir la continuidad del negocio sin interrupciones por red.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Se almacenan en memoria y se sincronizan al recuperar la conexión</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Odoo utiliza almacenamiento local en el navegador para permitir la continuidad del negocio sin interrupciones por red.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="El comando $\text{pip}$ es para gestionar librerías de Python, no para la sincronización de datos de usuario.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Se requiere usar el comando <span class="math">textpip</span> para forzar la subida</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El comando <span class="math">textpip</span> es para gestionar librerías de Python, no para la sincronización de datos de usuario.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="La sincronización es un proceso técnico que ocurre en el módulo del PdV antes de afectar a otros módulos.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Las ventas se redirigen automáticamente al módulo de Inventario</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La sincronización es un proceso técnico que ocurre en el módulo del PdV antes de afectar a otros módulos.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="6">
+          <div class="q-header">
+            <span class="q-number">Question 7</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">¿Cuál es el propósito del checkbox <span class="math">textControl de efectivo</span> en la configuración del Punto de Venta?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Se relaciona con el arqueo de caja que hacen los dependientes.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="El control de efectivo supervisa el flujo, pero no restringe otros métodos como el banco o tarjeta.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Limitar el pago de los clientes únicamente a monedas y billetes</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El control de efectivo supervisa el flujo, pero no restringe otros métodos como el banco o tarjeta.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Permite registrar el saldo inicial y final para detectar discrepancias en el efectivo físico.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Controlar el dinero en caja durante la apertura y el cierre</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Permite registrar el saldo inicial y final para detectar discrepancias en el efectivo físico.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="La conexión con hardware es una configuración distinta; este checkbox es para la lógica contable del arqueo.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Activar el uso de cajas registradoras electrónicas externas</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La conexión con hardware es una configuración distinta; este checkbox es para la lógica contable del arqueo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="No impide las devoluciones, sino que obliga a llevar un registro estricto de los movimientos manuales de dinero.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Evitar que se realicen devoluciones en efectivo</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">No impide las devoluciones, sino que obliga a llevar un registro estricto de los movimientos manuales de dinero.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="7">
+          <div class="q-header">
+            <span class="q-number">Question 8</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">En el flujo de fabricación, ¿qué indica que un material aparece en color verde tras pulsar <span class="math">textComprobar disponibilidad</span>?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Refleja el estado actual de las existencias físicas.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La disponibilidad se refiere a la presencia física del producto, independientemente del estado de la factura de compra.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Que el material ha sido pagado al proveedor</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La disponibilidad se refiere a la presencia física del producto, independientemente del estado de la factura de compra.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="El sistema reserva automáticamente las unidades necesarias si están disponibles en el inventario.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Que existe stock suficiente en el almacén para esa orden</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El sistema reserva automáticamente las unidades necesarias si están disponibles en el inventario.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Los indicadores de color en la fabricación de Odoo son estrictamente logísticos, no ecológicos.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Que el producto es ecológico y sostenible</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los indicadores de color en la fabricación de Odoo son estrictamente logísticos, no ecológicos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="La comprobación de disponibilidad ocurre al inicio del proceso, antes de la ejecución de las tareas.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Que la ruta de producción ha terminado con éxito</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La comprobación de disponibilidad ocurre al inicio del proceso, antes de la ejecución de las tareas.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="8">
+          <div class="q-header">
+            <span class="q-number">Question 9</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">¿Qué acción cambia el estado de una orden de producción de <span class="math">textborrador</span> a <span class="math">textconfirmado</span>?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Es el botón que indica que la orden está lista para entrar en el plan de trabajo.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La importación crea el registro del producto, pero no genera órdenes de fabricación automáticas.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Importar el producto desde un fichero Excel</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La importación crea el registro del producto, pero no genera órdenes de fabricación automáticas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="La BoM es la definición técnica del producto, pero no inicia una orden de trabajo específica.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Crear una nueva Lista de Materiales (BoM)</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La BoM es la definición técnica del producto, pero no inicia una orden de trabajo específica.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="La asignación de personal no altera el flujo lógico del estado de producción.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Asignar un responsable Mitchell Admin</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La asignación de personal no altera el flujo lógico del estado de producción.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Este paso formaliza la intención de fabricar y permite iniciar la reserva de materiales.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Pulsar sobre el botón de <span class="math">textMarcar por realizar</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este paso formaliza la intención de fabricar y permite iniciar la reserva de materiales.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="9">
+          <div class="q-header">
+            <span class="q-number">Question 10</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">¿Cuál es la función de la pestaña <span class="math">textEstructura &amp; Costo</span> en el módulo de Fabricación?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Es la herramienta que usaría un contable para analizar el producto.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="El coste de fabricación es un dato interno de producción, diferente al precio final de venta al público.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Modificar el precio de venta en el Punto de Venta</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El coste de fabricación es un dato interno de producción, diferente al precio final de venta al público.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Odoo estándar gestiona datos y documentos vinculados (PDF), pero no es un visor CAD nativo.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Visualizar el esquema técnico del montaje en 3D</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Odoo estándar gestiona datos y documentos vinculados (PDF), pero no es un visor CAD nativo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Es una herramienta fundamental para que el departamento contable analice la rentabilidad de lo fabricado.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Proporcionar un informe detallado de los costes de materiales y mano de obra</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Es una herramienta fundamental para que el departamento contable analice la rentabilidad de lo fabricado.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Esas propiedades se configuran en la pestaña de información general o inventario del producto.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Configurar las dimensiones físicas y el peso del producto</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esas propiedades se configuran en la pestaña de información general o inventario del producto.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="10">
+          <div class="q-header">
+            <span class="q-number">Question 11</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">En Python, ¿para qué se utiliza la palabra reservada <span class="math">textdef</span>?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Se usa cuando quieres agrupar instrucciones que realizan una tarea específica.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Las variables en Python no requieren una palabra reservada específica para su declaración inicial.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Para declarar una variable por defecto</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Las variables en Python no requieren una palabra reservada específica para su declaración inicial.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="La finalización se gestiona por el flujo lógico o comandos como $\text{exit()}$ o $\text{quit()}$.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Para finalizar la ejecución de un programa</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La finalización se gestiona por el flujo lógico o comandos como <span class="math">textexit()</span> o <span class="math">textquit()</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="La definición de clases utiliza la palabra reservada $\text{class}$.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Para definir una clase</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La definición de clases utiliza la palabra reservada <span class="math">textclass</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Es la palabra clave que precede al nombre de un bloque de código reutilizable.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Para definir una función</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Es la palabra clave que precede al nombre de un bloque de código reutilizable.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="11">
+          <div class="q-header">
+            <span class="q-number">Question 12</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">¿Qué ocurre con una orden de trabajo en el centro de producción <span class="math">textPintura</span> si depende de una orden previa en <span class="math">textEnsamblado</span> que aún no ha terminado?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Refleja una dependencia secuencial en la línea de montaje.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Las órdenes no se cancelan por dependencias temporales, simplemente se mantienen en espera.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Se cancela para evitar cuellos de botella</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Las órdenes no se cancelan por dependencias temporales, simplemente se mantienen en espera.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="El sistema respeta la secuencia lógica de la ruta de producción definida.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Permanece en estado <span class="math">textEsperando a otra orden de trabajo</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El sistema respeta la secuencia lógica de la ruta de producción definida.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Aunque pertenezcan al mismo producto, cada centro de trabajo mantiene su propia orden individual.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Se fusiona con la orden de ensamblado</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque pertenezcan al mismo producto, cada centro de trabajo mantiene su propia orden individual.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Estaría planificada, pero no disponible para que el operario la inicie hasta que se libere la dependencia.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Pasa automáticamente a estado <span class="math">textPlanificado</span> para ganar tiempo</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Estaría planificada, pero no disponible para que el operario la inicie hasta que se libere la dependencia.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="12">
+          <div class="q-header">
+            <span class="q-number">Question 13</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">En el contexto de Python, ¿qué es <span class="math">textpip</span>?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Es una herramienta de consola que expande las capacidades del lenguaje instalando módulos.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="El IDE mencionado en los apuntes es PyCharm, no pip.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Un entorno de desarrollo integrado (IDE)</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El IDE mencionado en los apuntes es PyCharm, no pip.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Es una herramienta funcional, no un tipo de excepción o fallo de sintaxis.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Un error común al declarar variables</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Es una herramienta funcional, no un tipo de excepción o fallo de sintaxis.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Es el sistema de gestión de paquetes estándar para instalar librerías externas en Python.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Un comando para gestionar e instalar paquetes de software</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Es el sistema de gestión de paquetes estándar para instalar librerías externas en Python.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Los decimales se gestionan mediante tipos de datos como $\text{float}$.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Un tipo de dato para números decimales</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los decimales se gestionan mediante tipos de datos como <span class="math">textfloat</span>.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="13">
+          <div class="q-header">
+            <span class="q-number">Question 14</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">Para utilizar centros de producción y rutas en el módulo de Fabricación de Odoo, ¿qué ajuste previo es necesario?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Se encuentra en los ajustes de operaciones de fabricación.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Es un requisito técnico de infraestructura, no una configuración funcional dentro de los ajustes de Odoo.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Configurar una conexión <span class="math">textWi-Fi</span> estable en la fábrica</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Es un requisito técnico de infraestructura, no una configuración funcional dentro de los ajustes de Odoo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Aunque es útil para controles, las rutas básicas pueden funcionar sin el módulo de calidad.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Instalar el módulo de <span class="math">textCalidad Enterprise</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque es útil para controles, las rutas básicas pueden funcionar sin el módulo de calidad.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Los productos a fabricar deben ser normalmente de tipo 'Almacenable' para llevar control de stock.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Definir los productos como <span class="math">textConsumibles</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los productos a fabricar deben ser normalmente de tipo 'Almacenable' para llevar control de stock.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Habilita la capacidad de desglosar una orden de producción en múltiples pasos realizados en distintos lugares.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Activar el checkbox de <span class="math">textÓrdenes de trabajo</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Habilita la capacidad de desglosar una orden de producción en múltiples pasos realizados en distintos lugares.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="14">
+          <div class="q-header">
+            <span class="q-number">Question 15</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">¿Cuál es la última acción necesaria para cerrar completamente una sesión de PdV y registrar contablemente las ventas?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Es el paso que ocurre después de confirmar el cierre de la interfaz.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Esto solo inicia el proceso de salida de la interfaz de venta, pero no finaliza la contabilidad.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Pulsar el botón <span class="math">textClose</span> en la esquina superior derecha</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esto solo inicia el proceso de salida de la interfaz de venta, pero no finaliza la contabilidad.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="La impresión es un acto físico que no sustituye al proceso de validación contable en el software.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Imprimir el último ticket de caja</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La impresión es un acto físico que no sustituye al proceso de validación contable en el software.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="La sesión en el servidor debe cerrarse correctamente de forma lógica antes de apagar el hardware.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Apagar el equipo TPV</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La sesión en el servidor debe cerrarse correctamente de forma lógica antes de apagar el hardware.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Este paso final transfiere los datos de la sesión a los libros contables generales de la empresa.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Validar y contabilizar asientos de cierre</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este paso final transfiere los datos de la sesión a los libros contables generales de la empresa.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="15">
+          <div class="q-header">
+            <span class="q-number">Question 16</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">Al definir una Lista de Materiales (BoM), ¿qué indica la columna <span class="math">textA consumir</span>?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Es la cantidad planificada según el diseño del producto.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La BoM no gestiona la obsolescencia, sino la estructura de nuevos productos.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">El número de productos que han caducado en el almacén</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La BoM no gestiona la obsolescencia, sino la estructura de nuevos productos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Eso se registraría en órdenes de desecho o desconstrucción, no en la definición inicial de la BoM.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">La cantidad de material que se ha desperdiciado durante el ensamblaje</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Eso se registraría en órdenes de desecho o desconstrucción, no en la definición inicial de la BoM.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Se basa en la receta o fórmula definida para el proceso de fabricación.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">La cantidad teórica necesaria de un componente para fabricar el producto final</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Se basa en la receta o fórmula definida para el proceso de fabricación.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Esa información se encuentra en la valoración de inventario o en la pestaña de estructura de costes.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">El precio de coste del material por unidad</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esa información se encuentra en la valoración de inventario o en la pestaña de estructura de costes.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="16">
+          <div class="q-header">
+            <span class="q-number">Question 17</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">¿Cuál de los siguientes es un módulo obligatorio que debe estar instalado para usar el Punto de Venta o Fabricación en Odoo?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Sin él, no habría productos físicos que vender o fabricar.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Python es el lenguaje base del sistema, no un módulo funcional dentro de la interfaz de Odoo.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Python 3.10</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Python es el lenguaje base del sistema, no un módulo funcional dentro de la interfaz de Odoo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Ambos módulos dependen de la gestión de existencias y movimientos de almacén para funcionar.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Inventario</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Ambos módulos dependen de la gestión de existencias y movimientos de almacén para funcionar.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Es un módulo auxiliar de comunicación que no interviene en la lógica de producción o venta directa.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Marketing por email</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Es un módulo auxiliar de comunicación que no interviene en la lógica de producción o venta directa.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El CRM gestiona oportunidades de negocio, pero no es técnicamente necesario para operar una tienda o una fábrica.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">CRM</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El CRM gestiona oportunidades de negocio, pero no es técnicamente necesario para operar una tienda o una fábrica.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="17">
+          <div class="q-header">
+            <span class="q-number">Question 18</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">En el caso práctico de fabricación de mesas, ¿qué documento se adjuntó para ayudar a los trabajadores del centro de ensamblado?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Es un archivo estático de lectura común en entornos industriales.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Los costes son información administrativa, los operarios necesitan guías técnicas de montaje.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Una hoja de cálculo Excel con los costes</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los costes son información administrativa, los operarios necesitan guías técnicas de montaje.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Es un documento contable sin utilidad práctica en la línea de montaje.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">La factura de compra de los tornillos</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Es un documento contable sin utilidad práctica en la línea de montaje.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Aunque Odoo admite enlaces, el material menciona específicamente un archivo PDF adjunto a la operación.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Un vídeo de formación alojado en YouTube</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque Odoo admite enlaces, el material menciona específicamente un archivo PDF adjunto a la operación.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Permite estandarizar el proceso y asegurar que los operarios tengan la información técnica necesaria.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Un PDF con las instrucciones de los pasos a seguir</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Permite estandarizar el proceso y asegurar que los operarios tengan la información técnica necesaria.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="18">
+          <div class="q-header">
+            <span class="q-number">Question 19</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">¿Cómo se realiza la devolución de un producto por el PdV según el procedimiento estándar descrito?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Se utiliza una cantidad negativa para revertir la transacción.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La gestión debe ser inmediata en la tienda para satisfacer al cliente y cuadrar la caja.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Enviando un correo electrónico al administrador del almacén</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La gestión debe ser inmediata en la tienda para satisfacer al cliente y cuadrar la caja.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Esto genera un ticket rectificativo y devuelve el dinero al cliente, actualizando el stock positivamente.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Indicando la cantidad como <span class="math">-1</span> en la interfaz y procesando el pago</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esto genera un ticket rectificativo y devuelve el dinero al cliente, actualizando el stock positivamente.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Esto no registraría la salida de dinero de la caja ni el reingreso del producto al inventario.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Cambiando el precio del producto a <span class="math">0</span> euros</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esto no registraría la salida de dinero de la caja ni el reingreso del producto al inventario.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Eliminar registros históricos rompería la integridad contable y la trazabilidad del sistema.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Borrando el registro de la venta original de la base de datos</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Eliminar registros históricos rompería la integridad contable y la trazabilidad del sistema.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="19">
+          <div class="q-header">
+            <span class="q-number">Question 20</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">Al editar un producto cargado en el PdV, ¿qué acción facilita su búsqueda posterior por el cajero?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Agrupa los productos por tipos similares.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Los comentarios de código no son visibles para el usuario final ni ayudan a la organización de la tienda.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Añadir un comentario Python en la descripción</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los comentarios de código no son visibles para el usuario final ni ayudan a la organización de la tienda.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Organizar productos por categorías permite una navegación visual más rápida en la pantalla táctil del TPV.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Informar correctamente la categoría del producto</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Organizar productos por categorías permite una navegación visual más rápida en la pantalla táctil del TPV.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Dificultaría enormemente la identificación humana del producto durante la venta.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Cambiar el nombre del producto a código binario</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Dificultaría enormemente la identificación humana del producto durante la venta.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Si se desactiva, el producto dejaría de ser visible y vendible en la interfaz del punto de venta.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Desactivar la opción de <span class="math">textDisponible en PdV</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Si se desactiva, el producto dejaría de ser visible y vendible en la interfaz del punto de venta.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="20">
+          <div class="q-header">
+            <span class="q-number">Question 21</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">¿Qué representa la columna <span class="math">textExternal ID</span> en el fichero de importación de productos?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Es una clave técnica usada para la trazabilidad de los datos importados.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="Permite al sistema reconocer si un producto ya existe o debe crearse uno nuevo basándose en esta clave.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Un identificador único para evitar duplicados al actualizar datos</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Permite al sistema reconocer si un producto ya existe o debe crearse uno nuevo basándose en esta clave.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Ese suele ser el campo 'Barcode' o EAN13, diferente al identificador técnico de base de datos.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">El código de barras que escanea el cliente</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Ese suele ser el campo 'Barcode' o EAN13, diferente al identificador técnico de base de datos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="No tiene relación con el hardware, es una referencia de software para la gestión de registros.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">La dirección IP de la impresora de tickets</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">No tiene relación con el hardware, es una referencia de software para la gestión de registros.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Ese campo es 'Name' o 'Display Name'; el External ID es para uso interno de sincronización.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">El nombre público del producto en la tienda web</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Ese campo es 'Name' o 'Display Name'; el External ID es para uso interno de sincronización.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="21">
+          <div class="q-header">
+            <span class="q-number">Question 22</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">En el módulo de Fabricación, ¿cuál es el estado de una orden tras pulsar <span class="math">textProducir</span> y antes de finalizarla?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Es la fase previa a 'Hecho'.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Este estado significaría el fin del proceso sin éxito, no una etapa intermedia de éxito parcial.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Cancelado</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este estado significaría el fin del proceso sin éxito, no una etapa intermedia de éxito parcial.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Indica que los materiales han sido consumidos y el producto está listo para ser registrado en el stock final.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Para cerrar</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Indica que los materiales han sido consumidos y el producto está listo para ser registrado en el stock final.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Las órdenes de producción son procesos internos de taller y no siguen un flujo de mensajería externa.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Enviado por email</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Las órdenes de producción son procesos internos de taller y no siguen un flujo de mensajería externa.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El estado borrador se abandona en cuanto se confirma la orden para su ejecución.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Borrador permanente</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El estado borrador se abandona en cuanto se confirma la orden para su ejecución.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="22">
+          <div class="q-header">
+            <span class="q-number">Question 23</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">Si el stock para fabricar una mesa es insuficiente, ¿qué flujo entre módulos del ERP se suele seguir según el resumen de la unidad?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piensa en cómo consigues materiales que no tienes para poder trabajar.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="No resuelve el problema técnico de la falta de componentes para la construcción del producto.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Fabricación <span class="math">→</span> CRM <span class="math">→</span> Punto de Venta</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">No resuelve el problema técnico de la falta de componentes para la construcción del producto.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Este flujo ignora la adquisición física de materias primas necesaria para iniciar la producción.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Ventas <span class="math">→</span> Contabilidad <span class="math">→</span> Fabricación</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este flujo ignora la adquisición física de materias primas necesaria para iniciar la producción.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Se detecta la falta en producción, se adquiere al proveedor, se recibe en almacén y se retoma la fabricación.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Fabricación <span class="math">→</span> Compras <span class="math">→</span> Inventario <span class="math">→</span> Fabricación</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Se detecta la falta en producción, se adquiere al proveedor, se recibe en almacén y se retoma la fabricación.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Mezcla herramientas de desarrollo con procesos de negocio funcionales.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Inventario <span class="math">→</span> Python <span class="math">→</span> Contabilidad</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Mezcla herramientas de desarrollo con procesos de negocio funcionales.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="23">
+          <div class="q-header">
+            <span class="q-number">Question 24</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">¿Qué utilidad tiene la palabra reservada <span class="math">textclass</span> en Python?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Es fundamental para estructurar el código siguiendo el paradigma de objetos.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Los errores se gestionan mediante excepciones, no mediante la palabra reservada $\text{class}$.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Clasificar los errores de sintaxis</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los errores se gestionan mediante excepciones, no mediante la palabra reservada <span class="math">textclass</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Para importar se utiliza la palabra reservada $\text{import}$.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Importar librerías externas de Odoo</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Para importar se utiliza la palabra reservada <span class="math">textimport</span>.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Python no tiene una palabra reservada para constantes; se usa una convención de nombres en mayúsculas.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Definir una constante global</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Python no tiene una palabra reservada para constantes; se usa una convención de nombres en mayúsculas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Permite crear plantillas de objetos con sus propios atributos y métodos.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Definir una clase para programación orientada a objetos</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Permite crear plantillas de objetos con sus propios atributos y métodos.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="24">
+          <div class="q-header">
+            <span class="q-number">Question 25</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">¿Cuál es la duración total configurada para la ruta de fabricación de la mesa en el ejemplo práctico?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Suma los tiempos de ensamblado y pintura.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Sería un tiempo excesivo para las operaciones simples descritas en el centro de trabajo.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">24 horas</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Sería un tiempo excesivo para las operaciones simples descritas en el centro de trabajo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Este es el tiempo individual de cada operación, pero la ruta completa incluye ambas secuencialmente.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">60 minutos</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este es el tiempo individual de cada operación, pero la ruta completa incluye ambas secuencialmente.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Suma los 60 minutos de la operación de ensamblado y los 60 minutos de la operación de pintura.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">120 minutos</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Suma los 60 minutos de la operación de ensamblado y los 60 minutos de la operación de pintura.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El tiempo de fabricación es una estimación de capacidad productiva, no de velocidad de red.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Depende de la conexión a Internet</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El tiempo de fabricación es una estimación de capacidad productiva, no de velocidad de red.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="25">
+          <div class="q-header">
+            <span class="q-number">Question 26</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">En el PdV, ¿para qué sirve pulsar el botón con el símbolo <span class="math">text+/-</span> durante una devolución?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Altera el carácter numérico de la unidad seleccionada.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="Permite transformar una venta en una devolución de forma rápida en la pantalla táctil.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Para cambiar el signo de la cantidad a negativo</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Permite transformar una venta en una devolución de forma rápida en la pantalla táctil.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Los descuentos suelen tener un botón específico ('Desc') en la interfaz del PdV.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Para aplicar un descuento al cliente</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los descuentos suelen tener un botón específico ('Desc') en la interfaz del PdV.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="El sistema calcula los impuestos automáticamente basándose en la configuración fiscal.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Para sumar los impuestos al precio base</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El sistema calcula los impuestos automáticamente basándose en la configuración fiscal.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="La apertura del cajón ocurre normalmente al finalizar el pago o mediante una función de gestión específica.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Para abrir el cajón de monedas manualmente</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La apertura del cajón ocurre normalmente al finalizar el pago o mediante una función de gestión específica.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="26">
+          <div class="q-header">
+            <span class="q-number">Question 27</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">Según el material, ¿qué componente de software es PyCharm?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Es donde el programador escribe las líneas de código.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Esa función la cumple PostgreSQL, no una herramienta de edición de código.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Un servidor de bases de datos para Odoo</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esa función la cumple PostgreSQL, no una herramienta de edición de código.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Es la herramienta recomendada para escribir, depurar y ejecutar código Python de forma profesional.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Un IDE (Entorno de Desarrollo Integrado)</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Es la herramienta recomendada para escribir, depurar y ejecutar código Python de forma profesional.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="PyCharm es una aplicación de escritorio independiente para programadores.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Una extensión del navegador para el Punto de Venta</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">PyCharm es una aplicación de escritorio independiente para programadores.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="No es una funcionalidad interna del ERP, sino una herramienta de desarrollo externa.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Un módulo de fabricación avanzada</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">No es una funcionalidad interna del ERP, sino una herramienta de desarrollo externa.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="27">
+          <div class="q-header">
+            <span class="q-number">Question 28</span>
+            <span class="q-of">/ 28</span>
+          </div>
+          <div class="q-text">Al finalizar la jornada, tras pulsar <span class="math">textClose</span> y <span class="math">textConfirm</span>, ¿qué botón se debe presionar para salir de la pantalla de sesión de la tienda?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Se encuentra junto al botón 'Reanudar'.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La tecla escape no realiza las acciones lógicas de cierre y guardado de datos en el servidor.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Esc</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La tecla escape no realiza las acciones lógicas de cierre y guardado de datos en el servidor.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Este botón volvería a abrir la interfaz de ventas para continuar operando en la misma sesión.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Reanudar</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este botón volvería a abrir la interfaz de ventas para continuar operando en la misma sesión.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Cierra el acceso de la persona al ERP, pero no liquida la sesión comercial del punto de venta.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Cerrar sesión de usuario</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Cierra el acceso de la persona al ERP, pero no liquida la sesión comercial del punto de venta.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Este botón finaliza la actividad de la interfaz de ventas y permite proceder a la contabilización.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Cerrar</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este botón finaliza la actividad de la interfaz de ventas y permite proceder a la contabilización.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      </div>
+  <div class="results" id="results">
+    <h2>Quiz Complete!</h2>
+    <div class="score" id="score">0%</div>
+    <div class="score-text" id="score-text"></div>
+    <button class="restart-btn" onclick="restart()">Try Again</button>
+  </div>
+</div>
+<script>
+const quizData = [{"question":"¿Cuál es la característica principal de Python como lenguaje de programación según los materiales proporcionados?","hint":"Observa el modo en que se procesa el código y la variedad de estilos de programación que admite.","options":[{"label":"A","text":"Solamente orientado a objetos","isCorrect":false,"rationale":"Aunque soporta objetos, su naturaleza multiparadigma le permite utilizar programación funcional o imperativa."},{"label":"B","text":"Compilado y multiparadigma","isCorrect":false,"rationale":"Confunde el método de ejecución; Python es interpretado, lo que facilita la portabilidad y el desarrollo rápido."},{"label":"C","text":"Compilado y de bajo nivel","isCorrect":false,"rationale":"A diferencia de lenguajes como C, Python no requiere una compilación previa a lenguaje máquina por parte del usuario y es de alto nivel."},{"label":"D","text":"Interpreted y multiparadigma","isCorrect":true,"rationale":"Python se define por su naturaleza de ejecución mediante un intérprete y su capacidad de soportar diversos estilos de programación."}]},{"question":"En el sistema ERP Odoo, ¿desde qué herramientas se pueden consultar y modificar los datos de la base de datos?","hint":"Considera tanto la plataforma principal como el gestor de la base de datos subyacente.","options":[{"label":"A","text":"A través de Python y PyCharm exclusivamente","isCorrect":false,"rationale":"Estas son herramientas de desarrollo de código, no las interfaces estándar de consulta de datos para un usuario o administrador de base de datos."},{"label":"B","text":"Solamente desde el backend de Odoo","isCorrect":false,"rationale":"Ignora que la base de datos subyacente puede ser manipulada externamente por administradores de sistemas."},{"label":"C","text":"Únicamente mediante ficheros Excel","isCorrect":false,"rationale":"Los ficheros Excel se usan para importación/exportación, pero no son el método de consulta directa del sistema en tiempo real."},{"label":"D","text":"Desde Odoo y PgAdmin","isCorrect":true,"rationale":"Los datos son accesibles tanto a través de la interfaz de usuario del ERP como mediante herramientas de gestión de bases de datos PostgreSQL."}]},{"question":"Para poder imprimir facturas a solicitud del cliente en el Punto de Venta (PdV), ¿qué configuración es imprescindible activar?","hint":"Busca una opción que relacione la venta con el registro financiero de la empresa.","options":[{"label":"A","text":"El módulo de Facturación Electrónica externa","isCorrect":false,"rationale":"Aunque existen módulos externos, la funcionalidad básica de facturas en el PdV de Odoo depende de la configuración interna de contabilidad."},{"label":"B","text":"El checkbox de Contabilidad en los ajustes del PdV","isCorrect":true,"rationale":"Esta opción vincula las operaciones de venta con el módulo contable para generar documentos legales como facturas."},{"label":"C","text":"La ruta de producción de facturas","isCorrect":false,"rationale":"Las rutas de producción pertenecen al módulo de fabricación y no tienen relación con la generación de documentos de venta."},{"label":"D","text":"El método de pago por transferencia bancaria","isCorrect":false,"rationale":"La capacidad de imprimir facturas es independiente del método de pago seleccionado por el cliente."}]},{"question":"Al importar productos desde un archivo Excel al PdV, ¿cuál es la utilidad del botón $\\text{Test}$?","hint":"Es una medida de seguridad previa para evitar errores de base de datos.","options":[{"label":"A","text":"Calcular los impuestos automáticamente","isCorrect":false,"rationale":"Los impuestos se definen en la ficha del producto o la configuración fiscal, no durante el test de carga de datos."},{"label":"B","text":"Comprobar que no hay problemas en los datos antes de la importación definitiva","isCorrect":true,"rationale":"Permite validar formatos, referencias y columnas para asegurar que el sistema acepte los registros sin errores."},{"label":"C","text":"Ejecutar una venta de prueba en el sistema","isCorrect":false,"rationale":"El proceso de importación no realiza transacciones comerciales, solo registra datos maestros de productos."},{"label":"D","text":"Verificar la conexión con el almacén central","isCorrect":false,"rationale":"La validación es sobre la estructura del fichero local, no sobre la infraestructura de red del ERP."}]},{"question":"Según el caso práctico, ¿por qué no se recomienda realizar la devolución de un producto desde el backend del sistema?","hint":"Piensa en quién opera la tienda y en la normativa vigente en algunos países.","options":[{"label":"A","text":"Porque el backend no permite introducir cantidades negativas","isCorrect":false,"rationale":"El sistema permite ajustes en el backend, pero rompe la trazabilidad esperada en el punto de venta físico."},{"label":"B","text":"Porque requiere reiniciar el servidor de Odoo","isCorrect":false,"rationale":"Las operaciones de almacén y ventas nunca requieren un reinicio del servicio del ERP."},{"label":"C","text":"Porque no es intuitivo para el usuario final y puede ser legalmente cuestionable","isCorrect":true,"rationale":"La interfaz del PdV está diseñada para cajeros y garantiza que el flujo de caja y la legalidad local se mantengan correctamente."},{"label":"D","text":"Debido a que el stock no se actualiza si se hace fuera del PdV","isCorrect":false,"rationale":"El stock se actualizaría, pero el problema reside en la formación del usuario y el cumplimiento normativo."}]},{"question":"¿Qué sucede con las ventas realizadas en Odoo si se pierde la conexión a Internet durante la sesión del PdV?","hint":"Considera la capacidad de trabajar en modo 'offline'.","options":[{"label":"A","text":"El sistema se bloquea y se pierden los datos no guardados","isCorrect":false,"rationale":"Esto sería ineficiente para entornos minoristas; el PdV está diseñado para ser resiliente a fallos de red."},{"label":"B","text":"Se almacenan en memoria y se sincronizan al recuperar la conexión","isCorrect":true,"rationale":"Odoo utiliza almacenamiento local en el navegador para permitir la continuidad del negocio sin interrupciones por red."},{"label":"C","text":"Se requiere usar el comando $\\text{pip}$ para forzar la subida","isCorrect":false,"rationale":"El comando $\\text{pip}$ es para gestionar librerías de Python, no para la sincronización de datos de usuario."},{"label":"D","text":"Las ventas se redirigen automáticamente al módulo de Inventario","isCorrect":false,"rationale":"La sincronización es un proceso técnico que ocurre en el módulo del PdV antes de afectar a otros módulos."}]},{"question":"¿Cuál es el propósito del checkbox $\\text{Control de efectivo}$ en la configuración del Punto de Venta?","hint":"Se relaciona con el arqueo de caja que hacen los dependientes.","options":[{"label":"A","text":"Limitar el pago de los clientes únicamente a monedas y billetes","isCorrect":false,"rationale":"El control de efectivo supervisa el flujo, pero no restringe otros métodos como el banco o tarjeta."},{"label":"B","text":"Controlar el dinero en caja durante la apertura y el cierre","isCorrect":true,"rationale":"Permite registrar el saldo inicial y final para detectar discrepancias en el efectivo físico."},{"label":"C","text":"Activar el uso de cajas registradoras electrónicas externas","isCorrect":false,"rationale":"La conexión con hardware es una configuración distinta; este checkbox es para la lógica contable del arqueo."},{"label":"D","text":"Evitar que se realicen devoluciones en efectivo","isCorrect":false,"rationale":"No impide las devoluciones, sino que obliga a llevar un registro estricto de los movimientos manuales de dinero."}]},{"question":"En el flujo de fabricación, ¿qué indica que un material aparece en color verde tras pulsar $\\text{Comprobar disponibilidad}$?","hint":"Refleja el estado actual de las existencias físicas.","options":[{"label":"A","text":"Que el material ha sido pagado al proveedor","isCorrect":false,"rationale":"La disponibilidad se refiere a la presencia física del producto, independientemente del estado de la factura de compra."},{"label":"B","text":"Que existe stock suficiente en el almacén para esa orden","isCorrect":true,"rationale":"El sistema reserva automáticamente las unidades necesarias si están disponibles en el inventario."},{"label":"C","text":"Que el producto es ecológico y sostenible","isCorrect":false,"rationale":"Los indicadores de color en la fabricación de Odoo son estrictamente logísticos, no ecológicos."},{"label":"D","text":"Que la ruta de producción ha terminado con éxito","isCorrect":false,"rationale":"La comprobación de disponibilidad ocurre al inicio del proceso, antes de la ejecución de las tareas."}]},{"question":"¿Qué acción cambia el estado de una orden de producción de $\\text{borrador}$ a $\\text{confirmado}$?","hint":"Es el botón que indica que la orden está lista para entrar en el plan de trabajo.","options":[{"label":"A","text":"Importar el producto desde un fichero Excel","isCorrect":false,"rationale":"La importación crea el registro del producto, pero no genera órdenes de fabricación automáticas."},{"label":"B","text":"Crear una nueva Lista de Materiales (BoM)","isCorrect":false,"rationale":"La BoM es la definición técnica del producto, pero no inicia una orden de trabajo específica."},{"label":"C","text":"Asignar un responsable Mitchell Admin","isCorrect":false,"rationale":"La asignación de personal no altera el flujo lógico del estado de producción."},{"label":"D","text":"Pulsar sobre el botón de $\\text{Marcar por realizar}$","isCorrect":true,"rationale":"Este paso formaliza la intención de fabricar y permite iniciar la reserva de materiales."}]},{"question":"¿Cuál es la función de la pestaña $\\text{Estructura & Costo}$ en el módulo de Fabricación?","hint":"Es la herramienta que usaría un contable para analizar el producto.","options":[{"label":"A","text":"Modificar el precio de venta en el Punto de Venta","isCorrect":false,"rationale":"El coste de fabricación es un dato interno de producción, diferente al precio final de venta al público."},{"label":"B","text":"Visualizar el esquema técnico del montaje en 3D","isCorrect":false,"rationale":"Odoo estándar gestiona datos y documentos vinculados (PDF), pero no es un visor CAD nativo."},{"label":"C","text":"Proporcionar un informe detallado de los costes de materiales y mano de obra","isCorrect":true,"rationale":"Es una herramienta fundamental para que el departamento contable analice la rentabilidad de lo fabricado."},{"label":"D","text":"Configurar las dimensiones físicas y el peso del producto","isCorrect":false,"rationale":"Esas propiedades se configuran en la pestaña de información general o inventario del producto."}]},{"question":"En Python, ¿para qué se utiliza la palabra reservada $\\text{def}$?","hint":"Se usa cuando quieres agrupar instrucciones que realizan una tarea específica.","options":[{"label":"A","text":"Para declarar una variable por defecto","isCorrect":false,"rationale":"Las variables en Python no requieren una palabra reservada específica para su declaración inicial."},{"label":"B","text":"Para finalizar la ejecución de un programa","isCorrect":false,"rationale":"La finalización se gestiona por el flujo lógico o comandos como $\\text{exit()}$ o $\\text{quit()}$."},{"label":"C","text":"Para definir una clase","isCorrect":false,"rationale":"La definición de clases utiliza la palabra reservada $\\text{class}$."},{"label":"D","text":"Para definir una función","isCorrect":true,"rationale":"Es la palabra clave que precede al nombre de un bloque de código reutilizable."}]},{"question":"¿Qué ocurre con una orden de trabajo en el centro de producción $\\text{Pintura}$ si depende de una orden previa en $\\text{Ensamblado}$ que aún no ha terminado?","hint":"Refleja una dependencia secuencial en la línea de montaje.","options":[{"label":"A","text":"Se cancela para evitar cuellos de botella","isCorrect":false,"rationale":"Las órdenes no se cancelan por dependencias temporales, simplemente se mantienen en espera."},{"label":"B","text":"Permanece en estado $\\text{Esperando a otra orden de trabajo}$","isCorrect":true,"rationale":"El sistema respeta la secuencia lógica de la ruta de producción definida."},{"label":"C","text":"Se fusiona con la orden de ensamblado","isCorrect":false,"rationale":"Aunque pertenezcan al mismo producto, cada centro de trabajo mantiene su propia orden individual."},{"label":"D","text":"Pasa automáticamente a estado $\\text{Planificado}$ para ganar tiempo","isCorrect":false,"rationale":"Estaría planificada, pero no disponible para que el operario la inicie hasta que se libere la dependencia."}]},{"question":"En el contexto de Python, ¿qué es $\\text{pip}$?","hint":"Es una herramienta de consola que expande las capacidades del lenguaje instalando módulos.","options":[{"label":"A","text":"Un entorno de desarrollo integrado (IDE)","isCorrect":false,"rationale":"El IDE mencionado en los apuntes es PyCharm, no pip."},{"label":"B","text":"Un error común al declarar variables","isCorrect":false,"rationale":"Es una herramienta funcional, no un tipo de excepción o fallo de sintaxis."},{"label":"C","text":"Un comando para gestionar e instalar paquetes de software","isCorrect":true,"rationale":"Es el sistema de gestión de paquetes estándar para instalar librerías externas en Python."},{"label":"D","text":"Un tipo de dato para números decimales","isCorrect":false,"rationale":"Los decimales se gestionan mediante tipos de datos como $\\text{float}$."}]},{"question":"Para utilizar centros de producción y rutas en el módulo de Fabricación de Odoo, ¿qué ajuste previo es necesario?","hint":"Se encuentra en los ajustes de operaciones de fabricación.","options":[{"label":"A","text":"Configurar una conexión $\\text{Wi-Fi}$ estable en la fábrica","isCorrect":false,"rationale":"Es un requisito técnico de infraestructura, no una configuración funcional dentro de los ajustes de Odoo."},{"label":"B","text":"Instalar el módulo de $\\text{Calidad Enterprise}$","isCorrect":false,"rationale":"Aunque es útil para controles, las rutas básicas pueden funcionar sin el módulo de calidad."},{"label":"C","text":"Definir los productos como $\\text{Consumibles}$","isCorrect":false,"rationale":"Los productos a fabricar deben ser normalmente de tipo 'Almacenable' para llevar control de stock."},{"label":"D","text":"Activar el checkbox de $\\text{Órdenes de trabajo}$","isCorrect":true,"rationale":"Habilita la capacidad de desglosar una orden de producción en múltiples pasos realizados en distintos lugares."}]},{"question":"¿Cuál es la última acción necesaria para cerrar completamente una sesión de PdV y registrar contablemente las ventas?","hint":"Es el paso que ocurre después de confirmar el cierre de la interfaz.","options":[{"label":"A","text":"Pulsar el botón $\\text{Close}$ en la esquina superior derecha","isCorrect":false,"rationale":"Esto solo inicia el proceso de salida de la interfaz de venta, pero no finaliza la contabilidad."},{"label":"B","text":"Imprimir el último ticket de caja","isCorrect":false,"rationale":"La impresión es un acto físico que no sustituye al proceso de validación contable en el software."},{"label":"C","text":"Apagar el equipo TPV","isCorrect":false,"rationale":"La sesión en el servidor debe cerrarse correctamente de forma lógica antes de apagar el hardware."},{"label":"D","text":"Validar y contabilizar asientos de cierre","isCorrect":true,"rationale":"Este paso final transfiere los datos de la sesión a los libros contables generales de la empresa."}]},{"question":"Al definir una Lista de Materiales (BoM), ¿qué indica la columna $\\text{A consumir}$?","hint":"Es la cantidad planificada según el diseño del producto.","options":[{"label":"A","text":"El número de productos que han caducado en el almacén","isCorrect":false,"rationale":"La BoM no gestiona la obsolescencia, sino la estructura de nuevos productos."},{"label":"B","text":"La cantidad de material que se ha desperdiciado durante el ensamblaje","isCorrect":false,"rationale":"Eso se registraría en órdenes de desecho o desconstrucción, no en la definición inicial de la BoM."},{"label":"C","text":"La cantidad teórica necesaria de un componente para fabricar el producto final","isCorrect":true,"rationale":"Se basa en la receta o fórmula definida para el proceso de fabricación."},{"label":"D","text":"El precio de coste del material por unidad","isCorrect":false,"rationale":"Esa información se encuentra en la valoración de inventario o en la pestaña de estructura de costes."}]},{"question":"¿Cuál de los siguientes es un módulo obligatorio que debe estar instalado para usar el Punto de Venta o Fabricación en Odoo?","hint":"Sin él, no habría productos físicos que vender o fabricar.","options":[{"label":"A","text":"Python 3.10","isCorrect":false,"rationale":"Python es el lenguaje base del sistema, no un módulo funcional dentro de la interfaz de Odoo."},{"label":"B","text":"Inventario","isCorrect":true,"rationale":"Ambos módulos dependen de la gestión de existencias y movimientos de almacén para funcionar."},{"label":"C","text":"Marketing por email","isCorrect":false,"rationale":"Es un módulo auxiliar de comunicación que no interviene en la lógica de producción o venta directa."},{"label":"D","text":"CRM","isCorrect":false,"rationale":"El CRM gestiona oportunidades de negocio, pero no es técnicamente necesario para operar una tienda o una fábrica."}]},{"question":"En el caso práctico de fabricación de mesas, ¿qué documento se adjuntó para ayudar a los trabajadores del centro de ensamblado?","hint":"Es un archivo estático de lectura común en entornos industriales.","options":[{"label":"A","text":"Una hoja de cálculo Excel con los costes","isCorrect":false,"rationale":"Los costes son información administrativa, los operarios necesitan guías técnicas de montaje."},{"label":"B","text":"La factura de compra de los tornillos","isCorrect":false,"rationale":"Es un documento contable sin utilidad práctica en la línea de montaje."},{"label":"C","text":"Un vídeo de formación alojado en YouTube","isCorrect":false,"rationale":"Aunque Odoo admite enlaces, el material menciona específicamente un archivo PDF adjunto a la operación."},{"label":"D","text":"Un PDF con las instrucciones de los pasos a seguir","isCorrect":true,"rationale":"Permite estandarizar el proceso y asegurar que los operarios tengan la información técnica necesaria."}]},{"question":"¿Cómo se realiza la devolución de un producto por el PdV según el procedimiento estándar descrito?","hint":"Se utiliza una cantidad negativa para revertir la transacción.","options":[{"label":"A","text":"Enviando un correo electrónico al administrador del almacén","isCorrect":false,"rationale":"La gestión debe ser inmediata en la tienda para satisfacer al cliente y cuadrar la caja."},{"label":"B","text":"Indicando la cantidad como $-1$ en la interfaz y procesando el pago","isCorrect":true,"rationale":"Esto genera un ticket rectificativo y devuelve el dinero al cliente, actualizando el stock positivamente."},{"label":"C","text":"Cambiando el precio del producto a $0$ euros","isCorrect":false,"rationale":"Esto no registraría la salida de dinero de la caja ni el reingreso del producto al inventario."},{"label":"D","text":"Borrando el registro de la venta original de la base de datos","isCorrect":false,"rationale":"Eliminar registros históricos rompería la integridad contable y la trazabilidad del sistema."}]},{"question":"Al editar un producto cargado en el PdV, ¿qué acción facilita su búsqueda posterior por el cajero?","hint":"Agrupa los productos por tipos similares.","options":[{"label":"A","text":"Añadir un comentario Python en la descripción","isCorrect":false,"rationale":"Los comentarios de código no son visibles para el usuario final ni ayudan a la organización de la tienda."},{"label":"B","text":"Informar correctamente la categoría del producto","isCorrect":true,"rationale":"Organizar productos por categorías permite una navegación visual más rápida en la pantalla táctil del TPV."},{"label":"C","text":"Cambiar el nombre del producto a código binario","isCorrect":false,"rationale":"Dificultaría enormemente la identificación humana del producto durante la venta."},{"label":"D","text":"Desactivar la opción de $\\text{Disponible en PdV}$","isCorrect":false,"rationale":"Si se desactiva, el producto dejaría de ser visible y vendible en la interfaz del punto de venta."}]},{"question":"¿Qué representa la columna $\\text{External ID}$ en el fichero de importación de productos?","hint":"Es una clave técnica usada para la trazabilidad de los datos importados.","options":[{"label":"A","text":"Un identificador único para evitar duplicados al actualizar datos","isCorrect":true,"rationale":"Permite al sistema reconocer si un producto ya existe o debe crearse uno nuevo basándose en esta clave."},{"label":"B","text":"El código de barras que escanea el cliente","isCorrect":false,"rationale":"Ese suele ser el campo 'Barcode' o EAN13, diferente al identificador técnico de base de datos."},{"label":"C","text":"La dirección IP de la impresora de tickets","isCorrect":false,"rationale":"No tiene relación con el hardware, es una referencia de software para la gestión de registros."},{"label":"D","text":"El nombre público del producto en la tienda web","isCorrect":false,"rationale":"Ese campo es 'Name' o 'Display Name'; el External ID es para uso interno de sincronización."}]},{"question":"En el módulo de Fabricación, ¿cuál es el estado de una orden tras pulsar $\\text{Producir}$ y antes de finalizarla?","hint":"Es la fase previa a 'Hecho'.","options":[{"label":"A","text":"Cancelado","isCorrect":false,"rationale":"Este estado significaría el fin del proceso sin éxito, no una etapa intermedia de éxito parcial."},{"label":"B","text":"Para cerrar","isCorrect":true,"rationale":"Indica que los materiales han sido consumidos y el producto está listo para ser registrado en el stock final."},{"label":"C","text":"Enviado por email","isCorrect":false,"rationale":"Las órdenes de producción son procesos internos de taller y no siguen un flujo de mensajería externa."},{"label":"D","text":"Borrador permanente","isCorrect":false,"rationale":"El estado borrador se abandona en cuanto se confirma la orden para su ejecución."}]},{"question":"Si el stock para fabricar una mesa es insuficiente, ¿qué flujo entre módulos del ERP se suele seguir según el resumen de la unidad?","hint":"Piensa en cómo consigues materiales que no tienes para poder trabajar.","options":[{"label":"A","text":"Fabricación $\\rightarrow$ CRM $\\rightarrow$ Punto de Venta","isCorrect":false,"rationale":"No resuelve el problema técnico de la falta de componentes para la construcción del producto."},{"label":"B","text":"Ventas $\\rightarrow$ Contabilidad $\\rightarrow$ Fabricación","isCorrect":false,"rationale":"Este flujo ignora la adquisición física de materias primas necesaria para iniciar la producción."},{"label":"C","text":"Fabricación $\\rightarrow$ Compras $\\rightarrow$ Inventario $\\rightarrow$ Fabricación","isCorrect":true,"rationale":"Se detecta la falta en producción, se adquiere al proveedor, se recibe en almacén y se retoma la fabricación."},{"label":"D","text":"Inventario $\\rightarrow$ Python $\\rightarrow$ Contabilidad","isCorrect":false,"rationale":"Mezcla herramientas de desarrollo con procesos de negocio funcionales."}]},{"question":"¿Qué utilidad tiene la palabra reservada $\\text{class}$ en Python?","hint":"Es fundamental para estructurar el código siguiendo el paradigma de objetos.","options":[{"label":"A","text":"Clasificar los errores de sintaxis","isCorrect":false,"rationale":"Los errores se gestionan mediante excepciones, no mediante la palabra reservada $\\text{class}$."},{"label":"B","text":"Importar librerías externas de Odoo","isCorrect":false,"rationale":"Para importar se utiliza la palabra reservada $\\text{import}$."},{"label":"C","text":"Definir una constante global","isCorrect":false,"rationale":"Python no tiene una palabra reservada para constantes; se usa una convención de nombres en mayúsculas."},{"label":"D","text":"Definir una clase para programación orientada a objetos","isCorrect":true,"rationale":"Permite crear plantillas de objetos con sus propios atributos y métodos."}]},{"question":"¿Cuál es la duración total configurada para la ruta de fabricación de la mesa en el ejemplo práctico?","hint":"Suma los tiempos de ensamblado y pintura.","options":[{"label":"A","text":"24 horas","isCorrect":false,"rationale":"Sería un tiempo excesivo para las operaciones simples descritas en el centro de trabajo."},{"label":"B","text":"60 minutos","isCorrect":false,"rationale":"Este es el tiempo individual de cada operación, pero la ruta completa incluye ambas secuencialmente."},{"label":"C","text":"120 minutos","isCorrect":true,"rationale":"Suma los 60 minutos de la operación de ensamblado y los 60 minutos de la operación de pintura."},{"label":"D","text":"Depende de la conexión a Internet","isCorrect":false,"rationale":"El tiempo de fabricación es una estimación de capacidad productiva, no de velocidad de red."}]},{"question":"En el PdV, ¿para qué sirve pulsar el botón con el símbolo $\\text{+/-}$ durante una devolución?","hint":"Altera el carácter numérico de la unidad seleccionada.","options":[{"label":"A","text":"Para cambiar el signo de la cantidad a negativo","isCorrect":true,"rationale":"Permite transformar una venta en una devolución de forma rápida en la pantalla táctil."},{"label":"B","text":"Para aplicar un descuento al cliente","isCorrect":false,"rationale":"Los descuentos suelen tener un botón específico ('Desc') en la interfaz del PdV."},{"label":"C","text":"Para sumar los impuestos al precio base","isCorrect":false,"rationale":"El sistema calcula los impuestos automáticamente basándose en la configuración fiscal."},{"label":"D","text":"Para abrir el cajón de monedas manualmente","isCorrect":false,"rationale":"La apertura del cajón ocurre normalmente al finalizar el pago o mediante una función de gestión específica."}]},{"question":"Según el material, ¿qué componente de software es PyCharm?","hint":"Es donde el programador escribe las líneas de código.","options":[{"label":"A","text":"Un servidor de bases de datos para Odoo","isCorrect":false,"rationale":"Esa función la cumple PostgreSQL, no una herramienta de edición de código."},{"label":"B","text":"Un IDE (Entorno de Desarrollo Integrado)","isCorrect":true,"rationale":"Es la herramienta recomendada para escribir, depurar y ejecutar código Python de forma profesional."},{"label":"C","text":"Una extensión del navegador para el Punto de Venta","isCorrect":false,"rationale":"PyCharm es una aplicación de escritorio independiente para programadores."},{"label":"D","text":"Un módulo de fabricación avanzada","isCorrect":false,"rationale":"No es una funcionalidad interna del ERP, sino una herramienta de desarrollo externa."}]},{"question":"Al finalizar la jornada, tras pulsar $\\text{Close}$ y $\\text{Confirm}$, ¿qué botón se debe presionar para salir de la pantalla de sesión de la tienda?","hint":"Se encuentra junto al botón 'Reanudar'.","options":[{"label":"A","text":"Esc","isCorrect":false,"rationale":"La tecla escape no realiza las acciones lógicas de cierre y guardado de datos en el servidor."},{"label":"B","text":"Reanudar","isCorrect":false,"rationale":"Este botón volvería a abrir la interfaz de ventas para continuar operando en la misma sesión."},{"label":"C","text":"Cerrar sesión de usuario","isCorrect":false,"rationale":"Cierra el acceso de la persona al ERP, pero no liquida la sesión comercial del punto de venta."},{"label":"D","text":"Cerrar","isCorrect":true,"rationale":"Este botón finaliza la actividad de la interfaz de ventas y permite proceder a la contabilización."}]}];
+const tr = {"correct":"Correct!","incorrect":"Incorrect","next":"Next Question →","seeResults":"See Results","complete":"Quiz Complete!","scoreText":"You got {correct} out of {total} correct","tryAgain":"Try Again","rightAnswer":"Right answer","notQuite":"Not quite"};
+let currentQ = 0, correctCount = 0, answered = false;
+
+function init() {
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === 0));
+  updateProgress();
+  document.querySelectorAll('.option').forEach(opt => opt.addEventListener('click', () => selectOption(opt)));
+  document.querySelectorAll('.next-btn').forEach(btn => btn.addEventListener('click', nextQuestion));
+}
+
+function selectOption(opt) {
+  if (answered) return;
+  answered = true;
+  const q = opt.closest('.question');
+  const options = q.querySelectorAll('.option');
+  const nextBtn = q.querySelector('.next-btn');
+  const isCorrect = opt.dataset.correct === 'true';
+  
+  // Mark all options as disabled
+  options.forEach(o => o.classList.add('disabled'));
+  
+  // Style selected option
+  opt.classList.add('selected', isCorrect ? 'correct' : 'incorrect');
+  
+  // Show correct answer if wrong
+  if (!isCorrect) {
+    const correctOpt = [...options].find(o => o.dataset.correct === 'true');
+    if (correctOpt) correctOpt.classList.add('show-correct');
+  }
+  
+  if (isCorrect) correctCount++;
+  
+  // Show feedback for ALL options that have rationale
+  options.forEach(o => {
+    const wrapper = o.closest('.option-wrapper');
+    const feedback = wrapper.querySelector('.option-feedback');
+    const rationale = o.dataset.rationale;
+    const isThisCorrect = o.dataset.correct === 'true';
+    
+    if (rationale && rationale.trim()) {
+      feedback.classList.remove('hidden');
+      feedback.classList.add(isThisCorrect ? 'correct-feedback' : 'incorrect-feedback');
+      
+      const statusEl = feedback.querySelector('.feedback-status');
+      statusEl.className = 'feedback-status ' + (isThisCorrect ? 'correct' : 'incorrect');
+      statusEl.innerHTML = isThisCorrect 
+        ? '✓ ' + tr.rightAnswer
+        : '✗ ' + tr.notQuite;
+    }
+  });
+  
+  nextBtn.classList.remove('hidden');
+  if (currentQ === quizData.length - 1) nextBtn.textContent = tr.seeResults;
+}
+
+function nextQuestion() {
+  answered = false;
+  currentQ++;
+  if (currentQ >= quizData.length) { showResults(); return; }
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === currentQ));
+  updateProgress();
+}
+
+function updateProgress() {
+  document.querySelector('.progress-fill').style.width = (currentQ / quizData.length * 100) + '%';
+}
+
+function showResults() {
+  document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
+  document.getElementById('results').classList.add('active');
+  const pct = Math.round((correctCount / quizData.length) * 100);
+  document.getElementById('score').textContent = pct + '%';
+  document.getElementById('score-text').textContent = tr.scoreText.replace('{correct}', correctCount).replace('{total}', quizData.length);
+  document.querySelector('.progress-fill').style.width = '100%';
+}
+
+function restart() {
+  currentQ = 0; correctCount = 0; answered = false;
+  document.getElementById('results').classList.remove('active');
+  document.querySelectorAll('.question').forEach((q, i) => {
+    q.classList.toggle('active', i === 0);
+    q.querySelectorAll('.option').forEach(o => o.classList.remove('selected', 'correct', 'incorrect', 'disabled', 'show-correct'));
+    q.querySelectorAll('.option-feedback').forEach(f => {
+      f.classList.add('hidden');
+      f.classList.remove('correct-feedback', 'incorrect-feedback');
+    });
+    const btn = q.querySelector('.next-btn');
+    btn.classList.add('hidden');
+    btn.textContent = tr.next;
+  });
+  updateProgress();
+}
+
+init();
+</script>
+</body>
+</html>
