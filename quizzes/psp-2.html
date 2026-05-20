@@ -412,12 +412,12 @@
 
         <div class="navigation">
             <button id="hint-toggle" class="hint-toggle">
-                <span>Hint</span>
+                <span>Pista</span>
                 <span id="hint-icon-arrow">▼</span>
             </button>
             <div class="nav-buttons">
-                <button id="prev-btn" class="btn btn-prev">Previous</button>
-                <button id="next-btn" class="btn btn-next">Next</button>
+                <button id="prev-btn" class="btn btn-prev">Anterior</button>
+                <button id="next-btn" class="btn btn-next">Siguiente</button>
             </div>
         </div>
     </div>
@@ -483,7 +483,7 @@
                             <span>${String.fromCharCode(65 + idx)}. ${opt.text}</span>
                         </div>
                         <div class="feedback-state">
-                            ${opt.isCorrect ? '✓ Right answer' : '✕ Not quite'}
+                            ${opt.isCorrect ? '✓ Correcto' : '✕ Incorrecto'}
                         </div>
                         ${opt.rationale ? '<div class="rationale">' + opt.rationale + '</div>' : ''}
                     </li>
@@ -512,9 +512,9 @@
                 </ul>
             `;
 
-            // Update Hint Box
+            // Update Pista Box
             const hintText = document.getElementById('hint-text');
-            hintText.innerText = q.hint || 'No hint available for this question.';
+            hintText.innerText = q.hint || 'No hay pista disponible para esta pregunta.';
             if (s.hintVisible) {
                 hintBox.classList.add('active');
             } else {
@@ -529,9 +529,9 @@
             prevBtn.disabled = currentIndex === 0;
             nextBtn.disabled = false;
             if (mode === 'review') {
-                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Back to Results' : 'Next';
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Volver a resultados' : 'Siguiente';
             } else {
-                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finish' : 'Next';
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finalizar' : 'Siguiente';
             }
             document.getElementById('hint-icon-arrow').innerText = s.hintVisible ? '▲' : '▼';
         }
@@ -561,29 +561,29 @@
             results.innerHTML = `
                 <div class="results-screen">
                     <div>
-                        <h1 class="results-title">You did it! Quiz Complete.</h1>
-                        <p class="results-subtitle">Review your score or take another run.</p>
+                        <h1 class="results-title">¡Lo lograste! Quiz completado.</h1>
+                        <p class="results-subtitle">Revisa tu puntuación o inténtalo de nuevo.</p>
                     </div>
                     <div class="results-grid">
                         <div class="result-card">
-                            <div class="result-label">Score</div>
+                            <div class="result-label">Puntuación</div>
                             <div class="result-value">${score}</div>
                         </div>
                         <div class="result-card">
-                            <div class="result-label">Accuracy</div>
+                            <div class="result-label">Precisión</div>
                             <div class="result-value">${stats.accuracy}%</div>
                         </div>
                         <div class="result-card">
                             <div class="result-metrics">
-                                <div>Right <strong>${stats.correct}</strong></div>
-                                <div>Wrong <strong>${stats.wrong}</strong></div>
-                                <div>Skipped <strong>${stats.skipped}</strong></div>
+                                <div>Correctas <strong>${stats.correct}</strong></div>
+                                <div>Incorrectas <strong>${stats.wrong}</strong></div>
+                                <div>Omitidas <strong>${stats.skipped}</strong></div>
                             </div>
                         </div>
                     </div>
                     <div class="results-actions">
-                        <button id="review-btn" class="btn btn-ghost">Review Quiz</button>
-                        <button id="retake-btn" class="btn btn-next">Retake Quiz</button>
+                        <button id="review-btn" class="btn btn-ghost">Revisar Quiz</button>
+                        <button id="retake-btn" class="btn btn-next">Repetir Quiz</button>
                     </div>
                 </div>
             `;
