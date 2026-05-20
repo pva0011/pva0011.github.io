@@ -346,6 +346,13 @@ let translated = 0;
 quizFiles.forEach(file => {
   const filePath = path.join(QUIZ_DIR, file);
   let content = fs.readFileSync(filePath, "utf8");
+
+  // Skip files already translated
+  if (content.includes("Pista") || content.includes("Siguiente")) {
+    console.log(`  ↷ ${file} (ya traducido)`);
+    return;
+  }
+
   const original = content;
 
   TRANSLATIONS.forEach(([pattern, replacement]) => {
