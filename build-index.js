@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const QUIZ_DIR = path.join(__dirname, "quizzes");
+const FORCE = process.argv.includes("--force");
 
 const PREFIXES = {
   ad: "Acceso a Datos",
@@ -418,6 +419,17 @@ const TRANSLATIONS = [
   [/No hint available for this question\./g,   "No hay pista disponible para esta pregunta."],
 ];
 
+// Applied unconditionally — must run on every file regardless of translation state
+const FORMATTING_PATTERNS = [
+  [/\$\$(.*?)\$\$/gs,  "$1"],
+  [/\$(.*?)\$/g,       "$1"],
+  [/\\\((.*?)\\\)/gs,  "$1"],
+  [/\\\[(.*?)\\\]/gs,  "$1"],
+  [/\*\*(.*?)\*\*/g,   "<strong>$1</strong>"],
+  [/\*(.*?)\*/g,       "<em>$1</em>"],
+  [/`(.*?)`/g,         "<code>$1</code>"],
+];
+
 // Dark mode CSS to inject into quiz files
 const QUIZ_DARK_CSS = `
     [data-theme="dark"] {
@@ -551,8 +563,13 @@ quizFiles.forEach(file => {
     content = content.replace('</body>', `${toggleScript}\n</body>`);
   }
 
-  // Translate if not already done
-  if (!content.includes("Pista") && !content.includes("Siguiente")) {
+  // Always apply formatting patterns regardless of translation state
+  FORMATTING_PATTERNS.forEach(([pattern, replacement]) => {
+    content = content.replace(pattern, replacement);
+  });
+
+  // Translate if not already done (or forced)
+  if (FORCE || (!content.includes("Pista") && !content.includes("Siguiente"))) {
     TRANSLATIONS.forEach(([pattern, replacement]) => {
       content = content.replace(pattern, replacement);
     });

@@ -478,7 +478,7 @@
       }
     }
     
-    /* quiz-mobile-v3 */
+    /<em> quiz-mobile-v3 </em>/
     @media (max-width: 640px) {
       body {
         height: 100dvh;
@@ -609,9 +609,9 @@
                 const revealClass = revealCorrect ? 'revealed-correct' : '';
 
                 optionsHtml += `
-                    <li class="option-item ${selectedClass} ${statusClass} ${revealClass}" onclick="selectOption(${idx})">
+                    <li class="option-item {selectedClass} {statusClass} {revealClass}" onclick="selectOption({idx})">
                         <div class="option-label">
-                            <span>${String.fromCharCode(65 + idx)}. ${opt.text}</span>
+                            <span>{String.fromCharCode(65 + idx)}. {opt.text}</span>
                         </div>
                         <div class="feedback-state">
                             ${opt.isCorrect ? '✓ Correcto' : '✕ Incorrecto'}
@@ -625,7 +625,7 @@
 
             content.innerHTML = `
                 <div class="progress-container">
-                    <div class="progress-text">${currentIndex + 1} / ${quizData.length}</div>
+                    <div class="progress-text">{currentIndex + 1} / {quizData.length}</div>
                     <div class="status-bar">
                         <div class="status-item status-correct">
                             <span>✓</span>
@@ -687,7 +687,7 @@
             const hintBox = document.getElementById('hint-box');
             const nav = document.querySelector('.navigation');
 
-            const score = `${stats.correct} / ${quizData.length}`;
+            const score = <code>{stats.correct} / {quizData.length}</code>;
 
             results.innerHTML = `
                 <div class="results-screen">
