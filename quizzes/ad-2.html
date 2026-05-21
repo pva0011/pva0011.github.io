@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso a datos - 8 a 15 - NotebookLM - Quiz Export</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+        :root {
+            --bg: #f6f1e7;
+            --bg-deep: #efe4d6;
+            --ink: #171717;
+            --muted: #5b5b5b;
+            --accent: #d3542c;
+            --accent-light: #ff8f5a;
+            --accent-dark: #b14320;
+            --teal: #1f6f78;
+            --card: #fff7ef;
+            --stroke: #e3d6c5;
+            --shadow: 0 18px 40px rgba(23, 23, 23, 0.12);
+            --radius-sm: 10px;
+            --radius-md: 12px;
+            --radius-lg: 14px;
+            --radius-xl: 18px;
+            --radius-2xl: 22px;
+            --space-1: 6px;
+            --space-2: 8px;
+            --space-3: 10px;
+            --space-4: 12px;
+            --space-5: 14px;
+            --space-6: 16px;
+            --space-7: 18px;
+            --space-8: 20px;
+            --space-9: 24px;
+            --space-10: 32px;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --error: #b54832;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background:
+                radial-gradient(240px 140px at 10% -10%, #ffd2b9 0%, transparent 70%),
+                radial-gradient(220px 160px at 90% 0%, #cfe7e6 0%, transparent 65%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+            color: var(--ink);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 800px;
+            padding: var(--space-10) var(--space-8);
+            box-sizing: border-box;
+            background: var(--card);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+        }
+
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .progress-text {
+            color: var(--muted);
+            font-size: 0.9em;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-correct { color: var(--teal); }
+        .status-wrong { color: var(--error); }
+
+        .question-text {
+            font-family: var(--font-display);
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-item:hover:not(.selected) {
+            background-color: var(--card);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .option-item.selected.correct {
+            background-color: rgba(31, 111, 120, 0.12);
+            border-color: var(--teal);
+        }
+
+        .option-item.selected.incorrect {
+            background-color: rgba(181, 72, 50, 0.12);
+            border-color: var(--error);
+        }
+
+        .option-item.revealed-correct {
+            border-color: rgba(31, 111, 120, 0.5);
+            box-shadow: inset 0 0 0 1px rgba(31, 111, 120, 0.16);
+        }
+
+        .option-label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feedback-state {
+            font-weight: bold;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .selected .feedback-state {
+            display: block;
+        }
+
+        .revealed-correct .feedback-state {
+            display: block;
+        }
+
+        .correct .feedback-state { color: var(--teal); }
+        .incorrect .feedback-state { color: var(--error); }
+        .revealed-correct .feedback-state { color: var(--teal); }
+
+        .rationale {
+            font-size: 0.95em;
+            color: var(--muted);
+            margin-top: 4px;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .selected .rationale {
+            display: block;
+        }
+
+        .revealed-correct .rationale {
+            display: block;
+        }
+        .hint-toggle {
+            border: 1px solid var(--stroke);
+            color: var(--muted);
+            cursor: pointer;
+            padding: var(--space-2) var(--space-6);
+            border-radius: var(--radius-md);
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hint-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .hint-content {
+            margin-top: 32px;
+            padding: var(--space-6);
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-lg);
+            font-size: 0.95em;
+            color: var(--muted);
+            display: none;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .hint-content.active {
+            display: flex;
+        }
+
+        .hint-icon-box {
+            color: var(--accent-dark);
+            font-size: 1.2em;
+            margin-top: -2px;
+        }
+
+        .navigation {
+            margin-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-7);
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-prev {
+            background-color: #fff;
+            color: var(--ink);
+            border-color: var(--stroke);
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn-next {
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            color: #fff;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .results-screen {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+        }
+
+        .results-title {
+            font-family: var(--font-display);
+            font-size: 2.1em;
+            margin: 0;
+        }
+
+        .results-subtitle {
+            color: var(--muted);
+            margin: 0;
+            font-size: 1em;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .result-card {
+            padding: var(--space-6);
+            border-radius: var(--radius-xl);
+            background: #fff;
+            border: 1px solid var(--stroke);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .result-label {
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-family: var(--font-display);
+        }
+
+        .result-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            border: 1px solid var(--stroke);
+            color: var(--ink);
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 900px) {
+            .quiz-container {
+                margin: var(--space-8);
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .quiz-container {
+                padding: var(--space-8) var(--space-6);
+            }
+
+            .question-text {
+                font-size: 1.3em;
+            }
+
+            .option-item {
+                padding: var(--space-4);
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .quiz-container {
+                margin: var(--space-6);
+                padding: var(--space-7) var(--space-5);
+            }
+
+            .progress-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+
+            .navigation {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-4);
+            }
+
+            .nav-buttons {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .hint-toggle {
+                justify-content: space-between;
+            }
+
+            .results-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div id="quiz-content">
+            <!-- Dynamic Content -->
+        </div>
+        <div id="results-content" class="hidden"></div>
+
+        <div id="hint-box" class="hint-content">
+            <div class="hint-icon-box">💡</div>
+            <div id="hint-text"></div>
+        </div>
+
+        <div class="navigation">
+            <button id="hint-toggle" class="hint-toggle">
+                <span>Hint</span>
+                <span id="hint-icon-arrow">▼</span>
+            </button>
+            <div class="nav-buttons">
+                <button id="prev-btn" class="btn btn-prev">Previous</button>
+                <button id="next-btn" class="btn btn-next">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [{"answerOptions":[{"isCorrect":false,"rationale":"La herencia en Oracle es principalmente jerárquica y esta directiva se centra en la integridad de los datos, no en la estructura de clases.","text":"Permitir la herencia múltiple entre tipos de objetos complejos definidos por el usuario."},{"isCorrect":false,"rationale":"Aunque se mencionan métodos de conversión ASCII, el propósito de PRAGMA es el control de acceso y seguridad de variables.","text":"Optimizar el rendimiento de las consultas SQL al convertir tipos de objetos a caracteres ASCII automáticamente."},{"isCorrect":false,"rationale":"La definición de claves primarias se realiza en la creación de la tabla de objetos, no mediante directivas de compilación de métodos.","text":"Establecer una clave primaria obligatoria para los tipos de objetos que se almacenarán en tablas anidadas."},{"isCorrect":true,"rationale":"Esta directiva garantiza la pureza del método al restringir el acceso a tablas o variables globales, evitando efectos secundarios durante la ejecución.","text":"Asegurar que el método no realice manipulaciones no autorizadas de datos o variables PL/SQL."}],"hint":"Relaciona esta directiva con el control de efectos secundarios en el código procedimental.","question":"¿Cuál es la función principal del compilador al utilizar la instrucción 'PRAGMA RESTRICT_REFERENCES' en la creación de métodos en Oracle?"},{"answerOptions":[{"isCorrect":true,"rationale":"Una tabla 'OF tipo' crea filas que son objetos con identidad propia, mientras que una columna de objeto simplemente encapsula datos dentro de una fila relacional estándar.","text":"La tabla de objetos asigna un identificador único (OID) a cada fila, tratándola como una entidad independiente."},{"isCorrect":false,"rationale":"Por definición, las tablas de objetos se crean a partir de tipos definidos por el usuario (User-Defined Types).","text":"Las tablas de objetos solo admiten tipos básicos del sistema, prohibiendo tipos creados por el usuario."},{"isCorrect":false,"rationale":"Ambas estructuras pueden beneficiarse de la jerarquía de tipos, pero su gestión de la identidad del objeto es lo que las distingue.","text":"La tabla con una columna de objeto permite el uso de herencia, mientras que la tabla de objetos no."},{"isCorrect":false,"rationale":"Las referencias (REF) se utilizan típicamente para apuntar a filas en tablas de objetos que poseen un identificador de objeto.","text":"El uso de referencias (REF) solo es posible en tablas que contienen columnas de objetos complejos."}],"hint":"Considera cómo se gestiona la identidad de los datos en cada caso.","question":"En el modelo de bases de datos objeto-relacionales, ¿qué diferencia estructural existe entre una 'tabla de objetos' y una tabla que contiene una 'columna de tipo objeto'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque la encapsulación y la herencia existen, la interoperabilidad técnica se basa en la serialización y conversión de formatos.","text":"Un método de encapsulación privada y un método de herencia pública para tipos hijos."},{"isCorrect":true,"rationale":"Estos métodos permiten la representación externa de datos complejos y su reconstrucción desde formatos estándar de intercambio.","text":"Un método para convertir el tipo a caracteres ASCII y otro para realizar la operación inversa."},{"isCorrect":false,"rationale":"Esta es una opción de implementación de métodos, pero no describe los dos métodos funcionales necesarios para la gestión de dominios específicos.","text":"Un procedimiento almacenado en Java y una función externa escrita en lenguaje C."},{"isCorrect":false,"rationale":"Estos son mecanismos de control del motor de la base de datos, no métodos intrínsecos de la definición de un nuevo tipo de dato.","text":"Un método de validación de triggers y un método de chequeo de integridad referencial."}],"hint":"Piensa en cómo un sistema traduce un objeto complejo a un formato legible por humanos.","question":"Al definir nuevos tipos de datos compuestos en bases de datos objeto-relacionales, ¿qué dos métodos fundamentales se sugiere que deben implementarse para garantizar la interoperabilidad?"},{"answerOptions":[{"isCorrect":true,"rationale":"El escalado horizontal aprovecha clusters de máquinas más baratas, lo que resulta en una mejor relación precio/rendimiento a gran escala.","text":"Permite añadir hardware comercial estándar en múltiples servidores en lugar de requerir una sola máquina de alta capacidad y coste exponencial."},{"isCorrect":false,"rationale":"Muchos sistemas NoSQL sacrifican la consistencia inmediata (ACID) para favorecer la escalabilidad y disponibilidad.","text":"Garantiza el cumplimiento estricto de los principios ACID sin coste adicional de software."},{"isCorrect":false,"rationale":"En realidad, los sistemas NoSQL suelen aumentar la replicación para garantizar la disponibilidad continua.","text":"Reduce la necesidad de replicar datos entre nodos, minimizando el gasto en almacenamiento magnético."},{"isCorrect":false,"rationale":"NoSQL sigue requiriendo lenguajes de alto nivel para interactuar con los datos; el ahorro es puramente de infraestructura hardware.","text":"Elimina la necesidad de utilizar lenguajes de programación complejos como Java o C#."}],"hint":"Compara la adquisición de un superordenador frente a la de muchos ordenadores comunes.","question":"¿Por qué el escalado horizontal es preferible económicamente en entornos NoSQL frente al escalado vertical de las bases de datos relacionales?"},{"answerOptions":[{"isCorrect":false,"rationale":"Una característica clave de las OODBMS es que la existencia de los objetos y sus OID se extiende indefinidamente tras el cierre de la aplicación.","text":"El OID solo es válido mientras la aplicación que creó el objeto está en ejecución."},{"isCorrect":true,"rationale":"A diferencia de las claves primarias relacionales que a menudo se basan en datos (como un DNI), el OID es una identidad interna e inmutable.","text":"El OID es generado automáticamente por el sistema, es independiente del contenido del objeto y no puede ser modificado."},{"isCorrect":false,"rationale":"El sistema es el encargado de asignar la identidad única al crear el objeto para asegurar su integridad absoluta.","text":"El OID es un identificador externo que el usuario debe definir obligatoriamente antes de la persistencia."},{"isCorrect":false,"rationale":"Si la identidad cambiara con el estado, se perdería la referencia al objeto del mundo real que representa.","text":"La identidad del objeto cambia automáticamente cada vez que se actualiza uno de sus atributos o estados."}],"hint":"Reflexiona sobre quién asigna el identificador y si este depende de los valores de los datos almacenados.","question":"¿Cuál es la característica distintiva de un 'Object ID' (OID) en una base de datos orientada a objetos (OODBMS) en comparación con una clave primaria relacional?"},{"answerOptions":[{"isCorrect":false,"rationale":"OQL es flexible y permite declarar iteradores mediante 'in', 'as' o simplemente por posición.","text":"Requiere que todas las variables de tipo iterador se declaren exclusivamente con la palabra clave 'AS'."},{"isCorrect":false,"rationale":"OQL trabaja directamente con la estructura de los objetos sin necesidad de conversiones de texto explícitas en la consulta.","text":"Debe incluir obligatoriamente el uso de operadores de conversión ASCII para tipos complejos."},{"isCorrect":false,"rationale":"El lenguaje de consulta es independiente de los mecanismos de integridad activa como los triggers.","text":"Solo puede utilizarse si previamente se han definido 'triggers' de integridad en el servidor."},{"isCorrect":true,"rationale":"OQL permite el acceso navegacional directo, por lo que la cláusula SELECT se puede omitir si se desea recuperar objetos completos.","text":"No es obligatoria; nombrar un objeto es suficiente para devolver todas sus instancias según el modelo definido."}],"hint":"Considera qué sucede si simplemente escribes el nombre de una clase en una consulta OQL.","question":"En el lenguaje OQL (Object Query Language), ¿cuál es una particularidad notable respecto a la cláusula SELECT?"},{"answerOptions":[{"isCorrect":true,"rationale":"La preparación para la nube requiere elasticidad y compatibilidad con proveedores como Amazon EC2 o entornos locales simultáneos.","text":"La capacidad de extender o reducir el clúster dinámicamente y admitir arquitecturas híbridas entre instalaciones locales y nubes públicas."},{"isCorrect":false,"rationale":"XQuery es específico de bases de datos XML como Exist DB, no es un requisito para que una NoSQL sea 'cloud ready'.","text":"El uso estricto de lenguajes de consulta basados en XQuery para garantizar la compatibilidad con HTML."},{"isCorrect":false,"rationale":"Aunque el rendimiento es clave, el formato de almacenamiento (JSON, Columnas) depende del tipo de base de datos, no de la ubicación en la nube.","text":"La obligación de almacenar todos los datos exclusivamente en formato binario para maximizar el ancho de banda."},{"isCorrect":false,"rationale":"La base de datos debe seguir siendo persistente; lo que hace es integrar la caché para evitar problemas de sincronización externos.","text":"La eliminación de la capa de persistencia para trabajar únicamente con memorias caché volátiles."}],"hint":"Piensa en la flexibilidad necesaria para adaptarse a cambios en la demanda de recursos.","question":"¿Qué implica que una solución NoSQL sea 'lista para la nube' (cloud ready) según los estándares empresariales?"},{"answerOptions":[{"isCorrect":true,"rationale":"Un VARRAY es una colección homogénea, lo que facilita su almacenamiento y acceso secuencial dentro de un atributo.","text":"Todos los elementos deben ser estrictamente del mismo tipo de dato."},{"isCorrect":false,"rationale":"Los elementos de un VARRAY pueden ser tipos básicos o tipos de objeto, sin necesidad de ser referencias.","text":"Cada elemento debe poseer una referencia (REF) obligatoria a una superclase externa."},{"isCorrect":false,"rationale":"A diferencia de las tablas anidadas, un VARRAY suele tener un límite máximo de elementos definido en su creación.","text":"El número de elementos debe ser ilimitado y crecer dinámicamente sin definición previa."},{"isCorrect":false,"rationale":"Los VARRAYs soportan la tipología rica del sistema objeto-relacional, no solo cadenas de texto.","text":"Solo pueden contener caracteres ASCII convertidos mediante métodos de usuario."}],"hint":"Recuerda la definición técnica de un array tradicional en programación.","question":"Respecto a la gestión de colecciones en Oracle, ¿cuál es una restricción fundamental de los elementos que componen un VARRAY?"},{"answerOptions":[{"isCorrect":false,"rationale":"La identidad (OID) es gestionada por el motor de almacenamiento, independientemente del lenguaje en que se escriban los métodos.","text":"Asegura que el objeto mantenga su identidad única incluso si el servidor de base de datos se reinicia."},{"isCorrect":false,"rationale":"El uso de C no está intrínsecamente ligado a la generación de esquemas XML, sino a la potencia de procesamiento.","text":"Facilita la creación automática de esquemas XML nativos para la web."},{"isCorrect":false,"rationale":"Las restricciones de PRAGMA son específicas de PL/SQL en Oracle; el código externo en C requiere otros mecanismos de control.","text":"Garantiza que el método cumpla siempre con la directiva 'PRAGMA RESTRICT_REFERENCES'."},{"isCorrect":true,"rationale":"Los lenguajes compilados como C ofrecen una velocidad de ejecución superior para lógica compleja procesada fuera del motor PL/SQL.","text":"Permite ejecutar operaciones de cálculo intensivo con mayor rendimiento que el código interpretado en la base de datos."}],"hint":"Compara la eficiencia de ejecución entre un lenguaje de base de datos y un lenguaje de sistema de bajo nivel.","question":"¿Qué ventaja ofrece el almacenamiento de métodos en lenguaje C de forma externa en un OODBMS o base de datos objeto-relacional?"},{"answerOptions":[{"isCorrect":false,"rationale":"Exist DB es una base de datos XML nativa, no una base de datos clave/valor como Redis.","text":"Requiere la conversión de todos los datos a tablas hash antes de permitir cualquier consulta."},{"isCorrect":false,"rationale":"Exist DB es un proyecto de código abierto independiente de las tecnologías propietarias de Oracle.","text":"Solo admite consultas ejecutadas desde aplicaciones escritas en lenguaje PL/SQL."},{"isCorrect":false,"rationale":"Los lenguajes como XQuery poseen potentes mecanismos de iteración similares a los de OQL o SQL.","text":"No permite el uso de variables de tipo iterador en sus búsquedas de documentos HTML."},{"isCorrect":true,"rationale":"Exist DB está orientada a documentos XML y utiliza estándares específicos del W3C para la manipulación de datos jerárquicos.","text":"Utiliza XQuery y XSLT como lenguajes nativos de consulta y programación en lugar de SQL."}],"hint":"Busca los lenguajes estándar asociados con el procesamiento de archivos XML.","question":"¿Cuál es la principal diferencia entre Exist DB y las bases de datos relacionales tradicionales en cuanto a lenguajes de consulta?"},{"answerOptions":[{"isCorrect":true,"rationale":"El acceso navegacional aprovecha las referencias directas entre objetos, evitando las costosas operaciones de 'JOIN' del modelo relacional.","text":"La facilidad de moverse a través de los objetos y sus jerarquías de herencia de forma intuitiva durante las consultas."},{"isCorrect":false,"rationale":"Aunque el GPS genera datos para Big Data, la 'navegación' en OODBMS se refiere a la estructura lógica de los datos.","text":"La capacidad de realizar búsquedas geográficas utilizando sistemas de posicionamiento global (GPS)."},{"isCorrect":false,"rationale":"La navegación es una técnica de recuperación de datos en el código, no una limitación del cliente de acceso.","text":"El uso exclusivo de navegadores web como única interfaz para modificar el estado de los objetos."},{"isCorrect":false,"rationale":"Esto describe el modelo relacional tradicional, no el acceso flexible y basado en punteros de las bases de datos de objetos.","text":"La obligación de definir un esquema fijo de columnas antes de poder leer los datos almacenados."}],"hint":"Piensa en cómo se sigue una pista desde un objeto padre hacia sus objetos hijos.","question":"¿Qué se entiende por 'acceso navegacional' en el contexto de las ventajas de las bases de datos orientadas a objetos?"},{"answerOptions":[{"isCorrect":false,"rationale":"Al contrario, la caché integrada suele requerir y beneficiarse de arquitecturas de múltiples nodos.","text":"La necesidad de utilizar servidores de procesamiento paralelo o clusters."},{"isCorrect":true,"rationale":"Al formar parte del mismo sistema, se evitan las incoherencias entre lo que hay en memoria y lo que se ha guardado en disco.","text":"La dificultad de sincronizar los datos de una caché externa con la base de datos persistente."},{"isCorrect":false,"rationale":"Los fallos de hardware son inevitables; lo que hace la caché integrada es mejorar el rendimiento y la consistencia.","text":"La posibilidad de que ocurran fallos de hardware en el centro de datos físico."},{"isCorrect":false,"rationale":"La integración de la caché es una mejora de infraestructura que no afecta a los formatos de intercambio de datos.","text":"El requisito de que todos los desarrolladores conozcan el formato JSON."}],"hint":"Considera la complejidad de mantener dos sistemas de almacenamiento (memoria y disco) actualizados simultáneamente.","question":"En un sistema NoSQL distribuido, ¿qué problema técnico se elimina al integrar la memoria caché directamente en los nodos de la base de datos?"},{"answerOptions":[{"isCorrect":false,"rationale":"La identidad (OID) es una característica independiente de si existe o no una jerarquía de herencia.","text":"Obliga a que cada objeto tenga un identificador único generado manualmente por el administrador."},{"isCorrect":false,"rationale":"Los objetos encapsulan tanto estados como comportamientos; la herencia permite reutilizar esos comportamientos.","text":"Elimina la necesidad de definir métodos de comportamiento (procedimientos) en la base de datos."},{"isCorrect":true,"rationale":"La herencia centraliza los datos comunes, lo que simplifica el mantenimiento y reduce el espacio necesario al no duplicar definiciones.","text":"Permite agrupar propiedades comunes en superclases, evitando repetir atributos en múltiples clases derivadas."},{"isCorrect":false,"rationale":"La herencia gestiona jerarquías 'es-un', mientras que las relaciones N:M se gestionan mediante otros tipos de asociaciones.","text":"Transforma automáticamente todas las relaciones N:M en tablas hash de alto rendimiento."}],"hint":"Enfócate en cómo se comparten los atributos entre una clase 'Persona' y una clase 'Estudiante'.","question":"Según el material, ¿qué ventaja directa ofrece la herencia en la reducción de la redundancia en bases de datos de objetos?"},{"answerOptions":[{"isCorrect":true,"rationale":"Un REF es solo un enlace; para modificar o leer los datos del objeto destino, el sistema debe 'desreferenciar' el enlace.","text":"No permiten realizar operaciones directas sobre el objeto referenciado sin acceder a él primero."},{"isCorrect":false,"rationale":"Las referencias funcionan principalmente dentro de la misma base de datos, aunque existan mecanismos distribuidos.","text":"Requieren que el objeto referenciado se encuentre en un servidor físico diferente."},{"isCorrect":false,"rationale":"Un REF puede ser NULL independientemente del estado de la tabla de destino, indicando la ausencia de relación.","text":"Solo pueden almacenar valores nulos (NULL) si la tabla de destino está vacía."},{"isCorrect":false,"rationale":"Los REF son ideales precisamente para establecer relaciones entre objetos sin duplicar la información.","text":"No pueden utilizarse para establecer relaciones 'uno a muchos' (1:N)."}],"hint":"Piensa en la diferencia entre tener un libro y tener una nota que dice dónde está el libro.","question":"¿Cuál es la limitación operativa de los atributos de tipo REF en las bases de datos objeto-relacionales de Oracle?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los clusters son fundamentales en NoSQL para manejar precisamente el volumen generado por estas tecnologías.","text":"Permiten que las bases de datos NoSQL funcionen sin necesidad de clusters de servidores."},{"isCorrect":true,"rationale":"La naturaleza constante y variable de estos flujos de datos desborda la capacidad de los esquemas rígidos relacionales.","text":"Generan volúmenes masivos de datos semiestructurados que requieren alta velocidad de procesamiento y almacenamiento flexible."},{"isCorrect":false,"rationale":"Los identificadores de objetos son internos del DBMS; los sensores solo proporcionan la carga de datos (payload).","text":"Proporcionan automáticamente los OID necesarios para la herencia de objetos en Oracle."},{"isCorrect":false,"rationale":"Al contrario, el volumen de estas fuentes es uno de los motivos por los que se buscan alternativas NoSQL más escalables.","text":"Obligan al uso de bases de datos relacionales para garantizar la atomicidad de cada coordenada capturada."}],"hint":"Relaciona la cantidad y el tipo de información que envían estos dispositivos con el almacenamiento necesario.","question":"¿Cómo contribuyen los sensores y sistemas GPS a la eclosión de las bases de datos NoSQL?"},{"answerOptions":[{"isCorrect":true,"rationale":"Al tener copias distribuidas, otros nodos pueden responder a la solicitud si el nodo principal no está disponible.","text":"La replicación y segregación de datos entre diferentes partes físicas del centro de datos."},{"isCorrect":false,"rationale":"Esta es una característica objeto-relacional de Oracle, no un mecanismo de alta disponibilidad NoSQL.","text":"La conversión obligatoria de todos los registros a tablas anidadas de Oracle."},{"isCorrect":false,"rationale":"El lenguaje de los métodos no previene fallos de hardware en el clúster.","text":"La ejecución de todos los métodos en lenguaje PL/SQL para evitar fallos externos."},{"isCorrect":false,"rationale":"La disponibilidad es una propiedad del sistema de gestión (clusters/replicación), no del modelo de datos específico.","text":"El uso exclusivo de un modelo de datos orientado a grafos como Neo4J."}],"hint":"Considera qué sucede si los datos están guardados en más de un lugar al mismo tiempo.","question":"En el contexto de disponibilidad continua NoSQL, ¿qué garantiza que una base de datos siga atendiendo lecturas ante el fallo de un nodo?"},{"answerOptions":[{"isCorrect":false,"rationale":"SQL no es el lenguaje nativo para definir comportamientos de objetos; se utilizan lenguajes como OQL o el propio de la aplicación.","text":"La posibilidad de usar el lenguaje SQL estándar para definir comportamientos de encapsulación."},{"isCorrect":false,"rationale":"La persistencia indefinida es una ventaja, no una limitación, ya que permite compartir datos entre sesiones y aplicaciones.","text":"La limitación de que los objetos solo persistan mientras la aplicación está abierta."},{"isCorrect":true,"rationale":"Se elimina la discrepancia de impedancia al usar el mismo paradigma (objetos) tanto en el código como en el almacenamiento.","text":"La capacidad de replicar y modificar objetos existentes para crear nuevos sin necesidad de traducir filas y columnas."},{"isCorrect":false,"rationale":"El sistema genera los OID automáticamente, lo que reduce la carga de trabajo y errores del desarrollador.","text":"El requisito de definir manualmente cada Identidad de Objeto (OID) mediante código Java."}],"hint":"Piensa en el esfuerzo que ahorra no tener que convertir datos de un formato a otro constantemente.","question":"Dentro de las características de las OODBMS, ¿qué permite que un desarrollador de aplicaciones orientadas a objetos sea más productivo?"},{"answerOptions":[{"isCorrect":false,"rationale":"El licenciamiento es un aspecto legal/comercial, ajeno al modelado semántico de los datos.","text":"Determina si una base de datos es de código abierto o propietaria."},{"isCorrect":true,"rationale":"Los OODM reflejan el modelo conceptual del mundo real con mayor precisión que las estructuras tabulares rígidas.","text":"Permite capturar el significado y las relaciones complejas de las entidades de la aplicación de forma directa."},{"isCorrect":false,"rationale":"La semántica se refiere al significado y estructura lógica, no a métricas de rendimiento físico.","text":"Define la velocidad exacta de transferencia de datos en Terabytes por segundo."},{"isCorrect":false,"rationale":"Aunque influye en el diseño, la semántica es un concepto descriptivo general, no una limitación técnica numérica.","text":"Establece el número máximo de niveles de herencia permitidos en un esquema Oracle."}],"hint":"Considera cómo se representan las relaciones del mundo real en el diseño de la base de datos.","question":"¿Qué rol cumple el concepto de 'semántica' en los modelos de datos orientados a objetos (OODM)?"},{"answerOptions":[{"isCorrect":false,"rationale":"Ese es el modelo de Redis o Memcached, no el de una base de datos de grafos.","text":"Su optimización para funcionar únicamente como una tabla hash de claves y valores."},{"isCorrect":false,"rationale":"Esta es la especialidad de MongoDB y bases de datos orientadas a documentos.","text":"Su capacidad nativa para almacenar documentos en formato JSON de forma jerárquica."},{"isCorrect":true,"rationale":"Neo4J destaca en escenarios donde las conexiones entre datos (nodos y aristas) son tan importantes como los datos en sí.","text":"Su diseño especializado para gestionar relaciones complejas mediante estructuras de grafos."},{"isCorrect":false,"rationale":"Neo4J está desarrollada en Java y utiliza lenguajes de consulta propios como Cypher, no PL/SQL.","text":"El uso exclusivo del lenguaje PL/SQL para la gestión de sus disparadores (triggers)."}],"hint":"Identifica qué tipo de estructura de datos es fundamental para representar redes sociales o mapas.","question":"¿Cuál es la principal ventaja de utilizar Neo4J frente a otras bases de datos NoSQL como MongoDB o Redis?"},{"answerOptions":[{"isCorrect":false,"rationale":"Big Data es un campo independiente que a menudo utiliza sus propios frameworks y herramientas especializadas.","text":"Eliminar la necesidad de utilizar frameworks para trabajar con bases de datos de Oracle."},{"isCorrect":false,"rationale":"Los sistemas Big Data están diseñados para manejar la variedad y la falta de estructura uniforme.","text":"Garantizar que todos los datos tengan exactamente el mismo esquema antes de ser procesados."},{"isCorrect":false,"rationale":"El enfoque es escalar la tecnología para el volumen existente, no mutilar los datos para que quepan en sistemas antiguos.","text":"Reducir el volumen de la información hasta que pueda caber en una base de datos relacional estándar."},{"isCorrect":true,"rationale":"El objetivo final del Big Data es descubrir patrones ocultos en grandes volúmenes de datos diversos.","text":"Sacar a la luz conocimientos y conexiones que no serían posibles con métodos convencionales."}],"hint":"Piensa en el propósito de analizar datos que provienen de muchas fuentes distintas.","question":"En el análisis de Big Data, ¿qué se busca lograr al tratar con datos heterogéneos según el material?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esta directiva es para integridad de código en Oracle OR, no para persistencia física en sistemas distribuidos NoSQL.","text":"El uso de la directiva 'PRAGMA RESTRICT_REFERENCES' en todos los nodos del clúster."},{"isCorrect":false,"rationale":"La seguridad de los datos depende de la redundancia y la persistencia, no del conjunto de caracteres utilizado.","text":"La limitación del almacenamiento exclusivamente a caracteres ASCII en todos los nodos."},{"isCorrect":true,"rationale":"Al replicar inmediatamente la escritura en otros nodos, la pérdida de un servidor físico no conlleva la pérdida de los datos recién ingresados.","text":"La capacidad de replicación de escritura en cualquier lugar con dependencia de ubicación."},{"isCorrect":false,"rationale":"Existen múltiples tipos de NoSQL (grafos, columnas, documentos) que ofrecen alta disponibilidad sin ser tablas hash.","text":"La estructura de tabla hash obligatoria para todos los tipos de bases de datos de clase empresarial."}],"hint":"Considera cómo el sistema propaga la información después de que un usuario realiza un cambio.","question":"¿Qué característica de las bases de datos NoSQL permite que los datos se escriban en cualquier nodo y sigan estando seguros ante un corte eléctrico?"},{"answerOptions":[{"isCorrect":false,"rationale":"La unicidad del OID es una propiedad intrínseca del sistema, no se define como encadenamiento.","text":"La restricción que impide que dos objetos compartan el mismo Identificador de Objeto (OID)."},{"isCorrect":true,"rationale":"El encadenamiento permite extender las capacidades relacionales mediante la reutilización de estructuras de tipos definidas previamente.","text":"La posibilidad de aplicar herencia y vinculación jerárquica en los tipos de registro de estilo relacional."},{"isCorrect":false,"rationale":"El encadenamiento es una propiedad estructural, no un proceso de conversión de datos.","text":"Un método para convertir automáticamente cualquier objeto en una tabla anidada de solo lectura."},{"isCorrect":false,"rationale":"Este proceso se refiere a la escalabilidad o disponibilidad, no a las características de los tipos de registro.","text":"El proceso de mover datos desde una caché persistente hacia un almacenamiento en la nube."}],"hint":"Relaciona este término con la estructura de los registros y su capacidad de heredar propiedades.","question":"¿Cómo define el material el concepto de 'encadenamiento' en el contexto objeto-relacional?"},{"answerOptions":[{"isCorrect":true,"rationale":"La reusabilidad reduce el tiempo de desarrollo y minimiza errores al emplear componentes ya probados.","text":"Permite compartir y utilizar definiciones de objetos complejas creadas previamente en otros proyectos."},{"isCorrect":false,"rationale":"La reusabilidad se aplica independientemente de si los métodos están en PL/SQL o en lenguajes externos como C.","text":"Obliga a que todos los métodos se escriban exclusivamente en código PL/SQL."},{"isCorrect":false,"rationale":"Los nuevos tipos pueden heredar atributos, pero siempre requieren una estructura definida, ya sea propia o heredada.","text":"Elimina la necesidad de definir atributos en los nuevos tipos creados por el usuario."},{"isCorrect":false,"rationale":"La reusabilidad es interna al paradigma de objetos; la compatibilidad entre sistemas distintos requiere capas de traducción.","text":"Garantiza que la base de datos sea compatible con cualquier sistema NoSQL sin realizar cambios."}],"hint":"Piensa en el beneficio de no tener que 'reinventar la rueda' en cada base de datos.","question":"En el desarrollo con Oracle Objeto-Relacional, ¿qué ventaja aporta la reusabilidad de bibliotecas de clases?"},{"answerOptions":[{"isCorrect":false,"rationale":"X-Hibe DB es una solución de software (base de datos), no una innovación en hardware físico.","text":"Expertos en hardware que diseñan nuevos tipos de almacenamiento magnético para Big Data."},{"isCorrect":false,"rationale":"Este perfil suele preferir SQL tradicional; las bases de datos nativas XML requieren conocimientos de esquemas jerárquicos.","text":"Analistas de negocio que solo trabajan con modelos relacionales de filas y columnas fijas."},{"isCorrect":true,"rationale":"Estas herramientas ofrecen potencia específica para aplicaciones donde el formato de intercambio y persistencia principal es el XML.","text":"Desarrolladores de software que necesitan funciones avanzadas de procesamiento y almacenamiento XML en sus aplicaciones."},{"isCorrect":false,"rationale":"Las bases de datos XML pueden y suelen funcionar en red o sobre infraestructuras complejas si es necesario.","text":"Administradores de sistemas que buscan eliminar por completo el uso de clusters de servidores."}],"hint":"Enfócate en quién se beneficia de tener herramientas potentes para manejar etiquetas y estructuras jerárquicas.","question":"Respecto a las bases de datos XML nativas como X-Hibe DB, ¿para qué perfil profesional están diseñadas principalmente?"},{"answerOptions":[{"isCorrect":false,"rationale":"La capacidad de escritura también debe escalar para ser considerada una solución empresarial eficiente.","text":"Se mantiene constante para las lecturas pero se vuelve nulo para las escrituras por seguridad."},{"isCorrect":false,"rationale":"Un sistema bien diseñado minimiza esta sobrecarga para que el beneficio de añadir nodos supere el coste de coordinación.","text":"Disminuye drásticamente debido a la sobrecarga de sincronizar la herencia de tipos."},{"isCorrect":false,"rationale":"El rendimiento depende de la arquitectura del clúster y la distribución de datos, no solo del lenguaje de consulta.","text":"Solo mejora si se utiliza el lenguaje OQL para realizar las consultas en cada nodo."},{"isCorrect":true,"rationale":"La escalabilidad lineal es una característica clave donde el rendimiento mejora proporcionalmente a la inversión en hardware.","text":"Aumenta linealmente el rendimiento de las operaciones tanto de lectura como de escritura."}],"hint":"Recuerda el concepto de 'escalabilidad lineal' mencionado en los beneficios técnicos.","question":"¿Qué ocurre con el rendimiento de una 'buena solución NoSQL' cuando se añaden nodos adicionales a un clúster?"},{"answerOptions":[{"isCorrect":true,"rationale":"La capacidad de procesar y extraer valor de datos de cualquier formato a gran escala es el corazón de la analítica de Big Data.","text":"Ejecutar consultas de alto rendimiento que integren datos estructurados, semiestructurados y sin estructura para el negocio."},{"isCorrect":false,"rationale":"Muchos sistemas Big Data dependen precisamente de estos frameworks para gestionar la complejidad de los datos.","text":"Eliminar la necesidad de utilizar frameworks externos como RedisLabs o Apache Incubator."},{"isCorrect":false,"rationale":"La gestión de métodos es un detalle técnico del modelo objeto-relacional, no el objetivo de la analítica de grandes datos.","text":"Garantizar que no existan más de dos métodos de conversión ASCII por cada objeto almacenado."},{"isCorrect":false,"rationale":"El Big Data se aleja de la rigidez de los esquemas fijos para ganar flexibilidad y velocidad.","text":"Convertir toda la información en un esquema relacional fijo con una sola tabla de objetos."}],"hint":"Considera qué tipo de información necesita una empresa moderna para su 'Business Intelligence'.","question":"En el caso práctico de Big Data, ¿cuál es el objetivo primordial de analizar volúmenes de datos de Terabytes a Petabytes?"}];
+        let currentIndex = 0;
+        let mode = 'quiz';
+        let state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+
+        function getStats() {
+            const answered = state.filter((s) => s.selectedIndex !== null).length;
+            const correct = state.filter((s, i) => s.selectedIndex !== null && quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const wrong = state.filter((s, i) => s.selectedIndex !== null && !quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const skipped = quizData.length - answered;
+            const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+            return { answered, correct, wrong, skipped, accuracy };
+        }
+
+        function shuffleAnswers() {
+            quizData.forEach((q) => {
+                for (let i = q.answerOptions.length - 1; i > 0; i -= 1) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.answerOptions[i], q.answerOptions[j]] = [q.answerOptions[j], q.answerOptions[i]];
+                }
+            });
+        }
+
+        function shuffleQuestions() {
+            for (let i = quizData.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [quizData[i], quizData[j]] = [quizData[j], quizData[i]];
+            }
+        }
+
+        function resetState() {
+            state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+        }
+
+        function renderQuestion() {
+            const q = quizData[currentIndex];
+            const s = state[currentIndex];
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+
+            let optionsHtml = '';
+            const correctIndex = q.answerOptions.findIndex((o) => o.isCorrect);
+            const selectedCorrect = s.selectedIndex !== null && q.answerOptions[s.selectedIndex].isCorrect;
+            q.answerOptions.forEach((opt, idx) => {
+                const isSelected = s.selectedIndex === idx;
+                const statusClass = isSelected ? (opt.isCorrect ? 'correct' : 'incorrect') : '';
+                const selectedClass = isSelected ? 'selected' : '';
+                const revealCorrect = (s.selectedIndex !== null && !selectedCorrect && opt.isCorrect) || (mode === 'review' && opt.isCorrect);
+                const revealClass = revealCorrect ? 'revealed-correct' : '';
+
+                optionsHtml += `
+                    <li class="option-item ${selectedClass} ${statusClass} ${revealClass}" onclick="selectOption(${idx})">
+                        <div class="option-label">
+                            <span>${String.fromCharCode(65 + idx)}. ${opt.text}</span>
+                        </div>
+                        <div class="feedback-state">
+                            ${opt.isCorrect ? '✓ Right answer' : '✕ Not quite'}
+                        </div>
+                        ${opt.rationale ? '<div class="rationale">' + opt.rationale + '</div>' : ''}
+                    </li>
+                `;
+            });
+
+            const stats = getStats();
+
+            content.innerHTML = `
+                <div class="progress-container">
+                    <div class="progress-text">${currentIndex + 1} / ${quizData.length}</div>
+                    <div class="status-bar">
+                        <div class="status-item status-correct">
+                            <span>✓</span>
+                            <span>${stats.correct}</span>
+                        </div>
+                        <div class="status-item status-wrong">
+                            <span>✕</span>
+                            <span>${stats.wrong}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="question-text">${q.question}</div>
+                <ul class="options-list">
+                    ${optionsHtml}
+                </ul>
+            `;
+
+            // Update Hint Box
+            const hintText = document.getElementById('hint-text');
+            hintText.innerText = q.hint || 'No hint available for this question.';
+            if (s.hintVisible) {
+                hintBox.classList.add('active');
+            } else {
+                hintBox.classList.remove('active');
+            }
+
+            results.classList.add('hidden');
+            content.classList.remove('hidden');
+            hintBox.classList.remove('hidden');
+            nav.classList.remove('hidden');
+
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = false;
+            if (mode === 'review') {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Back to Results' : 'Next';
+            } else {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finish' : 'Next';
+            }
+            document.getElementById('hint-icon-arrow').innerText = s.hintVisible ? '▲' : '▼';
+        }
+
+        function selectOption(idx) {
+            if (mode !== 'quiz') return;
+            if (state[currentIndex].selectedIndex !== null) return; // Prevent re-selection
+            state[currentIndex].selectedIndex = idx;
+            renderQuestion();
+        }
+
+        function toggleHint() {
+            if (mode === 'results') return;
+            state[currentIndex].hintVisible = !state[currentIndex].hintVisible;
+            renderQuestion();
+        }
+
+        function renderResults() {
+            const stats = getStats();
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+
+            const score = `${stats.correct} / ${quizData.length}`;
+
+            results.innerHTML = `
+                <div class="results-screen">
+                    <div>
+                        <h1 class="results-title">You did it! Quiz Complete.</h1>
+                        <p class="results-subtitle">Review your score or take another run.</p>
+                    </div>
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-label">Score</div>
+                            <div class="result-value">${score}</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Accuracy</div>
+                            <div class="result-value">${stats.accuracy}%</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-metrics">
+                                <div>Right <strong>${stats.correct}</strong></div>
+                                <div>Wrong <strong>${stats.wrong}</strong></div>
+                                <div>Skipped <strong>${stats.skipped}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="results-actions">
+                        <button id="review-btn" class="btn btn-ghost">Review Quiz</button>
+                        <button id="retake-btn" class="btn btn-next">Retake Quiz</button>
+                    </div>
+                </div>
+            `;
+
+            content.classList.add('hidden');
+            results.classList.remove('hidden');
+            hintBox.classList.add('hidden');
+            nav.classList.add('hidden');
+
+            document.getElementById('review-btn').onclick = () => {
+                mode = 'review';
+                currentIndex = 0;
+                renderQuestion();
+            };
+
+            document.getElementById('retake-btn').onclick = () => {
+                mode = 'quiz';
+                currentIndex = 0;
+                shuffleQuestions();
+                shuffleAnswers();
+                resetState();
+                renderQuestion();
+            };
+        }
+
+        document.getElementById('prev-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        };
+
+        document.getElementById('next-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (mode === 'review') {
+                if (currentIndex < quizData.length - 1) {
+                    currentIndex++;
+                    renderQuestion();
+                } else {
+                    mode = 'results';
+                    renderResults();
+                }
+                return;
+            }
+            if (currentIndex < quizData.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                mode = 'results';
+                renderResults();
+            }
+        };
+
+        document.getElementById('hint-toggle').onclick = toggleHint;
+
+        renderQuestion();
+    </script>
+</body>
+</html>

@@ -6,6 +6,7 @@ const path = require("path");
 const QUIZ_DIR = path.join(__dirname, "quizzes");
 
 const PREFIXES = {
+  ad: "Acceso a Datos",
   sge: "Sistemas de Gestión Empresarial",
   psp: "Programación de Servicios y Procesos",
   cib: "Ciberseguridad",
