@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMyDM - 8 a 15 - NotebookLM - Quiz Export</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+        :root {
+            --bg: #f6f1e7;
+            --bg-deep: #efe4d6;
+            --ink: #171717;
+            --muted: #5b5b5b;
+            --accent: #d3542c;
+            --accent-light: #ff8f5a;
+            --accent-dark: #b14320;
+            --teal: #1f6f78;
+            --card: #fff7ef;
+            --stroke: #e3d6c5;
+            --shadow: 0 18px 40px rgba(23, 23, 23, 0.12);
+            --radius-sm: 10px;
+            --radius-md: 12px;
+            --radius-lg: 14px;
+            --radius-xl: 18px;
+            --radius-2xl: 22px;
+            --space-1: 6px;
+            --space-2: 8px;
+            --space-3: 10px;
+            --space-4: 12px;
+            --space-5: 14px;
+            --space-6: 16px;
+            --space-7: 18px;
+            --space-8: 20px;
+            --space-9: 24px;
+            --space-10: 32px;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --error: #b54832;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background:
+                radial-gradient(240px 140px at 10% -10%, #ffd2b9 0%, transparent 70%),
+                radial-gradient(220px 160px at 90% 0%, #cfe7e6 0%, transparent 65%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+            color: var(--ink);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 800px;
+            padding: var(--space-10) var(--space-8);
+            box-sizing: border-box;
+            background: var(--card);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+        }
+
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .progress-text {
+            color: var(--muted);
+            font-size: 0.9em;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-correct { color: var(--teal); }
+        .status-wrong { color: var(--error); }
+
+        .question-text {
+            font-family: var(--font-display);
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-item:hover:not(.selected) {
+            background-color: var(--card);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .option-item.selected.correct {
+            background-color: rgba(31, 111, 120, 0.12);
+            border-color: var(--teal);
+        }
+
+        .option-item.selected.incorrect {
+            background-color: rgba(181, 72, 50, 0.12);
+            border-color: var(--error);
+        }
+
+        .option-item.revealed-correct {
+            border-color: rgba(31, 111, 120, 0.5);
+            box-shadow: inset 0 0 0 1px rgba(31, 111, 120, 0.16);
+        }
+
+        .option-label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feedback-state {
+            font-weight: bold;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .selected .feedback-state {
+            display: block;
+        }
+
+        .revealed-correct .feedback-state {
+            display: block;
+        }
+
+        .correct .feedback-state { color: var(--teal); }
+        .incorrect .feedback-state { color: var(--error); }
+        .revealed-correct .feedback-state { color: var(--teal); }
+
+        .rationale {
+            font-size: 0.95em;
+            color: var(--muted);
+            margin-top: 4px;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .selected .rationale {
+            display: block;
+        }
+
+        .revealed-correct .rationale {
+            display: block;
+        }
+        .hint-toggle {
+            border: 1px solid var(--stroke);
+            color: var(--muted);
+            cursor: pointer;
+            padding: var(--space-2) var(--space-6);
+            border-radius: var(--radius-md);
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hint-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .hint-content {
+            margin-top: 32px;
+            padding: var(--space-6);
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-lg);
+            font-size: 0.95em;
+            color: var(--muted);
+            display: none;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .hint-content.active {
+            display: flex;
+        }
+
+        .hint-icon-box {
+            color: var(--accent-dark);
+            font-size: 1.2em;
+            margin-top: -2px;
+        }
+
+        .navigation {
+            margin-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-7);
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-prev {
+            background-color: #fff;
+            color: var(--ink);
+            border-color: var(--stroke);
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn-next {
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            color: #fff;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .results-screen {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+        }
+
+        .results-title {
+            font-family: var(--font-display);
+            font-size: 2.1em;
+            margin: 0;
+        }
+
+        .results-subtitle {
+            color: var(--muted);
+            margin: 0;
+            font-size: 1em;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .result-card {
+            padding: var(--space-6);
+            border-radius: var(--radius-xl);
+            background: #fff;
+            border: 1px solid var(--stroke);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .result-label {
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-family: var(--font-display);
+        }
+
+        .result-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            border: 1px solid var(--stroke);
+            color: var(--ink);
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 900px) {
+            .quiz-container {
+                margin: var(--space-8);
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .quiz-container {
+                padding: var(--space-8) var(--space-6);
+            }
+
+            .question-text {
+                font-size: 1.3em;
+            }
+
+            .option-item {
+                padding: var(--space-4);
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .quiz-container {
+                margin: var(--space-6);
+                padding: var(--space-7) var(--space-5);
+            }
+
+            .progress-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+
+            .navigation {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-4);
+            }
+
+            .nav-buttons {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .hint-toggle {
+                justify-content: space-between;
+            }
+
+            .results-actions {
+                flex-direction: column;
+            }
+        }
+    
+    [data-theme="dark"] {
+      --bg: #1a1612;
+      --bg-deep: #141210;
+      --ink: #f0ebe0;
+      --muted: #9a9080;
+      --accent: #e8673a;
+      --accent-light: #ff9a6a;
+      --accent-dark: #c45528;
+      --teal: #2a9aa8;
+      --card: #221e18;
+      --stroke: #3a3028;
+      --shadow: 0 18px 40px rgba(0,0,0,0.4);
+      --error: #e06050;
+    }
+    [data-theme="dark"] body {
+      background:
+        radial-gradient(240px 140px at 10% -10%, #3a1a08 0%, transparent 70%),
+        radial-gradient(220px 160px at 90% 0%, #0a2a2e 0%, transparent 65%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    }
+    [data-theme="dark"] .option-item { background-color: var(--card); }
+    [data-theme="dark"] .hint-toggle,
+    [data-theme="dark"] .hint-content,
+    [data-theme="dark"] .btn-prev { background-color: var(--card); color: var(--ink); }
+    [data-theme="dark"] .result-card { background: var(--card); }
+    [data-theme="dark"] .btn-next {
+      background: linear-gradient(90deg, #e8673a, #f28c5e);
+      box-shadow: 0 4px 20px rgba(232, 103, 58, 0.35);
+      color: #fff;
+    }
+    [data-theme="dark"] .btn-next:hover:not(:disabled) {
+      box-shadow: 0 6px 24px rgba(232, 103, 58, 0.5);
+    }
+    
+    /* quiz-mobile-v3 */
+    @media (max-width: 640px) {
+      body {
+        height: 100dvh;
+        overflow: hidden;
+        align-items: flex-start;
+        padding: 0;
+      }
+      .quiz-container {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        margin: 0;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+        padding-bottom: 0;
+      }
+      #quiz-content,
+      #results-content {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        min-height: 0;
+        padding-bottom: 8px;
+      }
+      #hint-box { flex-shrink: 0; }
+      .navigation {
+        flex-shrink: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        margin-top: 0;
+        background: var(--card);
+        border-top: 1px solid var(--stroke);
+      }
+    }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+
+    <div class="quiz-heading" style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
+      <a href="../index.html" style="font-size:0.82em;color:var(--muted);text-decoration:none;font-family:var(--font-body)">← Índice</a>
+      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">Programación Multimedia y Dispositivos Móviles · Quiz 1</h1>
+    </div>
+        <div id="quiz-content">
+            <!-- Dynamic Content -->
+        </div>
+        <div id="results-content" class="hidden"></div>
+
+        <div id="hint-box" class="hint-content">
+            <div class="hint-icon-box">💡</div>
+            <div id="hint-text"></div>
+        </div>
+
+        <div class="navigation">
+            <button id="hint-toggle" class="hint-toggle">
+                <span>Pista</span>
+                <span id="hint-icon-arrow">▼</span>
+            </button>
+            <div class="nav-buttons">
+                <button id="prev-btn" class="btn btn-prev">Anterior</button>
+                <button id="next-btn" class="btn btn-next">Siguiente</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [{"answerOptions":[{"isCorrect":false,"rationale":"A diferencia de otros lenguajes, en Swift las llaves son siempre obligatorias para evitar ambigüedades lógicas.","text":"El bloque de código puede omitir las llaves si solo contiene una línea de ejecución."},{"isCorrect":false,"rationale":"Esta es una confusión común para programadores que vienen de otros lenguajes, pero Swift no requiere paréntesis para la condición.","text":"La condición debe ir obligatoriamente entre paréntesis, similar a Java o C++."},{"isCorrect":false,"rationale":"El uso de 'then' es propio de lenguajes como Pascal o SQL, pero no forma parte de la sintaxis de Swift.","text":"Se utiliza la palabra reservada `then` después de la condición para iniciar el bloque."},{"isCorrect":true,"rationale":"Swift simplifica la sintaxis eliminando los paréntesis obligatorios en las condiciones, manteniendo las llaves para definir el ámbito del bloque.","text":"La condición no debe ir entre paréntesis y el bloque de código debe delimitarse por llaves."}],"hint":"Observa la diferencia estética principal entre un condicional en Java y uno en Swift respecto a los símbolos de agrupación.","question":"¿Cuál de las siguientes afirmaciones sobre la sintaxis de la sentencia `if` en Swift es correcta?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esa descripción corresponde a los bucles `while` o `repeat-while`, no a la cláusula de intervalos específicos.","text":"Para definir un bucle que se ejecuta mientras una condición externa sea verdadera, sin un contador fijo."},{"isCorrect":false,"rationale":"La sintaxis 'stride' o 'from-through-by' es una estructura de control de flujo secuencial, no una operación de red o asíncrona.","text":"Para realizar una búsqueda asíncrona dentro de un array de objetos complejos."},{"isCorrect":false,"rationale":"Aunque se puede iterar sobre colecciones, esta sintaxis específica está diseñada para rangos numéricos con pasos definidos.","text":"Para iterar exclusivamente sobre los elementos de un diccionario filtrando por claves."},{"isCorrect":true,"rationale":"Esta cláusula permite personalizar el incremento del bucle, similar al tercer componente de un bucle for clásico en lenguajes como Java.","text":"Para definir un intervalo de iteración especificando el inicio, el final (incluido) y el tamaño del paso."}],"hint":"Piensa en cómo podrías mostrar solo los números impares saltando de dos en dos.","question":"En el contexto de las estructuras repetitivas en Swift, ¿para qué se utiliza específicamente la cláusula `from – through – by`?"},{"answerOptions":[{"isCorrect":false,"rationale":"La impresión en consola se realiza mediante `print()`, el operador `->` es puramente estructural para la firma de la función.","text":"Una operación de flujo que envía el resultado directamente a la consola."},{"isCorrect":false,"rationale":"Swift gestiona la memoria de forma automática y no utiliza la sintaxis de flecha para punteros como en C.","text":"El puntero a la dirección de memoria donde se almacena el primer parámetro."},{"isCorrect":true,"rationale":"El operador flecha precede a la declaración del tipo de retorno; si es `Void`, la función no devuelve nada.","text":"El tipo de dato que la función devuelve al finalizar su ejecución."},{"isCorrect":false,"rationale":"La conformidad a protocolos se indica con dos puntos `:`, no con el operador de retorno de función.","text":"La herencia obligatoria de una interfaz o protocolo específico."}],"hint":"Relaciona este símbolo con la salida o el resultado esperado de un proceso lógico.","question":"Al definir métodos en Swift, ¿qué indica el operador flecha (`->`) en la firma de la función?"},{"answerOptions":[{"isCorrect":false,"rationale":"En realidad, es al revés: las estructuras son tipos de valor y las clases son tipos de referencia, lo cual afecta a cómo se copian.","text":"Las clases son tipos de valor y las estructuras son tipos de referencia."},{"isCorrect":false,"rationale":"Tanto las clases como las estructuras pueden tener métodos para definir su funcionalidad.","text":"Solo las clases pueden contener métodos o funciones internas."},{"isCorrect":false,"rationale":"Swift solo admite herencia simple para clases, y las estructuras no soportan herencia de la misma forma.","text":"Las estructuras soportan herencia múltiple, mientras que las clases no."},{"isCorrect":true,"rationale":"El material destaca que, aunque son parecidas, las estructuras ofrecen esta flexibilidad en la declaración de sus variables.","text":"Las estructuras permiten definir variables sin necesidad de asignarles un valor inicial inmediato."}],"hint":"Revisa el apartado de inicializadores y cómo se comportan las variables al ser declaradas en ambos tipos.","question":"De acuerdo con el material proporcionado, ¿cuál es una diferencia clave entre las clases (`class`) y las estructuras (`struct`) en Swift?"},{"answerOptions":[{"isCorrect":false,"rationale":"El manifiesto es un archivo de configuración XML, no contiene lógica de programación ejecutable en Java o Kotlin.","text":"Porque contiene el código Java encargado de procesar las respuestas JSON."},{"isCorrect":false,"rationale":"Aunque se pueden definir configuraciones de seguridad de red, el cifrado HTTPS se gestiona principalmente a nivel de protocolo y certificados en el servidor.","text":"Porque es el único lugar donde se pueden configurar las claves SSL/TLS del protocolo HTTPS."},{"isCorrect":true,"rationale":"Android requiere una declaración explícita de permisos como `INTERNET` para restringir el uso indebido de recursos por parte de las apps.","text":"Porque allí se deben declarar los permisos necesarios para que la aplicación acceda a Internet."},{"isCorrect":false,"rationale":"La estructura de la base de datos remota se gestiona en el servidor, no en el cliente móvil.","text":"Porque define la estructura de las tablas de la base de datos MySQL remota."}],"hint":"Este archivo actúa como el 'pasaporte' de la aplicación, indicando qué tiene permitido hacer en el dispositivo.","question":"En el desarrollo de aplicaciones Android, ¿por qué es fundamental el uso del fichero `AndroidManifest.xml` al trabajar con servicios en red?"},{"answerOptions":[{"isCorrect":false,"rationale":"Pueden recibir cualquier tipo de parámetro, incluyendo objetos complejos u otras estructuras.","text":"Solo pueden recibir parámetros de tipo `String` o `Int`."},{"isCorrect":false,"rationale":"La gestión de memoria en Swift (ARC) es automática y no requiere limpiezas manuales de caché en el constructor.","text":"Deben limpiar la memoria caché del smartphone antes de asignar valores."},{"isCorrect":true,"rationale":"Los inicializadores de conveniencia son secundarios y deben delegar la creación final del objeto al inicializador designado.","text":"Deben invocar obligatoriamente al inicializador principal de la clase mediante `self.init`."},{"isCorrect":false,"rationale":"Un inicializador, por definición, se usa para crear una instancia, por lo que no puede ser un método estático.","text":"Deben ser declarados como estáticos para poder ser usados sin instanciar la clase."}],"hint":"Piensa en el flujo de delegación: el inicializador secundario siempre debe 'rendir cuentas' al principal.","question":"Sobre los inicializadores de conveniencia (`convenience init`) en Swift, ¿cuál es su requisito indispensable antes de finalizar su ejecución?"},{"answerOptions":[{"isCorrect":false,"rationale":"PHP se ejecuta en el servidor; el smartphone nunca ve el código fuente PHP, solo recibe la respuesta procesada (JSON).","text":"Compilar el código PHP para que se ejecute más rápido en el smartphone."},{"isCorrect":false,"rationale":"El almacenamiento físico es tarea de la base de datos (como MySQL), JSON es solo para el transporte.","text":"Almacenar físicamente los registros en el disco duro del servidor remoto."},{"isCorrect":true,"rationale":"JSON sirve como puente lingüístico universal que permite que sistemas distintos (Java/PHP) entiendan la misma estructura de información.","text":"Actuar como un formato de intercambio de datos ligero y fácil de procesar por ambos extremos."},{"isCorrect":false,"rationale":"JSON es una codificación de texto plano; el cifrado es responsabilidad de los protocolos SSL/TLS de HTTPS.","text":"Cifrar la información para que la conexión HTTPS sea totalmente infranqueable."}],"hint":"Imagina que el servidor habla un idioma y la App otro; JSON es el dialecto común que ambos han acordado usar.","question":"¿Cuál es la función principal del lenguaje JSON en el esquema de comunicación entre una App Android y un servidor PHP?"},{"answerOptions":[{"isCorrect":false,"rationale":"HTTP/HTTPS son protocolos de transferencia de datos, no lenguajes de programación.","text":"Que es un lenguaje de programación interpretado por el navegador."},{"isCorrect":true,"rationale":"La 'S' adicional garantiza que los datos viajen cifrados, algo vital para manejar contraseñas o datos personales.","text":"El uso de un cifrado SSL/TLS que protege la información contra capturas de terceros."},{"isCorrect":false,"rationale":"HTTP utiliza el puerto $80$, mientras que HTTPS utiliza por defecto el puerto $443$.","text":"El uso exclusivo del puerto $80$ para todas las comunicaciones móviles."},{"isCorrect":false,"rationale":"HTTP siempre ha permitido el envío de archivos multimedia; la diferencia radica exclusivamente en la seguridad y el puerto.","text":"La capacidad de enviar archivos de imagen, que el protocolo HTTP no permitía."}],"hint":"Considera qué mecanismo hace que aparezca el icono del candado en la barra de direcciones de un navegador.","question":"¿Qué característica técnica define al protocolo HTTPS frente al protocolo HTTP tradicional?"},{"answerOptions":[{"isCorrect":false,"rationale":"Swift previene este error en tiempo de compilación para evitar fallos catastróficos en tiempo de ejecución.","text":"La aplicación se ejecutará pero se cerrará inesperadamente si no coincide ningún caso."},{"isCorrect":true,"rationale":"Para garantizar la seguridad, Swift exige que se cubran todos los valores posibles o se incluya un caso por defecto.","text":"El código no compilará porque el `switch` en Swift debe ser exhaustivo."},{"isCorrect":false,"rationale":"El programador debe ser explícito en Swift; el compilador no genera lógica por defecto sin intervención manual.","text":"El compilador añade automáticamente un bloque vacío para el caso por defecto."},{"isCorrect":false,"rationale":"Es un error de compilación crítico, no una simple advertencia.","text":"Solo dará un aviso (warning) pero permitirá generar el archivo ejecutable."}],"hint":"Swift es un lenguaje diseñado para la seguridad y quiere estar seguro de que siempre hay un camino a seguir.","question":"En Swift, ¿qué ocurre si intentamos implementar una estructura `switch` y omitimos la opción `default`?"},{"answerOptions":[{"isCorrect":false,"rationale":"Es posible acceder y modificar elementos individuales de una tupla mediante sus índices.","text":"Las tuplas sin nombre solo pueden mostrarse mediante `print`, no permiten acceso individual."},{"isCorrect":false,"rationale":"Las tuplas son tipos independientes y tienen sus propios métodos de acceso directo muy eficientes.","text":"Es obligatorio convertir la tupla en un array antes de acceder a sus elementos."},{"isCorrect":true,"rationale":"Por defecto, las tuplas son colecciones ordenadas que permiten acceso posicional si no hay etiquetas de nombre.","text":"Utilizando su índice numérico, empezando por el cero (ej. `miTupla.0`)."},{"isCorrect":false,"rationale":"Las tuplas no generan claves aleatorias; o se definen nombres o se usan índices.","text":"Mediante el uso de una clave de tipo `String` generada aleatoriamente."}],"hint":"Es un método similar al acceso a elementos en un array tradicional.","question":"Al trabajar con tuplas en Swift, ¿cómo se puede acceder a un valor si no se le ha asignado un nombre específico a cada componente?"},{"answerOptions":[{"isCorrect":false,"rationale":"Swift permite la herencia entre clases definidas en diferentes archivos siempre que formen parte del mismo módulo o proyecto.","text":"Para heredar, las clases deben estar en el mismo archivo fuente obligatoriamente."},{"isCorrect":false,"rationale":"La herencia incluye tanto el estado (variables) como el comportamiento (métodos) de la clase padre.","text":"No se pueden heredar métodos, únicamente variables de instancia."},{"isCorrect":true,"rationale":"Esta es una medida de seguridad para evitar la complejidad y los conflictos de la herencia múltiple presentes en otros lenguajes.","text":"Solo soporta herencia simple, lo que significa que una clase solo puede heredar de otra."},{"isCorrect":false,"rationale":"El usuario tiene total libertad para crear jerarquías de clases propias siguiendo las reglas del lenguaje.","text":"La herencia solo está disponible para clases de sistema, no para clases creadas por el usuario."}],"hint":"Recuerda que Swift busca ser un lenguaje más seguro y predecible que C++ o Java en algunos aspectos estructurales.","question":"¿Cuál es la principal limitación de la herencia de clases en Swift mencionada en el material?"},{"answerOptions":[{"isCorrect":false,"rationale":"A pesar del nombre 'Map', en programación un HashMap es una estructura de datos lógica, no una representación cartográfica.","text":"Dibujar un mapa geográfico dentro de la actividad principal de la aplicación."},{"isCorrect":false,"rationale":"El `HashMap` no comprime datos, solo los organiza para su fácil acceso y transferencia.","text":"Acelerar la conexión a internet mediante un algoritmo de compresión de datos."},{"isCorrect":true,"rationale":"Esta estructura permite organizar los datos (como nombres de usuario o IDs) para que el servidor PHP pueda identificarlos correctamente.","text":"Almacenar los parámetros de tipo clave-valor que se enviarán al servidor mediante el método POST."},{"isCorrect":false,"rationale":"Normalmente las respuestas se guardan en `ArrayList` de objetos personalizados; el `HashMap` suele usarse para el envío de datos.","text":"Guardar la respuesta JSON del servidor para que pueda ser mostrada en un `ListView`."}],"hint":"Relaciona este concepto con el paso de información necesaria para un registro o una búsqueda filtrada.","question":"En el desarrollo Android, ¿cuál es el propósito de utilizar un objeto `HashMap<String, String>` al realizar una petición a una API REST?"},{"answerOptions":[{"isCorrect":false,"rationale":"Swift no utiliza `instance` como palabra clave de acceso a miembros locales.","text":"`instance`"},{"isCorrect":false,"rationale":"`me` no es una palabra reservada en la sintaxis de Swift para referirse a la instancia actual.","text":"`me`"},{"isCorrect":true,"rationale":"Funciona de manera idéntica al `this` de Java, permitiendo distinguir entre la propiedad de la clase y una variable local con el mismo nombre.","text":"`self`"},{"isCorrect":false,"rationale":"Aunque es el término usado en Java o C#, Swift utiliza específicamente `self`.","text":"`this`"}],"hint":"Es un pronombre reflexivo en inglés que denota 'uno mismo'.","question":"Dentro de una clase en Swift, ¿qué palabra reservada se utiliza para referirse a las variables de la propia instancia y evitar confusiones con los parámetros del inicializador?"},{"answerOptions":[{"isCorrect":false,"rationale":"La interpretación ocurre durante la ejecución del programa, pero no implica una traducción constante a ensamblador por cada interacción.","text":"Porque requiere que el código sea traducido a lenguaje ensamblador en cada clic del usuario."},{"isCorrect":true,"rationale":"Esta característica influye en cómo se distribuyen y ejecutan las aplicaciones desarrolladas con este lenguaje.","text":"Debido a que su funcionamiento no permite crear un archivo ejecutable independiente como un `.exe` o `.jar`."},{"isCorrect":false,"rationale":"El carácter interpretado de un lenguaje se refiere a su ejecución técnica, no a su dependencia de servicios externos.","text":"Porque solo funciona si hay una conexión activa a un servidor PHP remoto."},{"isCorrect":false,"rationale":"Swift es un lenguaje moderno e independiente, no una herramienta de traducción.","text":"Porque fue diseñado específicamente para traducir otros lenguajes antiguos como Objective-C."}],"hint":"Piensa en la diferencia entre un programa que genera un archivo de salida final y uno que necesita un entorno de ejecución dinámico.","question":"¿Por qué Swift es considerado un lenguaje interpretado según la resolución del caso práctico del Tema 14?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esta variable no existe en el núcleo estándar de PHP; se utilizan variables superglobales específicas.","text":"`$GET_DATA`"},{"isCorrect":false,"rationale":"Esta es una sintaxis más propia de lenguajes de bajo nivel o Java, no de la gestión de peticiones web en PHP.","text":"`system.input.read()`"},{"isCorrect":true,"rationale":"Esta superglobal de PHP permite capturar datos enviados tanto por métodos GET como POST, facilitando la comunicación.","text":"`$_REQUEST`"},{"isCorrect":false,"rationale":"PHP no utiliza la palabra `import` para gestionar parámetros de entrada HTTP.","text":"`import.params`"}],"hint":"Busca una variable global de PHP que empiece por signo de dólar y guion bajo.","question":"En una API REST desarrollada con PHP, ¿qué instrucción se utiliza habitualmente para recuperar los parámetros enviados desde una App móvil?"},{"answerOptions":[{"isCorrect":false,"rationale":"Las operaciones de red y los permisos de usuario son conceptos independientes; el hilo no afecta a los privilegios.","text":"El sistema operativo Android otorga automáticamente permisos de superusuario."},{"isCorrect":true,"rationale":"Android bloquea por seguridad las operaciones de red en el hilo principal para asegurar que la App siga respondiendo al usuario.","text":"Es necesario utilizar un sistema de hilos independiente para no bloquear la interfaz de usuario y evitar errores del sistema."},{"isCorrect":false,"rationale":"El modo de energía depende del hardware y el sistema, no del hilo donde se ejecute una petición HTTPS.","text":"La App cambia automáticamente a modo 'ahorro de energía'."},{"isCorrect":false,"rationale":"Al contrario, saturar el hilo principal suele llevar al cuelgue de la aplicación (ANR).","text":"La conexión se realiza un $50\\%$ más rápido gracias a la prioridad del procesador."}],"hint":"Imagina qué pasaría si la interfaz se congelara cada vez que descargas un dato de Internet.","question":"¿Qué sucede si una aplicación Android intenta realizar una conexión HTTPS en el hilo principal de ejecución (UI Thread)?"},{"answerOptions":[{"isCorrect":false,"rationale":"JSON admite perfectamente los valores `true` y `false` para representar lógica binaria.","text":"Booleanos"},{"isCorrect":false,"rationale":"Los arrays (colecciones ordenadas) son una de las estructuras fundamentales de la codificación JSON.","text":"Arrays"},{"isCorrect":false,"rationale":"Las cadenas de texto son el tipo de dato más común utilizado en JSON para transmitir información.","text":"Cadenas de texto (Strings)"},{"isCorrect":true,"rationale":"JSON soporta tipos básicos (strings, números, booleanos) y estructuras como arrays u objetos, pero no estructuras de datos complejas de memoria como pilas.","text":"Pilas (Stacks)"}],"hint":"Piensa en una estructura de datos dinámica que se suele estudiar en programación avanzada pero que no tiene una representación textual simple.","question":"¿Cuál de los siguientes tipos de datos NO es soportado de forma nativa por el estándar JSON?"},{"answerOptions":[{"isCorrect":false,"rationale":"Clases y estructuras son tipos distintos; una extensión no puede cambiar la naturaleza base de un tipo.","text":"Se utiliza para convertir automáticamente una clase en una estructura (`struct`)."},{"isCorrect":true,"rationale":"Las extensiones son muy potentes en Swift porque permiten organizar el código y añadir métodos a clases de las que no tenemos el código fuente.","text":"Permite agregar nuevas funcionalidades a una clase ya existente sin necesidad de usar herencia."},{"isCorrect":false,"rationale":"Las extensiones añaden comportamiento (código), no recursos físicos de hardware.","text":"Sirve para aumentar el tamaño de la memoria RAM asignada a una instancia específica."},{"isCorrect":false,"rationale":"Esto sería herencia múltiple, la cual no está soportada por Swift ni siquiera mediante extensiones.","text":"Permite que una clase herede de tres o más clases padres simultáneamente."}],"hint":"Imagina que quieres añadir un método a la clase `String` original de Apple; esta es la herramienta para hacerlo.","question":"En el contexto de Swift, ¿qué funcionalidad ofrece la 'extensión de clases'?"},{"answerOptions":[{"isCorrect":true,"rationale":"Apache sirve los ficheros PHP y gestiona las peticiones HTTP/S, mientras que MySQL gestiona el almacenamiento de los datos.","text":"Apache y MySQL."},{"isCorrect":false,"rationale":"Sin MySQL, los ficheros PHP no tendrían una base de datos a la que consultar la información solicitada.","text":"Únicamente Apache."},{"isCorrect":false,"rationale":"Mercury es un servidor de correo; no interviene en la comunicación de una App con una base de datos remota.","text":"Mercury y MySQL."},{"isCorrect":false,"rationale":"Tomcat se usa para Java Servlets/JSP y FileZilla para transferencia de archivos; no son necesarios para este esquema PHP/MySQL.","text":"Tomcat y FileZilla."}],"hint":"Necesitas un motor de base de datos y un servidor que sea capaz de interpretar el lenguaje backend PHP.","question":"¿Qué servicios deben activarse obligatoriamente en un panel como XAMPP para que el ejemplo de Android/JSON/MySQL funcione localmente?"},{"answerOptions":[{"isCorrect":false,"rationale":"Su función es la transmisión de datos por red, no la conversión de formatos de bases de datos a hojas de cálculo.","text":"Convierte automáticamente las bases de datos MySQL en archivos de Excel."},{"isCorrect":false,"rationale":"Volley es una biblioteca de comunicaciones de red, no un emulador o herramienta de compatibilidad entre sistemas.","text":"Permite ejecutar aplicaciones Android en ordenadores con sistema operativo iOS."},{"isCorrect":true,"rationale":"Volley gestiona automáticamente las colas de peticiones y el procesamiento de respuestas, ahorrando mucho código manual al desarrollador.","text":"Facilita la obtención y gestión de datos JSON de una forma sencilla y optimizada."},{"isCorrect":false,"rationale":"Independientemente de la biblioteca usada, Android siempre exige la declaración de permisos en el archivo XML.","text":"Elimina la necesidad de pedir permisos de Internet en el manifiesto."}],"hint":"Piensa en una herramienta que 'envuelve' la complejidad de las conexiones HTTP para hacerlas más manejables.","question":"Al trabajar con la biblioteca Volley en Android, ¿qué ventaja principal se obtiene respecto al manejo de red?"},{"answerOptions":[{"isCorrect":false,"rationale":"`let` define constantes, por lo que su valor nunca podría ser incrementado por ningún operador.","text":"Solo funciona con variables declaradas con la palabra reservada `let`."},{"isCorrect":true,"rationale":"Swift eliminó los operadores de incremento y decremento de estilo C para simplificar el lenguaje y evitar errores de lógica sutiles.","text":"No existe en las versiones modernas; se debe utilizar el operador de asignación compuesta `+= 1`."},{"isCorrect":false,"rationale":"Para concatenar cadenas en Swift se utiliza el operador `+` o la interpolación de cadenas.","text":"Es el operador estándar para concatenar dos cadenas de texto."},{"isCorrect":false,"rationale":"Las tuplas tienen índices fijos y no se pueden recorrer mediante incrementos de operador en tiempo de ejecución de esa forma.","text":"Se utiliza exclusivamente para incrementar el índice de las tuplas."}],"hint":"Recuerda que Swift rompió con algunas tradiciones de lenguajes antiguos para ganar claridad.","question":"¿Cuál es el propósito del operador de incremento clásico `++` en la versión actual de Swift mencionada en el material?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este error ocurre al acceder a un índice inexistente, no al intentar modificar una constante (que es error de compilación).","text":"Se lanzará una excepción de tipo `IndexOutOfBounds` en tiempo de ejecución."},{"isCorrect":false,"rationale":"La inmutabilidad es una restricción lógica de código, no un comportamiento temporal del sistema.","text":"El elemento se añade pero el array se borra automáticamente después de un minuto."},{"isCorrect":false,"rationale":"Swift es un lenguaje de tipado fuerte y restrictivo; no permite ignorar errores estructurales de mutabilidad.","text":"El compilador ignora la instrucción y continúa la ejecución sin añadir nada."},{"isCorrect":true,"rationale":"Swift utiliza la distinción entre `let` y `var` para controlar la mutabilidad de los objetos y mejorar el rendimiento y la seguridad.","text":"El código no compilará porque las colecciones declaradas con `let` son inmutables."}],"hint":"Diferencia entre una variable que puede cambiar y una constante que nace y muere con el mismo valor.","question":"En Swift, si declaras un array con `let`, ¿qué sucede si intentas usar el método `.append()` para añadir un elemento?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los símbolos de sintaxis no se contabilizan como datos almacenados en la estructura.","text":"$1$, ya que el par de corchetes cuenta como un elemento invisible."},{"isCorrect":true,"rationale":"La sintaxis `[:]` representa un diccionario vacío, por lo que su contador de elementos se reinicia a cero.","text":"$0$"},{"isCorrect":false,"rationale":"Una vez asignado el valor vacío, la información anterior se pierde y el contador se actualiza.","text":"El número total de elementos que tenía antes de ser vaciado."},{"isCorrect":false,"rationale":"`.count` siempre devuelve un entero, incluso si la colección está vacía, no devuelve `nil`.","text":"Un valor `nil` que causará un error en la consola."}],"hint":"Considera qué número representa la ausencia total de elementos en una lista o grupo.","question":"Al vaciar un diccionario en Swift con la sintaxis `tripulacion = [:]`, ¿cuál será el resultado de imprimir su propiedad `.count`?"},{"answerOptions":[{"isCorrect":false,"rationale":"No es posible ni ético imponer condiciones comerciales externas para el uso de una aplicación estándar.","text":"Obligar al usuario a contratar una tarifa plana antes de permitir la instalación de la App."},{"isCorrect":true,"rationale":"Esta es una buena práctica de diseño de experiencia de usuario (UX) para evitar cargos inesperados al cliente.","text":"Comprobar si el usuario usa datos móviles y preguntarle antes de realizar operaciones pesadas."},{"isCorrect":false,"rationale":"Las aplicaciones no deberían tomar control del hardware de forma tan intrusiva sin permiso del usuario.","text":"Desactivar la tarjeta de red del smartphone automáticamente si no hay señal Wi-Fi."},{"isCorrect":false,"rationale":"La diferencia de consumo es mínima y no justifica sacrificar la seguridad de los datos del usuario.","text":"Utilizar únicamente el protocolo HTTP porque consume menos kilobytes que HTTPS."}],"hint":"Se trata de una medida de cortesía y control que se implementa mediante un condicional en el código.","question":"¿Cuál es la recomendación del material para gestionar la conexión a Internet en dispositivos móviles con tarifas de datos limitadas?"},{"answerOptions":[{"isCorrect":false,"rationale":"La inicialización de objetos depende del flujo del programa, no del estado de hardware del dispositivo.","text":"Un método especial que solo se ejecuta cuando la batería del móvil está por debajo del $20\\%$."},{"isCorrect":false,"rationale":"Eso sería un de-inicializador (`deinit`), no un inicializador.","text":"La función que se encarga de destruir el objeto y liberar la memoria."},{"isCorrect":false,"rationale":"La designación se refiere al rol del constructor en la jerarquía de inicialización, no al paso de parámetros.","text":"Un parámetro que se pasa obligatoriamente por referencia mediante el símbolo `&`."},{"isCorrect":true,"rationale":"A diferencia de los de conveniencia, el designado tiene la responsabilidad total de completar la inicialización de la instancia.","text":"Es el inicializador principal de la clase que debe asegurar que todas las propiedades tengan un valor."}],"hint":"Es el 'capitán' de los constructores en una clase.","question":"En el contexto de la programación orientada a objetos en Swift, ¿qué es un 'inicializador designado'?"},{"answerOptions":[{"isCorrect":false,"rationale":"El paso de parámetros depende de la firma de la función, no de su modificador de acceso (visibilidad).","text":"Solo se pueden pasar parámetros si la función ha sido declarada como `public`."},{"isCorrect":false,"rationale":"Swift permite el uso de tuplas, pero la llamada estándar a una función usa paréntesis y etiquetas individuales.","text":"Los parámetros deben pasarse siempre dentro de una tupla anónima."},{"isCorrect":false,"rationale":"Swift no utiliza prefijos de símbolos de moneda para identificar tipos de datos en las llamadas.","text":"Es necesario usar el símbolo `$` antes de cada valor numérico en la llamada."},{"isCorrect":true,"rationale":"Esto mejora la legibilidad del código, haciendo que sea evidente qué valor corresponde a cada etiqueta de la función.","text":"Se deben escribir los nombres de los parámetros en la llamada de forma obligatoria."}],"hint":"Piensa en cómo Swift hace que leer una llamada a una función parezca casi una frase en inglés.","question":"Al realizar una llamada a una función en Swift que tiene parámetros, ¿qué regla de sintaxis es obligatoria seguir según el Tema 14?"}];
+        let currentIndex = 0;
+        let mode = 'quiz';
+        let state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+
+        function getStats() {
+            const answered = state.filter((s) => s.selectedIndex !== null).length;
+            const correct = state.filter((s, i) => s.selectedIndex !== null && quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const wrong = state.filter((s, i) => s.selectedIndex !== null && !quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const skipped = quizData.length - answered;
+            const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+            return { answered, correct, wrong, skipped, accuracy };
+        }
+
+        function shuffleAnswers() {
+            quizData.forEach((q) => {
+                for (let i = q.answerOptions.length - 1; i > 0; i -= 1) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.answerOptions[i], q.answerOptions[j]] = [q.answerOptions[j], q.answerOptions[i]];
+                }
+            });
+        }
+
+        function shuffleQuestions() {
+            for (let i = quizData.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [quizData[i], quizData[j]] = [quizData[j], quizData[i]];
+            }
+        }
+
+        function resetState() {
+            state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+        }
+
+        function renderQuestion() {
+            const q = quizData[currentIndex];
+            const s = state[currentIndex];
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+
+            let optionsHtml = '';
+            const correctIndex = q.answerOptions.findIndex((o) => o.isCorrect);
+            const selectedCorrect = s.selectedIndex !== null && q.answerOptions[s.selectedIndex].isCorrect;
+            q.answerOptions.forEach((opt, idx) => {
+                const isSelected = s.selectedIndex === idx;
+                const statusClass = isSelected ? (opt.isCorrect ? 'correct' : 'incorrect') : '';
+                const selectedClass = isSelected ? 'selected' : '';
+                const revealCorrect = (s.selectedIndex !== null && !selectedCorrect && opt.isCorrect) || (mode === 'review' && opt.isCorrect);
+                const revealClass = revealCorrect ? 'revealed-correct' : '';
+
+                optionsHtml += `
+                    <li class="option-item ${selectedClass} ${statusClass} ${revealClass}" onclick="selectOption(${idx})">
+                        <div class="option-label">
+                            <span>${String.fromCharCode(65 + idx)}. ${opt.text}</span>
+                        </div>
+                        <div class="feedback-state">
+                            ${opt.isCorrect ? '✓ Correcto' : '✕ Incorrecto'}
+                        </div>
+                        ${opt.rationale ? '<div class="rationale">' + opt.rationale + '</div>' : ''}
+                    </li>
+                `;
+            });
+
+            const stats = getStats();
+
+            content.innerHTML = `
+                <div class="progress-container">
+                    <div class="progress-text">${currentIndex + 1} / ${quizData.length}</div>
+                    <div class="status-bar">
+                        <div class="status-item status-correct">
+                            <span>✓</span>
+                            <span>${stats.correct}</span>
+                        </div>
+                        <div class="status-item status-wrong">
+                            <span>✕</span>
+                            <span>${stats.wrong}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="question-text">${q.question}</div>
+                <ul class="options-list">
+                    ${optionsHtml}
+                </ul>
+            `;
+
+            // Update Pista Box
+            const hintText = document.getElementById('hint-text');
+            hintText.innerText = q.hint || 'No hay pista disponible para esta pregunta.';
+            if (s.hintVisible) {
+                hintBox.classList.add('active');
+            } else {
+                hintBox.classList.remove('active');
+            }
+
+            results.classList.add('hidden');
+            content.classList.remove('hidden');
+            hintBox.classList.remove('hidden');
+            nav.classList.remove('hidden');
+
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = false;
+            if (mode === 'review') {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Volver a resultados' : 'Siguiente';
+            } else {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finalizar' : 'Siguiente';
+            }
+            document.getElementById('hint-icon-arrow').innerText = s.hintVisible ? '▲' : '▼';
+        }
+
+        function selectOption(idx) {
+            if (mode !== 'quiz') return;
+            if (state[currentIndex].selectedIndex !== null) return; // Prevent re-selection
+            state[currentIndex].selectedIndex = idx;
+            renderQuestion();
+        }
+
+        function toggleHint() {
+            if (mode === 'results') return;
+            state[currentIndex].hintVisible = !state[currentIndex].hintVisible;
+            renderQuestion();
+        }
+
+        function renderResults() {
+            const stats = getStats();
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+
+            const score = `${stats.correct} / ${quizData.length}`;
+
+            results.innerHTML = `
+                <div class="results-screen">
+                    <div>
+                        <h1 class="results-title">¡Lo lograste! Quiz completado.</h1>
+                        <p class="results-subtitle">Revisa tu puntuación o inténtalo de nuevo.</p>
+                    </div>
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-label">Puntuación</div>
+                            <div class="result-value">${score}</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Precisión</div>
+                            <div class="result-value">${stats.accuracy}%</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-metrics">
+                                <div>Correctas <strong>${stats.correct}</strong></div>
+                                <div>Incorrectas <strong>${stats.wrong}</strong></div>
+                                <div>Omitidas <strong>${stats.skipped}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="results-actions">
+                        <button id="review-btn" class="btn btn-ghost">Revisar Quiz</button>
+                        <button id="retake-btn" class="btn btn-next">Repetir Quiz</button>
+                    </div>
+                </div>
+            `;
+
+            content.classList.add('hidden');
+            results.classList.remove('hidden');
+            hintBox.classList.add('hidden');
+            nav.classList.add('hidden');
+
+            document.getElementById('review-btn').onclick = () => {
+                mode = 'review';
+                currentIndex = 0;
+                renderQuestion();
+            };
+
+            document.getElementById('retake-btn').onclick = () => {
+                mode = 'quiz';
+                currentIndex = 0;
+                shuffleQuestions();
+                shuffleAnswers();
+                resetState();
+                renderQuestion();
+            };
+        }
+
+        document.getElementById('prev-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        };
+
+        document.getElementById('next-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (mode === 'review') {
+                if (currentIndex < quizData.length - 1) {
+                    currentIndex++;
+                    renderQuestion();
+                } else {
+                    mode = 'results';
+                    renderResults();
+                }
+                return;
+            }
+            if (currentIndex < quizData.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                mode = 'results';
+                renderResults();
+            }
+        };
+
+        document.getElementById('hint-toggle').onclick = toggleHint;
+
+        renderQuestion();
+    </script>
+
+  <button id="theme-toggle" title="Cambiar tema" style="position:fixed;top:8px;right:8px;background:var(--card);border:1px solid var(--stroke);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:transform 0.2s ease;z-index:100;">🌙</button>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-toggle').textContent = '☀️';
+      }
+      document.getElementById('theme-toggle').addEventListener('click', function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        this.textContent = isDark ? '🌙' : '☀️';
+      });
+    })();
+  </script>
+</body>
+</html>
