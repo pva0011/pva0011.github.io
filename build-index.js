@@ -30,6 +30,33 @@ files.forEach(file => {
 });
 Object.values(groups).forEach(list => list.sort());
 
+// "sge-1.html"        → { prefix: "sge", middle: "",       num: "1" }
+// "sge-kahoot-1.html" → { prefix: "sge", middle: "Kahoot", num: "1" }
+function parseFilename(file) {
+  const base = file.replace(".html", "");
+  const parts = base.split("-");
+  const prefix = parts[0];
+  const num = parts[parts.length - 1].match(/^\d+$/) ? parts[parts.length - 1] : null;
+  const middleParts = parts.slice(1, num ? parts.length - 1 : parts.length);
+  const middle = middleParts.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  return { prefix, middle, num };
+}
+
+function quizLabel(file) {
+  const { prefix, middle, num } = parseFilename(file);
+  const fullName = PREFIXES[prefix] || prefix.toUpperCase();
+  const middlePart = middle ? ` ${middle}` : "";
+  return num ? `${fullName}${middlePart} · Quiz ${num}` : fullName;
+}
+
+function cardLabel(file) {
+  const { prefix, middle, num } = parseFilename(file);
+  const middlePart = middle ? ` ${middle}` : "";
+  return num
+    ? `${prefix.toUpperCase()}${middlePart} · Quiz ${num}`
+    : prefix.toUpperCase();
+}
+
 // Shared dark mode CSS + toggle (injected into every page)
 const DARK_MODE_CSS = `
   [data-theme="dark"] {
@@ -319,12 +346,8 @@ ${DARK_MODE_SCRIPT}
     <span class="count">${count} quiz${count !== 1 ? 'zes' : ''}</span>
   </div>
   <ul class="quiz-list">
-    ${groups[prefix].map((file, idx) => {
-      const num = (file.match(/(\d+)/) || [])[1];
-      const label = num
-        ? `${prefix.toUpperCase()} · Quiz ${num}`
-        : `${prefix.toUpperCase()} · Quiz ${idx + 1}`;
-      return `<li class="quiz-item" data-subject="${PREFIXES[prefix].toLowerCase()}"><a href="quizzes/${file}">${label}</a></li>`;
+    ${groups[prefix].map(file => {
+      return `<li class="quiz-item" data-subject="${PREFIXES[prefix].toLowerCase()}"><a href="quizzes/${file}">${cardLabel(file)}</a></li>`;
     }).join("")}
   </ul>
 </section>`;
@@ -423,21 +446,16 @@ const QUIZ_DARK_CSS = `
     [data-theme="dark"] .result-card { background: var(--card); }
     [data-theme="dark"] .btn-next {
       background: linear-gradient(90deg, #e8673a, #f28c5e);
-      box-shadow: none;
+      box-shadow: 0 4px 20px rgba(232, 103, 58, 0.35);
       color: #fff;
     }
     [data-theme="dark"] .btn-next:hover:not(:disabled) {
-      box-shadow: none;
-    }
-    .btn-prev:hover:not(:disabled),
-    .btn-next:hover:not(:disabled),
-    .option-item:hover:not(.selected),
-    .hint-toggle:hover {
-      box-shadow: none;
+      box-shadow: 0 6px 24px rgba(232, 103, 58, 0.5);
     }`;
 
-// Mobile: flex column layout — quiz-content scrolls, .navigation pinned at bottom (quiz-mobile-v3)
+// Mobile: flex column layout
 const QUIZ_MOBILE_CSS = `
+    /* quiz-mobile-v3 */
     @media (max-width: 640px) {
       body {
         height: 100dvh;
@@ -487,32 +505,29 @@ quizFiles.forEach(file => {
   let content = fs.readFileSync(filePath, "utf8");
   const original = content;
 
-  const prefix = file.split("-")[0];
-  const fullName = PREFIXES[prefix] || prefix.toUpperCase();
-  const num = (file.match(/(\d+)/) || [])[1];
-  const quizLabel = num ? `${fullName} · Quiz ${num}` : fullName;
+  const label = quizLabel(file);
 
-  // Inject heading before quiz-content if not present
+  // Inject heading before quiz-container if not present
   if (!content.includes('class="quiz-heading"')) {
     const heading = `
     <div class="quiz-heading" style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
       <a href="../index.html" style="font-size:0.82em;color:var(--muted);text-decoration:none;font-family:var(--font-body)">← Índice</a>
-      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">${quizLabel}</h1>
+      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">${label}</h1>
     </div>`;
     content = content.replace('<div class="quiz-container">', `<div class="quiz-container">\n${heading}`);
   }
 
-  // Inject dark mode CSS into <style> block if not present
+  // Inject dark mode CSS if not present
   if (!content.includes('[data-theme="dark"]')) {
     content = content.replace('</style>', `${QUIZ_DARK_CSS}\n    </style>`);
   }
 
-  // Inject mobile layout CSS if not present (guard: quiz-mobile-v3)
+  // Inject mobile CSS if not present
   if (!content.includes('quiz-mobile-v3')) {
     content = content.replace('</style>', `${QUIZ_MOBILE_CSS}\n    </style>`);
   }
 
-  // Inject dark mode toggle button + script before </body> if not present
+  // Inject dark mode toggle if not present
   if (!content.includes('id="theme-toggle"')) {
     const toggleScript = `
   <button id="theme-toggle" title="Cambiar tema" style="position:fixed;top:8px;right:8px;background:var(--card);border:1px solid var(--stroke);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:transform 0.2s ease;z-index:100;">🌙</button>
@@ -535,19 +550,7 @@ quizFiles.forEach(file => {
     content = content.replace('</body>', `${toggleScript}\n</body>`);
   }
 
-  // Patch quiz heading h1 padding if missing
-  content = content.replace(
-    /font-weight:700;color:var\(--ink\);margin-top:8px">/g,
-    'font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">'
-  );
-
-  // Patch toggle button position if old offset is still present
-  content = content.replace(
-    /position:fixed;top:16px;right:16px;(background:var\(--card\);border:1px solid var\(--stroke\);border-radius:50%;width:)38px;height:38px;cursor:pointer;font-size:16px/,
-    'position:fixed;top:8px;right:8px;$134px;height:34px;cursor:pointer;font-size:15px'
-  );
-
-
+  // Translate if not already done
   if (!content.includes("Pista") && !content.includes("Siguiente")) {
     TRANSLATIONS.forEach(([pattern, replacement]) => {
       content = content.replace(pattern, replacement);
