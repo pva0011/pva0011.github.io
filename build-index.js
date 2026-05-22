@@ -115,21 +115,6 @@ const DARK_MODE_SCRIPT = `
     })();
   <\/script>`;
 
-// fmt() helper injected into quiz JS — runs at render time on visible text only
-// Strips LaTeX delimiters and applies markdown-like formatting
-const FMT_HELPER = `
-        function fmt(str) {
-          if (!str) return str;
-          return str
-            .replace(/\\$\\$(.*?)\\$\\$/gs, '$1')
-            .replace(/\\$([^$]+?)\\$/g, '$1')
-            .replace(/\\\\\\\((.*?)\\\\\\\)/gs, '$1')
-            .replace(/\\\\\\\[(.*?)\\\\\\\]/gs, '$1')
-            .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
-            .replace(/\\*(.*?)\\*/g, '<em>$1</em>')
-            .replace(/\`(.*?)\`/g, '<code>$1</code>');
-        }`;
-
 const html = `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -394,6 +379,13 @@ const TRANSLATIONS = [
   [/No hint available for this question\./g,   "No hay pista disponible para esta pregunta."],
 ];
 
+// Applied unconditionally on every run — only $ patterns are safe to run on the
+// whole file; * and backtick patterns would destroy JS template literals and CSS selectors
+const FORMATTING_PATTERNS = [
+  [/\$\$(.*?)\$\$/gs,    "$1"],
+  [/\$(?!\{|\$)(.*?)\$/g, "$1"],  // skip ${ (template literals) and $$ (handled above)
+];
+
 const QUIZ_DARK_CSS = `
     [data-theme="dark"] {
       --bg: #1a1612;
@@ -485,7 +477,7 @@ quizFiles.forEach(file => {
   // Strip any old duplicate heading first
   content = content.replace(/\n\s*<div class="quiz-heading"[\s\S]*?<\/div>\s*\n/g, '\n');
 
-  // Inject heading before quiz-container
+  // Inject heading before quiz-container if not present
   if (!content.includes('class="quiz-heading"')) {
     const heading = `
     <div class="quiz-heading" style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
@@ -528,21 +520,10 @@ quizFiles.forEach(file => {
     content = content.replace('</body>', `${toggleScript}\n</body>`);
   }
 
-  // Inject fmt() helper before renderQuestion — runs at render time, not on raw JSON
-  if (!content.includes('function fmt(')) {
-    content = content.replace('        function renderQuestion()', `${FMT_HELPER}\n        function renderQuestion()`);
-  }
-
-  // Wrap displayed text fields with fmt() in renderQuestion
-  // opt.text → fmt(opt.text), q.question → fmt(q.question), opt.rationale → fmt(opt.rationale), q.hint → fmt(q.hint)
-  content = content
-    .replace(/\$\{opt\.text\}/g, '${fmt(opt.text)}')
-    .replace(/\$\{q\.question\}/g, '${fmt(q.question)}')
-    .replace(/'\+ opt\.rationale \+'/g, "'+ fmt(opt.rationale) +'")
-    .replace(/q\.hint \|\| 'No hay pista disponible para esta pregunta\.'/g,
-             "fmt(q.hint) || 'No hay pista disponible para esta pregunta.'")
-    .replace(/q\.hint \|\| 'No hint available for this question\.'/g,
-             "fmt(q.hint) || 'No hint available for this question.'");
+  // Always apply formatting patterns regardless of translation state
+  FORMATTING_PATTERNS.forEach(([pattern, replacement]) => {
+    content = content.replace(pattern, replacement);
+  });
 
   // Translate if not already done (or forced)
   if (FORCE || (!content.includes("Pista") && !content.includes("Siguiente"))) {

@@ -538,6 +538,18 @@
             state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
         }
 
+
+        function fmt(str) {
+          if (!str) return str;
+          return str
+            .replace(/\.*?)\\/gs, '$1')
+            .replace(/\([^]+?)\/g, '1')
+            .replace(/\\\((.*?)\\/gs, '$1')
+            .replace(/\\(.*?)\\/gs, '$1')
+            .replace(/\<em>\</em>(.<em>?)\</em>\*/g, '<strong>$1</strong>')
+            .replace(/\<em>(.</em>?)\*/g, '<em>$1</em>')
+            .replace(/<code>(.*?)</code>/g, '<code>$1</code>');
+        }
         function renderQuestion() {
             const q = quizData[currentIndex];
             const s = state[currentIndex];
@@ -587,7 +599,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="question-text">${q.question}</div>
+                <div class="question-text">${fmt(q.question)}</div>
                 <ul class="options-list">
                     ${optionsHtml}
                 </ul>
@@ -595,7 +607,7 @@
 
             // Update Pista Box
             const hintText = document.getElementById('hint-text');
-            hintText.innerText = q.hint || 'No hay pista disponible para esta pregunta.';
+            hintText.innerText = fmt(q.hint) || 'No hay pista disponible para esta pregunta.';
             if (s.hintVisible) {
                 hintBox.classList.add('active');
             } else {

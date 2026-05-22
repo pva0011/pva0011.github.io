@@ -431,7 +431,7 @@
       box-shadow: 0 6px 24px rgba(232, 103, 58, 0.5);
     }
     
-    /<em> quiz-mobile-v3 </em>/
+    /* quiz-mobile-v3 */
     @media (max-width: 640px) {
       body {
         height: 100dvh;
@@ -479,7 +479,7 @@
 
     <div class="quiz-heading" style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
       <a href="../index.html" style="font-size:0.82em;color:var(--muted);text-decoration:none;font-family:var(--font-body)">← Índice</a>
-      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">AD · Quiz 1</h1>
+      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">Acceso a Datos · Quiz 1</h1>
     </div>
         <div id="quiz-content">
             <!-- Dynamic Content -->
@@ -559,9 +559,9 @@
                 const revealClass = revealCorrect ? 'revealed-correct' : '';
 
                 optionsHtml += `
-                    <li class="option-item {selectedClass} {statusClass} {revealClass}" onclick="selectOption({idx})">
+                    <li class="option-item ${selectedClass} ${statusClass} ${revealClass}" onclick="selectOption(${idx})">
                         <div class="option-label">
-                            <span>{String.fromCharCode(65 + idx)}. {opt.text}</span>
+                            <span>${String.fromCharCode(65 + idx)}. ${opt.text}</span>
                         </div>
                         <div class="feedback-state">
                             ${opt.isCorrect ? '✓ Correcto' : '✕ Incorrecto'}
@@ -575,7 +575,7 @@
 
             content.innerHTML = `
                 <div class="progress-container">
-                    <div class="progress-text">{currentIndex + 1} / {quizData.length}</div>
+                    <div class="progress-text">${currentIndex + 1} / ${quizData.length}</div>
                     <div class="status-bar">
                         <div class="status-item status-correct">
                             <span>✓</span>
@@ -637,7 +637,7 @@
             const hintBox = document.getElementById('hint-box');
             const nav = document.querySelector('.navigation');
 
-            const score = <code>{stats.correct} / {quizData.length}</code>;
+            const score = `${stats.correct} / ${quizData.length}`;
 
             results.innerHTML = `
                 <div class="results-screen">
