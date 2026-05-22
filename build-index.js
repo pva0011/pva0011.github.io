@@ -32,8 +32,6 @@ files.forEach(file => {
 });
 Object.values(groups).forEach(list => list.sort());
 
-// "sge-1.html"        → { prefix: "sge", middle: "",       num: "1" }
-// "sge-kahoot-1.html" → { prefix: "sge", middle: "Kahoot", num: "1" }
 function parseFilename(file) {
   const base = file.replace(".html", "");
   const parts = base.split("-");
@@ -59,7 +57,6 @@ function cardLabel(file) {
     : prefix.toUpperCase();
 }
 
-// Shared dark mode CSS + toggle (injected into every page)
 const DARK_MODE_CSS = `
   [data-theme="dark"] {
     --bg: #1a1612;
@@ -117,6 +114,21 @@ const DARK_MODE_SCRIPT = `
       });
     })();
   <\/script>`;
+
+// fmt() helper injected into quiz JS — runs at render time on visible text only
+// Strips LaTeX delimiters and applies markdown-like formatting
+const FMT_HELPER = `
+        function fmt(str) {
+          if (!str) return str;
+          return str
+            .replace(/\\$\\$(.*?)\\$\\$/gs, '$1')
+            .replace(/\\$([^$]+?)\\$/g, '$1')
+            .replace(/\\\\\\\((.*?)\\\\\\\)/gs, '$1')
+            .replace(/\\\\\\\[(.*?)\\\\\\\]/gs, '$1')
+            .replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>')
+            .replace(/\\*(.*?)\\*/g, '<em>$1</em>')
+            .replace(/\`(.*?)\`/g, '<code>$1</code>');
+        }`;
 
 const html = `<!DOCTYPE html>
 <html lang="es">
@@ -362,7 +374,6 @@ ${DARK_MODE_SCRIPT}
 fs.writeFileSync(path.join(__dirname, "index.html"), html, "utf8");
 console.log("index.html actualizado ✔️");
 
-// Translations
 const TRANSLATIONS = [
   [/\bHint\b/g,                                "Pista"],
   [/✓ Right answer/g,                          "✓ Correcto"],
@@ -383,19 +394,6 @@ const TRANSLATIONS = [
   [/No hint available for this question\./g,   "No hay pista disponible para esta pregunta."],
 ];
 
-// Formatting patterns — applied ONLY inside quizData JSON, not the whole file
-// (avoids mangling JS template literals like ${foo} or * operators)
-const FORMATTING_PATTERNS = [
-  [/\$\$(.*?)\$\$/gs,  "$1"],
-  [/\$(.*?)\$/g,       "$1"],
-  [/\\\((.*?)\\\)/gs,  "$1"],
-  [/\\\[(.*?)\\\]/gs,  "$1"],
-  [/\*\*(.*?)\*\*/g,   "<strong>$1</strong>"],
-  [/\*(.*?)\*/g,       "<em>$1</em>"],
-  [/`(.*?)`/g,         "<code>$1</code>"],
-];
-
-// Dark mode CSS to inject into quiz files
 const QUIZ_DARK_CSS = `
     [data-theme="dark"] {
       --bg: #1a1612;
@@ -431,7 +429,6 @@ const QUIZ_DARK_CSS = `
       box-shadow: 0 6px 24px rgba(232, 103, 58, 0.5);
     }`;
 
-// Mobile: flex column layout
 const QUIZ_MOBILE_CSS = `
     /* quiz-mobile-v3 */
     @media (max-width: 640px) {
@@ -485,7 +482,10 @@ quizFiles.forEach(file => {
 
   const label = quizLabel(file);
 
-  // Inject heading before quiz-container if not present
+  // Strip any old duplicate heading first
+  content = content.replace(/\n\s*<div class="quiz-heading"[\s\S]*?<\/div>\s*\n/g, '\n');
+
+  // Inject heading before quiz-container
   if (!content.includes('class="quiz-heading"')) {
     const heading = `
     <div class="quiz-heading" style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
@@ -528,15 +528,21 @@ quizFiles.forEach(file => {
     content = content.replace('</body>', `${toggleScript}\n</body>`);
   }
 
-  // Apply formatting patterns ONLY inside the quizData JSON blob
-  const quizDataMatch = content.match(/(const quizData = )(\[[\s\S]*?\]);/);
-  if (quizDataMatch) {
-    let jsonStr = quizDataMatch[2];
-    FORMATTING_PATTERNS.forEach(([pattern, replacement]) => {
-      jsonStr = jsonStr.replace(pattern, replacement);
-    });
-    content = content.replace(quizDataMatch[0], quizDataMatch[1] + jsonStr + ";");
+  // Inject fmt() helper before renderQuestion — runs at render time, not on raw JSON
+  if (!content.includes('function fmt(')) {
+    content = content.replace('        function renderQuestion()', `${FMT_HELPER}\n        function renderQuestion()`);
   }
+
+  // Wrap displayed text fields with fmt() in renderQuestion
+  // opt.text → fmt(opt.text), q.question → fmt(q.question), opt.rationale → fmt(opt.rationale), q.hint → fmt(q.hint)
+  content = content
+    .replace(/\$\{opt\.text\}/g, '${fmt(opt.text)}')
+    .replace(/\$\{q\.question\}/g, '${fmt(q.question)}')
+    .replace(/'\+ opt\.rationale \+'/g, "'+ fmt(opt.rationale) +'")
+    .replace(/q\.hint \|\| 'No hay pista disponible para esta pregunta\.'/g,
+             "fmt(q.hint) || 'No hay pista disponible para esta pregunta.'")
+    .replace(/q\.hint \|\| 'No hint available for this question\.'/g,
+             "fmt(q.hint) || 'No hint available for this question.'");
 
   // Translate if not already done (or forced)
   if (FORCE || (!content.includes("Pista") && !content.includes("Siguiente"))) {
