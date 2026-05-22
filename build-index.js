@@ -4,8 +4,10 @@ const fs = require("fs");
 const path = require("path");
 
 const QUIZ_DIR = path.join(__dirname, "quizzes");
+const FORCE = process.argv.includes("--force");
 
 const PREFIXES = {
+  ad: "Acceso a Datos",
   sge: "Sistemas de Gestión Empresarial",
   psp: "Programación de Servicios y Procesos",
   cib: "Ciberseguridad",
@@ -30,8 +32,6 @@ files.forEach(file => {
 });
 Object.values(groups).forEach(list => list.sort());
 
-// "sge-1.html"        → { prefix: "sge", middle: "",       num: "1" }
-// "sge-kahoot-1.html" → { prefix: "sge", middle: "Kahoot", num: "1" }
 function parseFilename(file) {
   const base = file.replace(".html", "");
   const parts = base.split("-");
@@ -57,7 +57,6 @@ function cardLabel(file) {
     : prefix.toUpperCase();
 }
 
-// Shared dark mode CSS + toggle (injected into every page)
 const DARK_MODE_CSS = `
   [data-theme="dark"] {
     --bg: #1a1612;
@@ -97,17 +96,24 @@ const DARK_MODE_TOGGLE_CSS = `
     box-shadow: 0 4px 16px rgba(0,0,0,0.15);
   }`;
 
-const DARK_MODE_SCRIPT = `
-  <button id="theme-toggle" title="Cambiar tema">🌙</button>
-  <script>
+const DARK_MODE_INIT_SCRIPT = `
+  <script>/* theme-init-v2 */
     (function() {
       const saved = localStorage.getItem('theme');
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (saved === 'dark' || (!saved && prefersDark)) {
         document.documentElement.setAttribute('data-theme', 'dark');
-        document.getElementById('theme-toggle').textContent = '☀️';
       }
-      document.getElementById('theme-toggle').addEventListener('click', function() {
+    })();
+  <\/script>`;
+
+const DARK_MODE_SCRIPT = `
+  <button id="theme-toggle" title="Cambiar tema">🌙</button>
+  <script>
+    (function() {
+      const toggle = document.getElementById('theme-toggle');
+      if (document.documentElement.getAttribute('data-theme') === 'dark') toggle.textContent = '☀️';
+      toggle.addEventListener('click', function() {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
         localStorage.setItem('theme', isDark ? 'light' : 'dark');
@@ -125,7 +131,6 @@ const html = `<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-
 <style>
   :root {
     --bg: #f6f1e7;
@@ -148,9 +153,7 @@ const html = `<!DOCTYPE html>
   }
 ${DARK_MODE_CSS}
 ${DARK_MODE_TOGGLE_CSS}
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
     font-family: var(--font-body);
     background:
@@ -162,16 +165,13 @@ ${DARK_MODE_TOGGLE_CSS}
     padding: 48px 20px;
     transition: background 0.3s ease, color 0.3s ease;
   }
-
   [data-theme="dark"] body {
     background:
       radial-gradient(240px 140px at 10% -10%, #3a1a08 0%, transparent 70%),
       radial-gradient(220px 160px at 90% 0%, #0a2a2e 0%, transparent 65%),
       linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
   }
-
   .container { max-width: 720px; margin: 0 auto; }
-
   h1 {
     font-family: var(--font-display);
     font-size: 2.2em;
@@ -180,21 +180,18 @@ ${DARK_MODE_TOGGLE_CSS}
     margin-bottom: 8px;
     color: var(--ink);
   }
-
   .subtitle {
     text-align: center;
     color: var(--muted);
     font-size: 1em;
     margin-bottom: 12px;
   }
-
   .badge-row {
     display: flex;
     justify-content: center;
     gap: 8px;
     margin-bottom: 32px;
   }
-
   .badge {
     background: rgba(31, 111, 120, 0.1);
     color: var(--teal);
@@ -205,7 +202,6 @@ ${DARK_MODE_TOGGLE_CSS}
     font-weight: 600;
     letter-spacing: 0.02em;
   }
-
   #search {
     width: 100%;
     padding: 14px 18px;
@@ -220,22 +216,18 @@ ${DARK_MODE_TOGGLE_CSS}
     box-shadow: 0 4px 16px rgba(23,23,23,0.07);
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
   }
-
   #search::placeholder { color: var(--muted); }
   #search:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(211, 84, 44, 0.12);
   }
-
   .section { margin-bottom: 44px; }
-
   .section-header {
     display: flex;
     align-items: baseline;
     gap: 8px;
     margin-bottom: 16px;
   }
-
   .section-header h2 {
     font-family: var(--font-display);
     font-size: 1.05em;
@@ -247,7 +239,6 @@ ${DARK_MODE_TOGGLE_CSS}
     min-width: 0;
     flex-shrink: 1;
   }
-
   .tag {
     background: rgba(211, 84, 44, 0.1);
     color: var(--accent-dark);
@@ -259,7 +250,6 @@ ${DARK_MODE_TOGGLE_CSS}
     white-space: nowrap;
     flex-shrink: 0;
   }
-
   .count {
     color: var(--muted);
     font-size: 0.8em;
@@ -267,14 +257,12 @@ ${DARK_MODE_TOGGLE_CSS}
     flex-shrink: 0;
     margin-left: auto;
   }
-
   .quiz-list {
     list-style: none;
     display: flex;
     flex-direction: column;
     gap: 10px;
   }
-
   .quiz-item {
     background: var(--card);
     border: 1px solid var(--stroke);
@@ -282,12 +270,10 @@ ${DARK_MODE_TOGGLE_CSS}
     box-shadow: 0 4px 16px rgba(23,23,23,0.07);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-
   .quiz-item:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow);
   }
-
   .quiz-item a {
     display: flex;
     align-items: center;
@@ -298,7 +284,6 @@ ${DARK_MODE_TOGGLE_CSS}
     font-weight: 500;
     font-size: 0.97em;
   }
-
   .quiz-item a::after {
     content: '→';
     color: var(--accent);
@@ -306,9 +291,7 @@ ${DARK_MODE_TOGGLE_CSS}
     opacity: 0.7;
     transition: opacity 0.2s, transform 0.2s;
   }
-
   .quiz-item:hover a::after { opacity: 1; transform: translateX(3px); }
-
   .no-results {
     text-align: center;
     color: var(--muted);
@@ -316,24 +299,20 @@ ${DARK_MODE_TOGGLE_CSS}
     font-size: 0.95em;
     display: none;
   }
-
   @media (max-width: 520px) {
     h1 { font-size: 1.7em; }
     body { padding: 32px 16px; }
   }
 </style>
+${DARK_MODE_INIT_SCRIPT}
 </head>
-
 <body>
 ${DARK_MODE_SCRIPT}
 <div class="container">
-
   <h1>🎯 Índice de Quizzes</h1>
   <p class="subtitle">Selecciona un quiz para comenzar a practicar</p>
   <p class="badge-row"><span class="badge">DAM · 2º año</span><span class="badge">Temas 8 – 15</span></p>
-
   <input type="text" id="search" placeholder="Buscar… (ej: sge, psp 2, ciber)" autocomplete="off" />
-
   ${Object.keys(groups)
     .sort()
     .map(prefix => {
@@ -353,20 +332,15 @@ ${DARK_MODE_SCRIPT}
 </section>`;
     })
     .join("\n")}
-
   <p class="no-results" id="no-results">No se encontraron quizzes para "<span id="no-results-term"></span>".</p>
-
 </div>
-
 <script>
   const search = document.getElementById("search");
   const noResults = document.getElementById("no-results");
   const noResultsTerm = document.getElementById("no-results-term");
-
   search.addEventListener("input", () => {
     const term = search.value.toLowerCase().trim();
     let visible = 0;
-
     document.querySelectorAll(".quiz-item").forEach(li => {
       const text = li.innerText.toLowerCase();
       const subject = (li.dataset.subject || "");
@@ -374,13 +348,11 @@ ${DARK_MODE_SCRIPT}
       li.style.display = show ? "" : "none";
       if (show) visible++;
     });
-
     document.querySelectorAll(".section").forEach(section => {
       const anyVisible = [...section.querySelectorAll(".quiz-item")]
         .some(li => li.style.display !== "none");
       section.style.display = anyVisible ? "" : "none";
     });
-
     if (term && visible === 0) {
       noResults.style.display = "block";
       noResultsTerm.textContent = search.value;
@@ -389,14 +361,12 @@ ${DARK_MODE_SCRIPT}
     }
   });
 </script>
-
 </body>
 </html>`;
 
 fs.writeFileSync(path.join(__dirname, "index.html"), html, "utf8");
 console.log("index.html actualizado ✔️");
 
-// Translations
 const TRANSLATIONS = [
   [/\bHint\b/g,                                "Pista"],
   [/✓ Right answer/g,                          "✓ Correcto"],
@@ -417,7 +387,13 @@ const TRANSLATIONS = [
   [/No hint available for this question\./g,   "No hay pista disponible para esta pregunta."],
 ];
 
-// Dark mode CSS to inject into quiz files
+// Applied unconditionally on every run — only $ patterns are safe to run on the
+// whole file; * and backtick patterns would destroy JS template literals and CSS selectors
+const FORMATTING_PATTERNS = [
+  [/\$\$(.*?)\$\$/gs,    "$1"],
+  [/\$(?!\{|\$)(.*?)\$/g, "$1"],  // skip ${ (template literals) and $$ (handled above)
+];
+
 const QUIZ_DARK_CSS = `
     [data-theme="dark"] {
       --bg: #1a1612;
@@ -453,7 +429,6 @@ const QUIZ_DARK_CSS = `
       box-shadow: 0 6px 24px rgba(232, 103, 58, 0.5);
     }`;
 
-// Mobile: flex column layout
 const QUIZ_MOBILE_CSS = `
     /* quiz-mobile-v3 */
     @media (max-width: 640px) {
@@ -507,6 +482,9 @@ quizFiles.forEach(file => {
 
   const label = quizLabel(file);
 
+  // Strip any old duplicate heading first
+  content = content.replace(/\n\s*<div class="quiz-heading"[\s\S]*?<\/div>\s*\n/g, '\n');
+
   // Inject heading before quiz-container if not present
   if (!content.includes('class="quiz-heading"')) {
     const heading = `
@@ -527,19 +505,25 @@ quizFiles.forEach(file => {
     content = content.replace('</style>', `${QUIZ_MOBILE_CSS}\n    </style>`);
   }
 
-  // Inject dark mode toggle if not present
-  if (!content.includes('id="theme-toggle"')) {
-    const toggleScript = `
-  <button id="theme-toggle" title="Cambiar tema" style="position:fixed;top:8px;right:8px;background:var(--card);border:1px solid var(--stroke);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:transform 0.2s ease;z-index:100;">🌙</button>
-  <script>
+  // Inject dark mode toggle if not present (theme-init-v2 = split init/toggle)
+  if (!content.includes('theme-init-v2')) {
+    const themeInit = `
+  <script>/* theme-init-v2 */
     (function() {
       const saved = localStorage.getItem('theme');
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (saved === 'dark' || (!saved && prefersDark)) {
         document.documentElement.setAttribute('data-theme', 'dark');
-        document.getElementById('theme-toggle').textContent = '☀️';
       }
-      document.getElementById('theme-toggle').addEventListener('click', function() {
+    })();
+  <\/script>`;
+    const toggleScript = `
+  <button id="theme-toggle" title="Cambiar tema" style="position:fixed;top:8px;right:8px;background:var(--card);border:1px solid var(--stroke);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:transform 0.2s ease;z-index:100;">🌙</button>
+  <script>
+    (function() {
+      const toggle = document.getElementById('theme-toggle');
+      if (document.documentElement.getAttribute('data-theme') === 'dark') toggle.textContent = '☀️';
+      toggle.addEventListener('click', function() {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
         localStorage.setItem('theme', isDark ? 'light' : 'dark');
@@ -547,11 +531,17 @@ quizFiles.forEach(file => {
       });
     })();
   <\/script>`;
+    content = content.replace('</head>', `${themeInit}\n</head>`);
     content = content.replace('</body>', `${toggleScript}\n</body>`);
   }
 
-  // Translate if not already done
-  if (!content.includes("Pista") && !content.includes("Siguiente")) {
+  // Always apply formatting patterns regardless of translation state
+  FORMATTING_PATTERNS.forEach(([pattern, replacement]) => {
+    content = content.replace(pattern, replacement);
+  });
+
+  // Translate if not already done (or forced)
+  if (FORCE || (!content.includes("Pista") && !content.includes("Siguiente"))) {
     TRANSLATIONS.forEach(([pattern, replacement]) => {
       content = content.replace(pattern, replacement);
     });

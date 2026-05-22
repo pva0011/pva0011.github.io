@@ -215,19 +215,25 @@
     body { padding: 32px 16px; }
   }
 </style>
+
+  <script>/* theme-init-v2 */
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
 </head>
 <body>
 
   <button id="theme-toggle" title="Cambiar tema">🌙</button>
   <script>
     (function() {
-      const saved = localStorage.getItem('theme');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (saved === 'dark' || (!saved && prefersDark)) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        document.getElementById('theme-toggle').textContent = '☀️';
-      }
-      document.getElementById('theme-toggle').addEventListener('click', function() {
+      const toggle = document.getElementById('theme-toggle');
+      if (document.documentElement.getAttribute('data-theme') === 'dark') toggle.textContent = '☀️';
+      toggle.addEventListener('click', function() {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
         localStorage.setItem('theme', isDark ? 'light' : 'dark');
