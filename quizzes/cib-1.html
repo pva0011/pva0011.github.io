@@ -396,91 +396,10 @@
                 flex-direction: column;
             }
         }
-    
-    [data-theme="dark"] {
-      --bg: #1a1612;
-      --bg-deep: #141210;
-      --ink: #f0ebe0;
-      --muted: #9a9080;
-      --accent: #e8673a;
-      --accent-light: #ff9a6a;
-      --accent-dark: #c45528;
-      --teal: #2a9aa8;
-      --card: #221e18;
-      --stroke: #3a3028;
-      --shadow: 0 18px 40px rgba(0,0,0,0.4);
-      --error: #e06050;
-    }
-    [data-theme="dark"] body {
-      background:
-        radial-gradient(240px 140px at 10% -10%, #3a1a08 0%, transparent 70%),
-        radial-gradient(220px 160px at 90% 0%, #0a2a2e 0%, transparent 65%),
-        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
-    }
-    [data-theme="dark"] .option-item { background-color: var(--card); }
-    [data-theme="dark"] .hint-toggle,
-    [data-theme="dark"] .hint-content,
-    [data-theme="dark"] .btn-prev { background-color: var(--card); color: var(--ink); }
-    [data-theme="dark"] .result-card { background: var(--card); }
-    [data-theme="dark"] .btn-next {
-      background: linear-gradient(90deg, #e8673a, #f28c5e);
-      box-shadow: 0 4px 20px rgba(232, 103, 58, 0.35);
-      color: #fff;
-    }
-    [data-theme="dark"] .btn-next:hover:not(:disabled) {
-      box-shadow: 0 6px 24px rgba(232, 103, 58, 0.5);
-    }
-    
-    /* quiz-mobile-v3 */
-    @media (max-width: 640px) {
-      body {
-        height: 100dvh;
-        overflow: hidden;
-        align-items: flex-start;
-        padding: 0;
-      }
-      .quiz-container {
-        height: 100dvh;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        margin: 0;
-        border-radius: 0;
-        border-left: none;
-        border-right: none;
-        border-top: none;
-        padding-bottom: 0;
-      }
-      #quiz-content,
-      #results-content {
-        flex: 1;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        min-height: 0;
-        padding-bottom: 8px;
-      }
-      #hint-box { flex-shrink: 0; }
-      .navigation {
-        flex-shrink: 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 16px;
-        margin-top: 0;
-        background: var(--card);
-        border-top: 1px solid var(--stroke);
-      }
-    }
     </style>
 </head>
 <body>
     <div class="quiz-container">
-
-    <div class="quiz-heading" style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
-      <a href="../index.html" style="font-size:0.82em;color:var(--muted);text-decoration:none;font-family:var(--font-body)">← Índice</a>
-      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">Ciberseguridad · Quiz 1</h1>
-    </div>
         <div id="quiz-content">
             <!-- Dynamic Content -->
         </div>
@@ -493,12 +412,12 @@
 
         <div class="navigation">
             <button id="hint-toggle" class="hint-toggle">
-                <span>Pista</span>
+                <span>Hint</span>
                 <span id="hint-icon-arrow">▼</span>
             </button>
             <div class="nav-buttons">
-                <button id="prev-btn" class="btn btn-prev">Anterior</button>
-                <button id="next-btn" class="btn btn-next">Siguiente</button>
+                <button id="prev-btn" class="btn btn-prev">Previous</button>
+                <button id="next-btn" class="btn btn-next">Next</button>
             </div>
         </div>
     </div>
@@ -564,7 +483,7 @@
                             <span>${String.fromCharCode(65 + idx)}. ${opt.text}</span>
                         </div>
                         <div class="feedback-state">
-                            ${opt.isCorrect ? '✓ Correcto' : '✕ Incorrecto'}
+                            ${opt.isCorrect ? '✓ Right answer' : '✕ Not quite'}
                         </div>
                         ${opt.rationale ? '<div class="rationale">' + opt.rationale + '</div>' : ''}
                     </li>
@@ -593,9 +512,9 @@
                 </ul>
             `;
 
-            // Update Pista Box
+            // Update Hint Box
             const hintText = document.getElementById('hint-text');
-            hintText.innerText = q.hint || 'No hay pista disponible para esta pregunta.';
+            hintText.innerText = q.hint || 'No hint available for this question.';
             if (s.hintVisible) {
                 hintBox.classList.add('active');
             } else {
@@ -610,9 +529,9 @@
             prevBtn.disabled = currentIndex === 0;
             nextBtn.disabled = false;
             if (mode === 'review') {
-                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Volver a resultados' : 'Siguiente';
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Back to Results' : 'Next';
             } else {
-                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finalizar' : 'Siguiente';
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finish' : 'Next';
             }
             document.getElementById('hint-icon-arrow').innerText = s.hintVisible ? '▲' : '▼';
         }
@@ -642,29 +561,29 @@
             results.innerHTML = `
                 <div class="results-screen">
                     <div>
-                        <h1 class="results-title">¡Lo lograste! Quiz completado.</h1>
-                        <p class="results-subtitle">Revisa tu puntuación o inténtalo de nuevo.</p>
+                        <h1 class="results-title">You did it! Quiz Complete.</h1>
+                        <p class="results-subtitle">Review your score or take another run.</p>
                     </div>
                     <div class="results-grid">
                         <div class="result-card">
-                            <div class="result-label">Puntuación</div>
+                            <div class="result-label">Score</div>
                             <div class="result-value">${score}</div>
                         </div>
                         <div class="result-card">
-                            <div class="result-label">Precisión</div>
+                            <div class="result-label">Accuracy</div>
                             <div class="result-value">${stats.accuracy}%</div>
                         </div>
                         <div class="result-card">
                             <div class="result-metrics">
-                                <div>Correctas <strong>${stats.correct}</strong></div>
-                                <div>Incorrectas <strong>${stats.wrong}</strong></div>
-                                <div>Omitidas <strong>${stats.skipped}</strong></div>
+                                <div>Right <strong>${stats.correct}</strong></div>
+                                <div>Wrong <strong>${stats.wrong}</strong></div>
+                                <div>Skipped <strong>${stats.skipped}</strong></div>
                             </div>
                         </div>
                     </div>
                     <div class="results-actions">
-                        <button id="review-btn" class="btn btn-ghost">Revisar Quiz</button>
-                        <button id="retake-btn" class="btn btn-next">Repetir Quiz</button>
+                        <button id="review-btn" class="btn btn-ghost">Review Quiz</button>
+                        <button id="retake-btn" class="btn btn-next">Retake Quiz</button>
                     </div>
                 </div>
             `;
@@ -723,23 +642,5 @@
 
         renderQuestion();
     </script>
-
-  <button id="theme-toggle" title="Cambiar tema" style="position:fixed;top:8px;right:8px;background:var(--card);border:1px solid var(--stroke);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:transform 0.2s ease;z-index:100;">🌙</button>
-  <script>
-    (function() {
-      const saved = localStorage.getItem('theme');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (saved === 'dark' || (!saved && prefersDark)) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-        document.getElementById('theme-toggle').textContent = '☀️';
-      }
-      document.getElementById('theme-toggle').addEventListener('click', function() {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
-        localStorage.setItem('theme', isDark ? 'light' : 'dark');
-        this.textContent = isDark ? '🌙' : '☀️';
-      });
-    })();
-  </script>
 </body>
 </html>
