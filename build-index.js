@@ -127,7 +127,6 @@ const html = `<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-
 <style>
   :root {
     --bg: #f6f1e7;
@@ -150,9 +149,7 @@ const html = `<!DOCTYPE html>
   }
 ${DARK_MODE_CSS}
 ${DARK_MODE_TOGGLE_CSS}
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
     font-family: var(--font-body);
     background:
@@ -164,16 +161,13 @@ ${DARK_MODE_TOGGLE_CSS}
     padding: 48px 20px;
     transition: background 0.3s ease, color 0.3s ease;
   }
-
   [data-theme="dark"] body {
     background:
       radial-gradient(240px 140px at 10% -10%, #3a1a08 0%, transparent 70%),
       radial-gradient(220px 160px at 90% 0%, #0a2a2e 0%, transparent 65%),
       linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
   }
-
   .container { max-width: 720px; margin: 0 auto; }
-
   h1 {
     font-family: var(--font-display);
     font-size: 2.2em;
@@ -182,21 +176,18 @@ ${DARK_MODE_TOGGLE_CSS}
     margin-bottom: 8px;
     color: var(--ink);
   }
-
   .subtitle {
     text-align: center;
     color: var(--muted);
     font-size: 1em;
     margin-bottom: 12px;
   }
-
   .badge-row {
     display: flex;
     justify-content: center;
     gap: 8px;
     margin-bottom: 32px;
   }
-
   .badge {
     background: rgba(31, 111, 120, 0.1);
     color: var(--teal);
@@ -207,7 +198,6 @@ ${DARK_MODE_TOGGLE_CSS}
     font-weight: 600;
     letter-spacing: 0.02em;
   }
-
   #search {
     width: 100%;
     padding: 14px 18px;
@@ -222,22 +212,18 @@ ${DARK_MODE_TOGGLE_CSS}
     box-shadow: 0 4px 16px rgba(23,23,23,0.07);
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
   }
-
   #search::placeholder { color: var(--muted); }
   #search:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(211, 84, 44, 0.12);
   }
-
   .section { margin-bottom: 44px; }
-
   .section-header {
     display: flex;
     align-items: baseline;
     gap: 8px;
     margin-bottom: 16px;
   }
-
   .section-header h2 {
     font-family: var(--font-display);
     font-size: 1.05em;
@@ -249,7 +235,6 @@ ${DARK_MODE_TOGGLE_CSS}
     min-width: 0;
     flex-shrink: 1;
   }
-
   .tag {
     background: rgba(211, 84, 44, 0.1);
     color: var(--accent-dark);
@@ -261,7 +246,6 @@ ${DARK_MODE_TOGGLE_CSS}
     white-space: nowrap;
     flex-shrink: 0;
   }
-
   .count {
     color: var(--muted);
     font-size: 0.8em;
@@ -269,14 +253,12 @@ ${DARK_MODE_TOGGLE_CSS}
     flex-shrink: 0;
     margin-left: auto;
   }
-
   .quiz-list {
     list-style: none;
     display: flex;
     flex-direction: column;
     gap: 10px;
   }
-
   .quiz-item {
     background: var(--card);
     border: 1px solid var(--stroke);
@@ -284,12 +266,10 @@ ${DARK_MODE_TOGGLE_CSS}
     box-shadow: 0 4px 16px rgba(23,23,23,0.07);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-
   .quiz-item:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow);
   }
-
   .quiz-item a {
     display: flex;
     align-items: center;
@@ -300,7 +280,6 @@ ${DARK_MODE_TOGGLE_CSS}
     font-weight: 500;
     font-size: 0.97em;
   }
-
   .quiz-item a::after {
     content: '→';
     color: var(--accent);
@@ -308,9 +287,7 @@ ${DARK_MODE_TOGGLE_CSS}
     opacity: 0.7;
     transition: opacity 0.2s, transform 0.2s;
   }
-
   .quiz-item:hover a::after { opacity: 1; transform: translateX(3px); }
-
   .no-results {
     text-align: center;
     color: var(--muted);
@@ -318,24 +295,19 @@ ${DARK_MODE_TOGGLE_CSS}
     font-size: 0.95em;
     display: none;
   }
-
   @media (max-width: 520px) {
     h1 { font-size: 1.7em; }
     body { padding: 32px 16px; }
   }
 </style>
 </head>
-
 <body>
 ${DARK_MODE_SCRIPT}
 <div class="container">
-
   <h1>🎯 Índice de Quizzes</h1>
   <p class="subtitle">Selecciona un quiz para comenzar a practicar</p>
   <p class="badge-row"><span class="badge">DAM · 2º año</span><span class="badge">Temas 8 – 15</span></p>
-
   <input type="text" id="search" placeholder="Buscar… (ej: sge, psp 2, ciber)" autocomplete="off" />
-
   ${Object.keys(groups)
     .sort()
     .map(prefix => {
@@ -355,20 +327,15 @@ ${DARK_MODE_SCRIPT}
 </section>`;
     })
     .join("\n")}
-
   <p class="no-results" id="no-results">No se encontraron quizzes para "<span id="no-results-term"></span>".</p>
-
 </div>
-
 <script>
   const search = document.getElementById("search");
   const noResults = document.getElementById("no-results");
   const noResultsTerm = document.getElementById("no-results-term");
-
   search.addEventListener("input", () => {
     const term = search.value.toLowerCase().trim();
     let visible = 0;
-
     document.querySelectorAll(".quiz-item").forEach(li => {
       const text = li.innerText.toLowerCase();
       const subject = (li.dataset.subject || "");
@@ -376,13 +343,11 @@ ${DARK_MODE_SCRIPT}
       li.style.display = show ? "" : "none";
       if (show) visible++;
     });
-
     document.querySelectorAll(".section").forEach(section => {
       const anyVisible = [...section.querySelectorAll(".quiz-item")]
         .some(li => li.style.display !== "none");
       section.style.display = anyVisible ? "" : "none";
     });
-
     if (term && visible === 0) {
       noResults.style.display = "block";
       noResultsTerm.textContent = search.value;
@@ -391,7 +356,6 @@ ${DARK_MODE_SCRIPT}
     }
   });
 </script>
-
 </body>
 </html>`;
 
@@ -419,7 +383,8 @@ const TRANSLATIONS = [
   [/No hint available for this question\./g,   "No hay pista disponible para esta pregunta."],
 ];
 
-// Applied unconditionally — must run on every file regardless of translation state
+// Formatting patterns — applied ONLY inside quizData JSON, not the whole file
+// (avoids mangling JS template literals like ${foo} or * operators)
 const FORMATTING_PATTERNS = [
   [/\$\$(.*?)\$\$/gs,  "$1"],
   [/\$(.*?)\$/g,       "$1"],
@@ -563,10 +528,15 @@ quizFiles.forEach(file => {
     content = content.replace('</body>', `${toggleScript}\n</body>`);
   }
 
-  // Always apply formatting patterns regardless of translation state
-  FORMATTING_PATTERNS.forEach(([pattern, replacement]) => {
-    content = content.replace(pattern, replacement);
-  });
+  // Apply formatting patterns ONLY inside the quizData JSON blob
+  const quizDataMatch = content.match(/(const quizData = )(\[[\s\S]*?\]);/);
+  if (quizDataMatch) {
+    let jsonStr = quizDataMatch[2];
+    FORMATTING_PATTERNS.forEach(([pattern, replacement]) => {
+      jsonStr = jsonStr.replace(pattern, replacement);
+    });
+    content = content.replace(quizDataMatch[0], quizDataMatch[1] + jsonStr + ";");
+  }
 
   // Translate if not already done (or forced)
   if (FORCE || (!content.includes("Pista") && !content.includes("Siguiente"))) {
