@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso a datos - 8 a 15 - NotebookLM - Quiz Export</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+        :root {
+            --bg: #f6f1e7;
+            --bg-deep: #efe4d6;
+            --ink: #171717;
+            --muted: #5b5b5b;
+            --accent: #d3542c;
+            --accent-light: #ff8f5a;
+            --accent-dark: #b14320;
+            --teal: #1f6f78;
+            --card: #fff7ef;
+            --stroke: #e3d6c5;
+            --shadow: 0 18px 40px rgba(23, 23, 23, 0.12);
+            --radius-sm: 10px;
+            --radius-md: 12px;
+            --radius-lg: 14px;
+            --radius-xl: 18px;
+            --radius-2xl: 22px;
+            --space-1: 6px;
+            --space-2: 8px;
+            --space-3: 10px;
+            --space-4: 12px;
+            --space-5: 14px;
+            --space-6: 16px;
+            --space-7: 18px;
+            --space-8: 20px;
+            --space-9: 24px;
+            --space-10: 32px;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --error: #b54832;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background:
+                radial-gradient(240px 140px at 10% -10%, #ffd2b9 0%, transparent 70%),
+                radial-gradient(220px 160px at 90% 0%, #cfe7e6 0%, transparent 65%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+            color: var(--ink);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 800px;
+            padding: var(--space-10) var(--space-8);
+            box-sizing: border-box;
+            background: var(--card);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+        }
+
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .progress-text {
+            color: var(--muted);
+            font-size: 0.9em;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-correct { color: var(--teal); }
+        .status-wrong { color: var(--error); }
+
+        .question-text {
+            font-family: var(--font-display);
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-item:hover:not(.selected) {
+            background-color: var(--card);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .option-item.selected.correct {
+            background-color: rgba(31, 111, 120, 0.12);
+            border-color: var(--teal);
+        }
+
+        .option-item.selected.incorrect {
+            background-color: rgba(181, 72, 50, 0.12);
+            border-color: var(--error);
+        }
+
+        .option-item.revealed-correct {
+            border-color: rgba(31, 111, 120, 0.5);
+            box-shadow: inset 0 0 0 1px rgba(31, 111, 120, 0.16);
+        }
+
+        .option-label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feedback-state {
+            font-weight: bold;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .selected .feedback-state {
+            display: block;
+        }
+
+        .revealed-correct .feedback-state {
+            display: block;
+        }
+
+        .correct .feedback-state { color: var(--teal); }
+        .incorrect .feedback-state { color: var(--error); }
+        .revealed-correct .feedback-state { color: var(--teal); }
+
+        .rationale {
+            font-size: 0.95em;
+            color: var(--muted);
+            margin-top: 4px;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .selected .rationale {
+            display: block;
+        }
+
+        .revealed-correct .rationale {
+            display: block;
+        }
+        .hint-toggle {
+            border: 1px solid var(--stroke);
+            color: var(--muted);
+            cursor: pointer;
+            padding: var(--space-2) var(--space-6);
+            border-radius: var(--radius-md);
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hint-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .hint-content {
+            margin-top: 32px;
+            padding: var(--space-6);
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-lg);
+            font-size: 0.95em;
+            color: var(--muted);
+            display: none;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .hint-content.active {
+            display: flex;
+        }
+
+        .hint-icon-box {
+            color: var(--accent-dark);
+            font-size: 1.2em;
+            margin-top: -2px;
+        }
+
+        .navigation {
+            margin-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-7);
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-prev {
+            background-color: #fff;
+            color: var(--ink);
+            border-color: var(--stroke);
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn-next {
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            color: #fff;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .results-screen {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+        }
+
+        .results-title {
+            font-family: var(--font-display);
+            font-size: 2.1em;
+            margin: 0;
+        }
+
+        .results-subtitle {
+            color: var(--muted);
+            margin: 0;
+            font-size: 1em;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .result-card {
+            padding: var(--space-6);
+            border-radius: var(--radius-xl);
+            background: #fff;
+            border: 1px solid var(--stroke);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .result-label {
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-family: var(--font-display);
+        }
+
+        .result-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            border: 1px solid var(--stroke);
+            color: var(--ink);
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 900px) {
+            .quiz-container {
+                margin: var(--space-8);
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .quiz-container {
+                padding: var(--space-8) var(--space-6);
+            }
+
+            .question-text {
+                font-size: 1.3em;
+            }
+
+            .option-item {
+                padding: var(--space-4);
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .quiz-container {
+                margin: var(--space-6);
+                padding: var(--space-7) var(--space-5);
+            }
+
+            .progress-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+
+            .navigation {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-4);
+            }
+
+            .nav-buttons {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .hint-toggle {
+                justify-content: space-between;
+            }
+
+            .results-actions {
+                flex-direction: column;
+            }
+        }
+    
+    [data-theme="dark"] {
+      --bg: #1a1612;
+      --bg-deep: #141210;
+      --ink: #f0ebe0;
+      --muted: #9a9080;
+      --accent: #e8673a;
+      --accent-light: #ff9a6a;
+      --accent-dark: #c45528;
+      --teal: #2a9aa8;
+      --card: #221e18;
+      --stroke: #3a3028;
+      --shadow: 0 18px 40px rgba(0,0,0,0.4);
+      --error: #e06050;
+    }
+    [data-theme="dark"] body {
+      background:
+        radial-gradient(240px 140px at 10% -10%, #3a1a08 0%, transparent 70%),
+        radial-gradient(220px 160px at 90% 0%, #0a2a2e 0%, transparent 65%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    }
+    [data-theme="dark"] .option-item { background-color: var(--card); }
+    [data-theme="dark"] .hint-toggle,
+    [data-theme="dark"] .hint-content,
+    [data-theme="dark"] .btn-prev { background-color: var(--card); color: var(--ink); }
+    [data-theme="dark"] .result-card { background: var(--card); }
+    [data-theme="dark"] .btn-next {
+      background: linear-gradient(90deg, #e8673a, #f28c5e);
+      box-shadow: 0 4px 20px rgba(232, 103, 58, 0.35);
+      color: #fff;
+    }
+    [data-theme="dark"] .btn-next:hover:not(:disabled) {
+      box-shadow: 0 6px 24px rgba(232, 103, 58, 0.5);
+    }
+    
+    /* quiz-mobile-v3 */
+    @media (max-width: 640px) {
+      body {
+        height: 100dvh;
+        overflow: hidden;
+        align-items: flex-start;
+        padding: 0;
+      }
+      .quiz-container {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        margin: 0;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+        padding-bottom: 0;
+      }
+      #quiz-content,
+      #results-content {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        min-height: 0;
+        padding-bottom: 8px;
+      }
+      #hint-box { flex-shrink: 0; }
+      .navigation {
+        flex-shrink: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        margin-top: 0;
+        background: var(--card);
+        border-top: 1px solid var(--stroke);
+      }
+    }
+    </style>
+
+  <script>/* theme-init-v2 */
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+</head>
+<body>
+    <div class="quiz-container">
+
+    <div class="quiz-heading" style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
+      <a href="../index.html" style="font-size:0.82em;color:var(--muted);text-decoration:none;font-family:var(--font-body)">← Índice</a>
+      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">Acceso a Datos · Quiz 4</h1>
+    </div>
+        <div id="quiz-content">
+            <!-- Dynamic Content -->
+        </div>
+        <div id="results-content" class="hidden"></div>
+
+        <div id="hint-box" class="hint-content">
+            <div class="hint-icon-box">💡</div>
+            <div id="hint-text"></div>
+        </div>
+
+        <div class="navigation">
+            <button id="hint-toggle" class="hint-toggle">
+                <span>Pista</span>
+                <span id="hint-icon-arrow">▼</span>
+            </button>
+            <div class="nav-buttons">
+                <button id="prev-btn" class="btn btn-prev">Anterior</button>
+                <button id="next-btn" class="btn btn-next">Siguiente</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [{"answerOptions":[{"isCorrect":false,"rationale":"Este es un nombre genérico que no identifica la implementación específica requerida para el motor Redis.","text":"nosql-java-driver"},{"isCorrect":false,"rationale":"Aunque suena plausible, no es el nombre oficial del artefacto utilizado en el ecosistema de dependencias de Maven para esta integración.","text":"redis-connector"},{"isCorrect":false,"rationale":"Si bien es un framework válido, el material fuente especifica el uso directo del cliente Jedis para la capa de acceso.","text":"spring-data-redis"},{"isCorrect":true,"rationale":"Esta es la librería cliente de Java estándar para comunicarse con Redis, gestionada bajo el groupId 'redis.clients'.","text":"jedis"}],"hint":"Busca el nombre específico de la librería que aparece en el bloque de dependencias del caso práctico.","question":"¿Qué artefacto de Maven es necesario incluir en el fichero pom.xml para habilitar la conexión de una aplicación Java con una base de datos Redis?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este requisito afectaría drásticamente el rendimiento y la latencia, algo que las soluciones NoSQL buscan evitar.","text":"Los nodos deben sincronizarse obligatoriamente en tiempo real antes de cada lectura"},{"isCorrect":false,"rationale":"Desactivar la replicación pondría en riesgo la integridad y disponibilidad de los datos en caso de corte de suministro.","text":"La replicación debe desactivarse durante las horas de alta demanda de Big Data"},{"isCorrect":false,"rationale":"Este enfoque es típico de sistemas relacionales tradicionales y contradice la flexibilidad de alta disponibilidad NoSQL.","text":"Solo el nodo maestro puede procesar escrituras para garantizar la consistencia ACID"},{"isCorrect":true,"rationale":"La disponibilidad continua se basa en la redundancia y en la capacidad de respuesta del sistema a pesar de fallos parciales de hardware.","text":"Todos los nodos deben atender solicitudes de lectura incluso si hay máquinas fuera de servicio"}],"hint":"Recuerda el principio de evitar un 'punto único de fallo' mencionado en los beneficios.","question":"En el contexto de disponibilidad continua en bases de datos NoSQL empresariales, ¿cuál es una condición crítica para los nodos de un clúster?"},{"answerOptions":[{"isCorrect":false,"rationale":"MongoDB maneja las transacciones de forma distinta y 'it' no es la palabra clave para abrirlas.","text":"Para iniciar una transacción interna en la base de datos"},{"isCorrect":true,"rationale":"Cuando una consulta devuelve muchos resultados, este comando permite avanzar por los documentos restantes del cursor.","text":"Para iterar el cursor sobre el que se haya realizado una consulta"},{"isCorrect":false,"rationale":"La importación se realiza mediante herramientas externas o comandos específicos, no con un iterador de shell.","text":"Para importar tablas desde un sistema relacional externo"},{"isCorrect":false,"rationale":"Existen operadores como 'type', pero 'it' se limita exclusivamente al manejo de la visualización de resultados.","text":"Para identificar el tipo de dato de un campo específico"}],"hint":"Piensa en lo que sucede cuando una consulta (query) devuelve demasiados registros para una sola pantalla.","question":"Al trabajar con la shell de MongoDB, ¿para qué se utiliza específicamente el comando 'it'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque pueden combinarse, la restricción de no duplicados es propiedad de los índices 'Unique'.","text":"Garantizar que no existan dos documentos con el mismo valor en un campo"},{"isCorrect":false,"rationale":"Esa tarea corresponde a los índices geoespaciales, que utilizan estructuras de datos diferentes.","text":"Indexar por coordenadas espaciales para aplicaciones de mapas"},{"isCorrect":true,"rationale":"A diferencia de los índices normales, estos solo incluyen entradas para documentos que poseen el campo indexado, optimizando espacio.","text":"No indexar documentos que carecen del campo definido, permitiendo valores nulos únicos"},{"isCorrect":false,"rationale":"Esta es la función de los índices TTL (Time To Live), no de los índices dispersos o sparse.","text":"Eliminar automáticamente documentos después de un tiempo de expiración"}],"hint":"El término se traduce como 'disperso' y se aplica cuando no todos los documentos tienen el mismo esquema.","question":"¿Cuál es la función principal de los índices de tipo 'Sparse' en MongoDB?"},{"answerOptions":[{"isCorrect":false,"rationale":"Eso se define mediante los campos 'mechanisms' o 'passwordDigestor', no por restricciones de red.","text":"El algoritmo de cifrado para la digestión de la contraseña"},{"isCorrect":false,"rationale":"La asignación de base de datos se realiza dentro de la definición del rol asignado al usuario.","text":"La base de datos específica a la que el usuario tiene permiso de lectura"},{"isCorrect":false,"rationale":"Los roles se definen en un array independiente dentro del mismo comando de creación de usuario.","text":"Los roles específicos que determinan los privilegios de acceso"},{"isCorrect":true,"rationale":"Permite añadir una capa de seguridad basada en la ubicación de red del cliente y el servidor.","text":"Rangos de direcciones IP desde las cuales el usuario puede o no conectarse"}],"hint":"Considera restricciones relacionadas con la infraestructura de red, como IPs y CIDR.","question":"Dentro del comando 'db.createUser()', ¿qué especifica el parámetro 'authenticationRestrictions'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esta es la implementación específica del driver (por ejemplo de eXist-DB), pero no la utilidad de gestión global.","text":"DatabaseImpl"},{"isCorrect":false,"rationale":"Esta clase suele representar la sesión activa, pero no es el gestor encargado del registro del driver.","text":"XMLDBConnection"},{"isCorrect":false,"rationale":"Este servicio se utiliza para manipular colecciones una vez que la base de datos ya ha sido registrada.","text":"CollectionManagementService"},{"isCorrect":true,"rationale":"Esta clase proporciona los métodos estáticos necesarios para registrar instancias de la interfaz Database y obtener conexiones.","text":"DatabaseManager"}],"hint":"Es una clase estática que actúa como punto de entrada para gestionar drivers XMLDB.","question":"En la integración de bases de datos XML nativas con Java, ¿qué clase es la encargada de registrar la base de datos para su uso posterior?"},{"answerOptions":[{"isCorrect":false,"rationale":"Por defecto, la referencia al nombre del objeto implica una colección completa de instancias.","text":"Se devuelve únicamente el primer objeto encontrado en la base de datos"},{"isCorrect":true,"rationale":"OQL permite simplificar consultas devolviendo todos los objetos de una clase simplemente referenciando su nombre.","text":"Se devuelve una colección de todas las existencias de ese tipo de objeto"},{"isCorrect":false,"rationale":"A diferencia del SQL tradicional, OQL no exige siempre el SELECT si la intención es recuperar el objeto completo.","text":"Se produce un error de sintaxis por falta de la cláusula obligatoria"},{"isCorrect":false,"rationale":"El objetivo de OQL es la manipulación de objetos de datos, no solo la consulta de esquemas.","text":"Solo se devuelven los metadatos de la clase sin los datos persistidos"}],"hint":"Recuerda el ejemplo de 'Customer' vs 'PremiumCustomer' mencionado en el material.","question":"Según la sintaxis del lenguaje OQL, si se nombra un objeto persistente sin la cláusula SELECT, ¿cuál es el resultado esperado?"},{"answerOptions":[{"isCorrect":true,"rationale":"Añadir máquinas estándar (commodity hardware) suele ser más barato que actualizar un único servidor a especificaciones extremas.","text":"Los servidores múltiples tienen un mejor precio en relación al hardware que se añade"},{"isCorrect":false,"rationale":"El escalado horizontal a menudo aumenta la complejidad y cantidad de licencias dependiendo del modelo de negocio.","text":"Requiere menos licencias de software por cada nodo añadido"},{"isCorrect":false,"rationale":"Aunque es posible, la ventaja principal citada es la relación coste/rendimiento del hardware añadido.","text":"Reduce el consumo eléctrico al utilizar procesadores de baja potencia"},{"isCorrect":false,"rationale":"La distribución de datos no exime de la necesidad de políticas de backup para recuperación ante desastres.","text":"Elimina la necesidad de realizar copias de seguridad externas"}],"hint":"Compara el coste de una supercomputadora frente a varios servidores convencionales trabajando en paralelo.","question":"En el escalado de bases de datos, ¿cuál es la principal ventaja económica del escalado horizontal frente al vertical?"},{"answerOptions":[{"isCorrect":false,"rationale":"La conexión es manejada por el pool de conexiones configurado en la persistencia.","text":"Establecer la conexión física con el socket de la base de datos"},{"isCorrect":true,"rationale":"Este objeto permite gestionar la atomicidad de las operaciones sobre las entidades persistentes.","text":"Controlar el inicio, confirmación o reversión de una unidad de trabajo"},{"isCorrect":false,"rationale":"Esa es la responsabilidad de las anotaciones o el fichero de mapeo XML, no de la gestión de transacciones.","text":"Mapear los atributos de la clase Java a las columnas de la tabla"},{"isCorrect":false,"rationale":"La caché es gestionada por el EntityManager o el SessionFactory, no por el objeto de transacción.","text":"Almacenar temporalmente los resultados de una consulta en caché"}],"hint":"Piensa en los métodos 'begin', 'commit' y 'rollback'.","question":"Dentro de la arquitectura JPA y Hibernate, ¿cuál es la función del objeto 'EntityTransaction'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este comando no existe para la carga de scripts de automatización dentro de la consola de Mongo.","text":"exec()"},{"isCorrect":true,"rationale":"Este comando carga y ejecuta ficheros JavaScript en la sesión actual de la shell.","text":"load()"},{"isCorrect":false,"rationale":"No es un comando estándar de la shell de MongoDB; es una confusión frecuente con otros sistemas gestores.","text":"runScript()"},{"isCorrect":false,"rationale":"Aunque común en otros lenguajes, MongoDB utiliza 'load' para la ejecución de scripts en su intérprete.","text":"import()"}],"hint":"Es un comando de una sola palabra que recibe la ruta del script como parámetro.","question":"¿Qué comando de la shell de MongoDB permite ejecutar un script externo almacenado en una ruta específica?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este término es exclusivo del modelo de objetos de Java y no está relacionado con la replicación de datos.","text":"La conexión automática entre dos bases de datos NoSQL distintas"},{"isCorrect":false,"rationale":"La introspección busca precisamente lo contrario: exponer la estructura del componente de forma programática.","text":"El proceso de cifrar el código fuente para evitar la ingeniería inversa"},{"isCorrect":true,"rationale":"Es un proceso fundamental que permite a las herramientas de desarrollo entender cómo interactuar con un JavaBean.","text":"La capacidad de analizar un componente para descubrir sus propiedades, eventos y métodos"},{"isCorrect":false,"rationale":"La introspección se centra en los metadatos de las clases Java, no en la transformación de documentos XML.","text":"La creación de una interfaz gráfica a partir de un árbol DOM de XML"}],"hint":"Es una técnica para 'mirar hacia adentro' de un objeto y conocer su estructura en tiempo de ejecución.","question":"¿Cómo se define el concepto de 'Introspección' en el desarrollo de componentes no visuales en Java?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esta es la capacidad de análisis primario, no está relacionada con la ubicación de los nodos de escritura.","text":"Ejecutar consultas de análisis sin necesidad de una base de datos secundaria"},{"isCorrect":false,"rationale":"La escritura se refiere a la ubicación física/lógica del nodo, no a la compatibilidad de lenguajes de consulta.","text":"Poder insertar datos en formato SQL y NoSQL simultáneamente en la misma tabla"},{"isCorrect":true,"rationale":"Garantiza que la aplicación no dependa de un nodo central para las operaciones de actualización, mejorando la escalabilidad.","text":"Escribir datos en cualquier nodo del clúster y que se repliquen automáticamente"},{"isCorrect":false,"rationale":"Esto describe una característica de flexibilidad de esquema, no la topología de escritura del clúster.","text":"Permitir que los usuarios modifiquen el esquema de la base de datos desde el navegador"}],"hint":"Relaciónalo con la replicación entre nodos y la independencia de ubicación.","question":"En una base de datos NoSQL empresarial, ¿qué permite la capacidad de 'escritura en cualquier lugar'?"},{"answerOptions":[{"isCorrect":true,"rationale":"La ausencia de esquema (schemaless) permite que cada documento tenga campos diferentes sin necesidad de reestructurar la base de datos.","text":"NoSQL permite almacenar información no uniforme facilitando la evolución del modelo"},{"isCorrect":false,"rationale":"Añadir columnas en bases relacionales suele requerir bloqueos de tabla y definiciones previas estrictas.","text":"Las relacionales permiten añadir columnas en tiempo de ejecución sin afectar al rendimiento"},{"isCorrect":false,"rationale":"Al contrario, las bases NoSQL suelen carecer de integridad referencial forzada por esquema para ganar velocidad.","text":"NoSQL requiere una definición de esquema inicial para garantizar la integridad referencial"},{"isCorrect":false,"rationale":"Las bases NoSQL son ideales para datos semiestructurados o sin estructura, no limitándose a XML.","text":"Las bases NoSQL solo aceptan datos estructurados mediante validación XML previa"}],"hint":"Considera el término 'schemaless' y su impacto en la flexibilidad de los datos.","question":"¿Cuál es la principal diferencia en el manejo de esquemas entre una base de datos relacional y una NoSQL como MongoDB?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este nombre suele asociarse a la manipulación de árboles DOM, no a la persistencia en el gestor de base de datos.","text":"addContent()"},{"isCorrect":false,"rationale":"No es un método estándar de la API de colecciones para bases de datos XML nativas.","text":"saveXML()"},{"isCorrect":true,"rationale":"Este método almacena el recurso pasado por parámetro dentro de la colección actual del repositorio XML.","text":"storeResource()"},{"isCorrect":false,"rationale":"Este método crea una instancia de recurso vacía en memoria, pero no lo guarda físicamente en la colección.","text":"createResource()"}],"hint":"Diferencia entre crear un objeto en memoria y almacenarlo ('guardarlo') en el disco.","question":"En el contexto de eXist-DB, ¿qué método de la clase 'Collection' se utiliza para persistir un nuevo recurso en la colección?"},{"answerOptions":[{"isCorrect":false,"rationale":"No es un comando de cierre, sino una interfaz de exposición de recursos.","text":"El comando final que cierra la conexión con la base de datos orientada a objetos"},{"isCorrect":false,"rationale":"Aunque suena a terminología de mapas, no tiene relación con la indexación de datos.","text":"Un tipo especial de índice utilizado para consultas geográficas"},{"isCorrect":false,"rationale":"La clave primaria es un atributo interno, mientras que el endpoint es un concepto de comunicación de red.","text":"La clave primaria de un objeto persistente en el lenguaje OQL"},{"isCorrect":true,"rationale":"Son las URLs o rutas específicas que exponen los datos de la aplicación al exterior.","text":"Puntos de acceso que dan respuesta al objeto u objetos que se van a devolver"}],"hint":"Se define como un signo de robustez y orden al diseñar interfaces de respuesta de datos.","question":"¿Qué representa un 'End Point' en el diseño de una API para acceso a bases de datos?"},{"answerOptions":[{"isCorrect":false,"rationale":"Si un campo debe ignorarse, simplemente no se incluye en la definición del índice compuesto.","text":"Que el campo debe ser ignorado durante las búsquedas"},{"isCorrect":true,"rationale":"En la definición de índices, el 1 representa orden ascendente y el -1 representa orden descendente.","text":"Ordenación descendente para ese campo específico"},{"isCorrect":false,"rationale":"La creación en segundo plano se define mediante un objeto de opciones adicional, no mediante la dirección del campo.","text":"Que el índice debe crearse en segundo plano (background)"},{"isCorrect":false,"rationale":"La gestión de nulos depende de si el índice es de tipo 'sparse', no del valor de ordenación.","text":"Que el campo es opcional y puede contener valores nulos"}],"hint":"Es la forma de especificar cómo se deben organizar los datos dentro de la estructura del índice.","question":"Al crear un índice compuesto en MongoDB, ¿qué indica el valor '-1' asignado a un campo?"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque es un concepto lógico de iteración, no forma parte de la sintaxis declarativa de OQL.","text":"FOR EACH C in Customer"},{"isCorrect":false,"rationale":"OQL utiliza formas más compactas y similares a SQL para sus declaraciones de iteradores.","text":"Iterate C over Customer"},{"isCorrect":true,"rationale":"Es una de las tres sintaxis aceptadas por OQL para definir alias de iteración sobre colecciones.","text":"Customer as C"},{"isCorrect":false,"rationale":"Esta sintaxis es incorrecta; la palabra clave correcta es 'in', no 'from'.","text":"C from Customer"}],"hint":"Existen tres formas mencionadas: 'in', la declaración directa y una que usa un alias con una palabra reservada.","question":"En el lenguaje OQL, ¿cuál de las siguientes es una forma válida de declarar una variable de tipo iterador?"},{"answerOptions":[{"isCorrect":true,"rationale":"Al segregar y replicar datos geográficamente, el sistema sobrevive a desastres que afecten a toda una instalación.","text":"Evitar cortes de servicio por fallos físicos localizados en un centro de datos"},{"isCorrect":false,"rationale":"La solución debe admitir tanto instalaciones físicas como nubes híbridas, no limitarse a una.","text":"Permitir que la base de datos se ejecute exclusivamente en la nube pública"},{"isCorrect":false,"rationale":"La replicación geográfica suele implicar consistencia eventual para priorizar el rendimiento y la disponibilidad.","text":"Garantizar la consistencia ACID global en milisegundos"},{"isCorrect":false,"rationale":"La replicación es necesaria para mantener los centros de datos sincronizados, lo cual añade cierta complejidad técnica.","text":"Reducir la latencia de red al eliminar la necesidad de replicación"}],"hint":"Piensa en la seguridad ante desastres naturales o fallos eléctricos masivos en una región.","question":"¿Qué beneficio aporta el uso de 'Multiple Data Centers' en una solución NoSQL empresarial?"},{"answerOptions":[{"isCorrect":false,"rationale":"La definición del índice (campos y orden) se mantiene intacta durante la reconstrucción.","text":"Se cambia el orden de los campos en todos los índices compuestos"},{"isCorrect":false,"rationale":"MongoDB no gestiona tablas relacionales, por lo que este concepto es inaplicable.","text":"Se actualizan los punteros de los documentos a las tablas relacionales"},{"isCorrect":false,"rationale":"Este comando no analiza el rendimiento; simplemente regenera lo que ya ha sido definido por el usuario.","text":"Se crea un nuevo índice basado en el historial de consultas recientes"},{"isCorrect":true,"rationale":"Es útil para reconstruir índices corruptos o para optimizar el almacenamiento tras muchas eliminaciones.","text":"Se eliminan y vuelven a crear todos los índices de la colección"}],"hint":"Es una operación de mantenimiento para índices ya existentes.","question":"En MongoDB, ¿cuál es el resultado de ejecutar 'db.accounts.reIndex()'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los esquemas fijos dificultan la gestión de grandes volúmenes de datos semiestructurados típicos de Big Data.","text":"Uso de esquemas fijos predefinidos"},{"isCorrect":true,"rationale":"Las soluciones empresariales están diseñadas para escalar masivamente gestionando variedad y complejidad de datos.","text":"Capacidad Big Data"},{"isCorrect":false,"rationale":"El modelo relacional tradicional suele presentar dificultades de escalabilidad extrema comparado con NoSQL.","text":"Modelo relacional de filas y columnas"},{"isCorrect":false,"rationale":"La caché ayuda al rendimiento de lectura, pero no es la responsable de la capacidad de almacenamiento masivo.","text":"Almacenamiento en caché de primer nivel"}],"hint":"Se asocia directamente con la velocidad, variedad y complejidad de los almacenes de grandes datos.","question":"¿Qué característica de las bases de datos NoSQL permite manejar volúmenes de datos en el rango de Petabytes?"},{"answerOptions":[{"isCorrect":false,"rationale":"La estructura del EndPoint no afecta directamente a la huella de memoria de los objetos en el servidor.","text":"Reduce el tamaño de los objetos persistentes en memoria"},{"isCorrect":true,"rationale":"Centraliza la lógica de acceso a datos y permite una integración más limpia con otras capas de la aplicación.","text":"Aporta robustez, orden y facilita la obtención de respuestas necesarias"},{"isCorrect":false,"rationale":"Los EndPoints son una capa de aplicación, no sustituyen las funcionalidades básicas de la base de datos.","text":"Permite que la base de datos funcione sin necesidad de un motor de búsqueda"},{"isCorrect":false,"rationale":"Los EndPoints pueden devolver datos en múltiples formatos (JSON, XML, etc.) según se defina.","text":"Obliga a que todos los datos sean devueltos en formato binario"}],"hint":"Considera los beneficios de diseño mencionados al adaptar APIs a bases de datos orientadas a objetos.","question":"En el desarrollo de aplicaciones con acceso a datos, ¿por qué es recomendable diseñar una interfaz con 'EndPoints'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Para borrar datos se usan comandos como 'flushdb' o 'del'; 'close' solo afecta a la sesión del cliente.","text":"Borrar todos los datos almacenados en la base de datos"},{"isCorrect":false,"rationale":"Redis es una base de datos clave-valor en memoria y 'close' no realiza funciones de exportación.","text":"Exportar la sesión actual a un fichero XML"},{"isCorrect":false,"rationale":"La configuración de persistencia es global del servidor y no depende del cierre de un cliente individual.","text":"Cambiar el modo de la base de datos de persistente a volátil"},{"isCorrect":true,"rationale":"Es una buena práctica para evitar fugas de memoria y no saturar el número de conexiones permitidas en el servidor.","text":"Liberar los recursos y cerrar la conexión con el servidor Redis"}],"hint":"Es la última acción realizada en el bloque de código del caso práctico de Redis.","question":"Al conectar con Redis desde Java, ¿cuál es el propósito de invocar al método 'client.close()'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los permisos de escritura se gestionan dentro del array de 'roles', no en 'customData'.","text":"Definir los permisos de escritura sobre colecciones específicas"},{"isCorrect":true,"rationale":"Es un documento opcional que permite enriquecer el perfil del usuario con datos corporativos.","text":"Almacenar información adicional como el nombre completo o el ID de empleado"},{"isCorrect":false,"rationale":"MongoDB no utiliza este campo para gestionar la expiración de sesiones de seguridad.","text":"Indicar el tiempo de vida (TTL) de la sesión del usuario"},{"isCorrect":false,"rationale":"Es simplemente un contenedor de metadatos informativos, no una herramienta de cifrado.","text":"Encriptar los campos sensibles del documento de usuario"}],"hint":"Es un campo para información extra del usuario que no afecta a la autenticación.","question":"En la gestión de roles de MongoDB, ¿qué función cumple el campo 'customData'?"},{"answerOptions":[{"isCorrect":false,"rationale":"La evolución de los datos ha potenciado el uso de APIs, no lo ha limitado.","text":"El fin del uso de APIs para el acceso a datos en la nube"},{"isCorrect":true,"rationale":"Los datos semiestructurados no encajan bien en el modelo de tablas fijas, impulsando el nacimiento de NoSQL.","text":"Dificultad de manejo en bases relacionales que requieren esquemas rígidos"},{"isCorrect":false,"rationale":"Al contrario, los sistemas NoSQL aprovechan el procesamiento en paralelo (clústeres) para manejar estos datos.","text":"La imposibilidad de ser procesados por procesadores en paralelo"},{"isCorrect":false,"rationale":"Los datos semiestructurados se consultan preferiblemente con lenguajes declarativos o APIs específicas.","text":"La necesidad de utilizar exclusivamente lenguajes de programación procedimentales"}],"hint":"Piensa en por qué las bases de datos relacionales tradicionales empezaron a ser 'examinadas'.","question":"Según el material, ¿qué reto introdujeron los paquetes de información semiestructurados y escasos?"},{"answerOptions":[{"isCorrect":false,"rationale":"Es un servicio para gestionar el contenedor (la colección), no los elementos individuales que contiene.","text":"CollectionManagementService"},{"isCorrect":false,"rationale":"Suele referirse a una parte de un documento en memoria (DOM), no al recurso completo en la base de datos.","text":"XMLNode"},{"isCorrect":true,"rationale":"Es la abstracción utilizada para manipular documentos individuales dentro de una colección XML.","text":"Resource"},{"isCorrect":false,"rationale":"Representa la implementación de la base de datos completa, no un recurso individual.","text":"DatabaseImpl"}],"hint":"Es el objeto que se pasa como parámetro a métodos como 'storeResource'.","question":"En el API de bases de datos XML, ¿qué clase representa un recurso (documento) almacenado?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esta es una restricción de derechos de autor del material didáctico, no del software NoSQL.","text":"Tienen prohibida su transmisión total o parcial por medios informáticos"},{"isCorrect":false,"rationale":"Aunque existen versiones empresariales, la base de muchas de estas tecnologías es gratuita y abierta.","text":"Requieren obligatoriamente licencias comerciales de pago por nodo"},{"isCorrect":true,"rationale":"Gran parte del ecosistema NoSQL ha crecido gracias a comunidades y proyectos open source.","text":"Suelen ser en su mayoría de código abierto"},{"isCorrect":false,"rationale":"Cualquier desarrollador o empresa puede contribuir o distribuir soluciones NoSQL de código abierto.","text":"Solo pueden ser distribuidas por consorcios internacionales de software"}],"hint":"Es el punto número 3 de la lista de características comunes.","question":"¿Cuál es una característica común de las bases de datos NoSQL en cuanto a su licenciamiento?"}];
+        let currentIndex = 0;
+        let mode = 'quiz';
+        let state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+
+        function getStats() {
+            const answered = state.filter((s) => s.selectedIndex !== null).length;
+            const correct = state.filter((s, i) => s.selectedIndex !== null && quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const wrong = state.filter((s, i) => s.selectedIndex !== null && !quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const skipped = quizData.length - answered;
+            const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+            return { answered, correct, wrong, skipped, accuracy };
+        }
+
+        function shuffleAnswers() {
+            quizData.forEach((q) => {
+                for (let i = q.answerOptions.length - 1; i > 0; i -= 1) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.answerOptions[i], q.answerOptions[j]] = [q.answerOptions[j], q.answerOptions[i]];
+                }
+            });
+        }
+
+        function shuffleQuestions() {
+            for (let i = quizData.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [quizData[i], quizData[j]] = [quizData[j], quizData[i]];
+            }
+        }
+
+        function resetState() {
+            state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+        }
+
+        function renderQuestion() {
+            const q = quizData[currentIndex];
+            const s = state[currentIndex];
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+
+            let optionsHtml = '';
+            const correctIndex = q.answerOptions.findIndex((o) => o.isCorrect);
+            const selectedCorrect = s.selectedIndex !== null && q.answerOptions[s.selectedIndex].isCorrect;
+            q.answerOptions.forEach((opt, idx) => {
+                const isSelected = s.selectedIndex === idx;
+                const statusClass = isSelected ? (opt.isCorrect ? 'correct' : 'incorrect') : '';
+                const selectedClass = isSelected ? 'selected' : '';
+                const revealCorrect = (s.selectedIndex !== null && !selectedCorrect && opt.isCorrect) || (mode === 'review' && opt.isCorrect);
+                const revealClass = revealCorrect ? 'revealed-correct' : '';
+
+                optionsHtml += `
+                    <li class="option-item ${selectedClass} ${statusClass} ${revealClass}" onclick="selectOption(${idx})">
+                        <div class="option-label">
+                            <span>${String.fromCharCode(65 + idx)}. ${opt.text}</span>
+                        </div>
+                        <div class="feedback-state">
+                            ${opt.isCorrect ? '✓ Correcto' : '✕ Incorrecto'}
+                        </div>
+                        ${opt.rationale ? '<div class="rationale">' + opt.rationale + '</div>' : ''}
+                    </li>
+                `;
+            });
+
+            const stats = getStats();
+
+            content.innerHTML = `
+                <div class="progress-container">
+                    <div class="progress-text">${currentIndex + 1} / ${quizData.length}</div>
+                    <div class="status-bar">
+                        <div class="status-item status-correct">
+                            <span>✓</span>
+                            <span>${stats.correct}</span>
+                        </div>
+                        <div class="status-item status-wrong">
+                            <span>✕</span>
+                            <span>${stats.wrong}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="question-text">${q.question}</div>
+                <ul class="options-list">
+                    ${optionsHtml}
+                </ul>
+            `;
+
+            // Update Pista Box
+            const hintText = document.getElementById('hint-text');
+            hintText.innerText = q.hint || 'No hay pista disponible para esta pregunta.';
+            if (s.hintVisible) {
+                hintBox.classList.add('active');
+            } else {
+                hintBox.classList.remove('active');
+            }
+
+            results.classList.add('hidden');
+            content.classList.remove('hidden');
+            hintBox.classList.remove('hidden');
+            nav.classList.remove('hidden');
+
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = false;
+            if (mode === 'review') {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Volver a resultados' : 'Siguiente';
+            } else {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finalizar' : 'Siguiente';
+            }
+            document.getElementById('hint-icon-arrow').innerText = s.hintVisible ? '▲' : '▼';
+        }
+
+        function selectOption(idx) {
+            if (mode !== 'quiz') return;
+            if (state[currentIndex].selectedIndex !== null) return; // Prevent re-selection
+            state[currentIndex].selectedIndex = idx;
+            renderQuestion();
+        }
+
+        function toggleHint() {
+            if (mode === 'results') return;
+            state[currentIndex].hintVisible = !state[currentIndex].hintVisible;
+            renderQuestion();
+        }
+
+        function renderResults() {
+            const stats = getStats();
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+
+            const score = `${stats.correct} / ${quizData.length}`;
+
+            results.innerHTML = `
+                <div class="results-screen">
+                    <div>
+                        <h1 class="results-title">¡Lo lograste! Quiz completado.</h1>
+                        <p class="results-subtitle">Revisa tu puntuación o inténtalo de nuevo.</p>
+                    </div>
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-label">Puntuación</div>
+                            <div class="result-value">${score}</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Precisión</div>
+                            <div class="result-value">${stats.accuracy}%</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-metrics">
+                                <div>Correctas <strong>${stats.correct}</strong></div>
+                                <div>Incorrectas <strong>${stats.wrong}</strong></div>
+                                <div>Omitidas <strong>${stats.skipped}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="results-actions">
+                        <button id="review-btn" class="btn btn-ghost">Revisar Quiz</button>
+                        <button id="retake-btn" class="btn btn-next">Repetir Quiz</button>
+                    </div>
+                </div>
+            `;
+
+            content.classList.add('hidden');
+            results.classList.remove('hidden');
+            hintBox.classList.add('hidden');
+            nav.classList.add('hidden');
+
+            document.getElementById('review-btn').onclick = () => {
+                mode = 'review';
+                currentIndex = 0;
+                renderQuestion();
+            };
+
+            document.getElementById('retake-btn').onclick = () => {
+                mode = 'quiz';
+                currentIndex = 0;
+                shuffleQuestions();
+                shuffleAnswers();
+                resetState();
+                renderQuestion();
+            };
+        }
+
+        document.getElementById('prev-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        };
+
+        document.getElementById('next-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (mode === 'review') {
+                if (currentIndex < quizData.length - 1) {
+                    currentIndex++;
+                    renderQuestion();
+                } else {
+                    mode = 'results';
+                    renderResults();
+                }
+                return;
+            }
+            if (currentIndex < quizData.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                mode = 'results';
+                renderResults();
+            }
+        };
+
+        document.getElementById('hint-toggle').onclick = toggleHint;
+
+        renderQuestion();
+    </script>
+
+  <button id="theme-toggle" title="Cambiar tema" style="position:fixed;top:8px;right:8px;background:var(--card);border:1px solid var(--stroke);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:transform 0.2s ease;z-index:100;">🌙</button>
+  <script>
+    (function() {
+      const toggle = document.getElementById('theme-toggle');
+      if (document.documentElement.getAttribute('data-theme') === 'dark') toggle.textContent = '☀️';
+      toggle.addEventListener('click', function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        this.textContent = isDark ? '🌙' : '☀️';
+      });
+    })();
+  </script>
+</body>
+</html>
