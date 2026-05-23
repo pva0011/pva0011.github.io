@@ -96,24 +96,17 @@ const DARK_MODE_TOGGLE_CSS = `
     box-shadow: 0 4px 16px rgba(0,0,0,0.15);
   }`;
 
-const DARK_MODE_INIT_SCRIPT = `
-  <script>/* theme-init-v2 */
+const DARK_MODE_SCRIPT = `
+  <button id="theme-toggle" title="Cambiar tema">🌙</button>
+  <script>
     (function() {
       const saved = localStorage.getItem('theme');
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (saved === 'dark' || (!saved && prefersDark)) {
         document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-toggle').textContent = '☀️';
       }
-    })();
-  <\/script>`;
-
-const DARK_MODE_SCRIPT = `
-  <button id="theme-toggle" title="Cambiar tema">🌙</button>
-  <script>
-    (function() {
-      const toggle = document.getElementById('theme-toggle');
-      if (document.documentElement.getAttribute('data-theme') === 'dark') toggle.textContent = '☀️';
-      toggle.addEventListener('click', function() {
+      document.getElementById('theme-toggle').addEventListener('click', function() {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
         localStorage.setItem('theme', isDark ? 'light' : 'dark');
@@ -121,6 +114,21 @@ const DARK_MODE_SCRIPT = `
       });
     })();
   <\/script>`;
+
+// fmt() helper — injected into quiz JS at render time
+const FMT_HELPER = [
+  '',
+  '        function fmt(str) {',
+  '          if (!str) return str;',
+  '          return str',
+  '            .replace(/\\$\\$(.*?)\\$\\$/gs, function(_,m){return m;})',
+  '            .replace(/\\$([^$<>]+?)\\$/g, function(_,m){return m;})',
+  '            .replace(/\\*\\*(.*?)\\*\\*/g, function(_,m){return "<strong>"+m+"</strong>";})',
+  '            .replace(/\\*(.*?)\\*/g, function(_,m){return "<em>"+m+"</em>";})',
+  '            .replace(/`(.*?)`/g, function(_,m){return "<code>"+m+"</code>";})',
+  '        }',
+].join("\n");
+
 
 const html = `<!DOCTYPE html>
 <html lang="es">
@@ -284,14 +292,38 @@ ${DARK_MODE_TOGGLE_CSS}
     font-weight: 500;
     font-size: 0.97em;
   }
-  .quiz-item a::after {
-    content: '→';
+  .quiz-item a .quiz-arrow {
     color: var(--accent);
     font-size: 1.1em;
     opacity: 0.7;
     transition: opacity 0.2s, transform 0.2s;
+    margin-left: auto;
+    flex-shrink: 0;
   }
-  .quiz-item:hover a::after { opacity: 1; transform: translateX(3px); }
+  .quiz-item:hover a .quiz-arrow { opacity: 1; transform: translateX(3px); }
+  .error-badge {
+    font-size: 0.72em;
+    font-weight: 700;
+    color: var(--accent-dark);
+    background: rgba(211, 84, 44, 0.08);
+    border: 1px solid rgba(211, 84, 44, 0.18);
+    padding: 2px 7px;
+    border-radius: 10px;
+    white-space: nowrap;
+    margin-left: 8px;
+    flex-shrink: 0;
+  }
+  .error-badge {
+    font-size: 0.72em;
+    font-weight: 700;
+    color: var(--accent-dark);
+    background: rgba(211, 84, 44, 0.1);
+    border: 1px solid rgba(211, 84, 44, 0.2);
+    padding: 2px 7px;
+    border-radius: 10px;
+    white-space: nowrap;
+    margin-right: 8px;
+  }
   .no-results {
     text-align: center;
     color: var(--muted);
@@ -304,7 +336,6 @@ ${DARK_MODE_TOGGLE_CSS}
     body { padding: 32px 16px; }
   }
 </style>
-${DARK_MODE_INIT_SCRIPT}
 </head>
 <body>
 ${DARK_MODE_SCRIPT}
@@ -326,7 +357,7 @@ ${DARK_MODE_SCRIPT}
   </div>
   <ul class="quiz-list">
     ${groups[prefix].map(file => {
-      return `<li class="quiz-item" data-subject="${PREFIXES[prefix].toLowerCase()}"><a href="quizzes/${file}">${cardLabel(file)}</a></li>`;
+      return `<li class="quiz-item" data-subject="${PREFIXES[prefix].toLowerCase()}"><a href="quizzes/${file}">${cardLabel(file)}<span class="quiz-arrow">→</span></a></li>`;
     }).join("")}
   </ul>
 </section>`;
@@ -334,6 +365,44 @@ ${DARK_MODE_SCRIPT}
     .join("\n")}
   <p class="no-results" id="no-results">No se encontraron quizzes para "<span id="no-results-term"></span>".</p>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    try {
+      var hash = window.location.hash;
+      if (hash.startsWith('#wrong=')) {
+        var parts = hash.slice(7).split(':');
+        var fname = parts[0];
+        var count = parseInt(parts[1], 10);
+        if (fname) {
+          var key = 'wrong:' + fname;
+          if (count > 0) {
+            localStorage.setItem(key, JSON.stringify(count));
+          } else {
+            localStorage.removeItem(key);
+          }
+        }
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    } catch(e) {}
+    document.querySelectorAll('.quiz-item a').forEach(function(a) {
+      var file = a.getAttribute('href').split('/').pop();
+      try {
+        var saved = localStorage.getItem('wrong:' + file);
+        if (saved) {
+          var parsed = JSON.parse(saved);
+          var count = typeof parsed === 'number' ? parsed : (Array.isArray(parsed) ? parsed.length : 0);
+          if (count > 0) {
+            var badge = document.createElement('span');
+            badge.className = 'error-badge';
+            badge.textContent = count + ' ✗';
+            var arrow = a.querySelector('.quiz-arrow');
+            a.insertBefore(badge, arrow);
+          }
+        }
+      } catch(e) {}
+    });
+  });
+</script>
 <script>
   const search = document.getElementById("search");
   const noResults = document.getElementById("no-results");
@@ -385,13 +454,6 @@ const TRANSLATIONS = [
   [/\bPrevious\b/g,                            "Anterior"],
   [/\bNext\b/g,                                "Siguiente"],
   [/No hint available for this question\./g,   "No hay pista disponible para esta pregunta."],
-];
-
-// Applied unconditionally on every run — only $ patterns are safe to run on the
-// whole file; * and backtick patterns would destroy JS template literals and CSS selectors
-const FORMATTING_PATTERNS = [
-  [/\$\$(.*?)\$\$/gs,    "$1"],
-  [/\$(?!\{|\$)(.*?)\$/g, "$1"],  // skip ${ (template literals) and $$ (handled above)
 ];
 
 const QUIZ_DARK_CSS = `
@@ -482,10 +544,34 @@ quizFiles.forEach(file => {
 
   const label = quizLabel(file);
 
+  // When --force: strip only wrong-answer + fmt injected blocks so they re-patch cleanly
+  // (do NOT strip dark mode CSS or theme toggle — those use content.includes guards that still work)
+  if (FORCE) {
+    // Strip originalQuizData + startup init block
+    content = content.replace(/\n        const originalQuizData[\s\S]*?\}\)\(\);/m, '');
+    // Strip saveWrongAnswers function
+    content = content.replace(/\n        function saveWrongAnswers\(\)[\s\S]*?\n        \}/m, '');
+    // Strip retake-wrong-btn button
+    content = content.replace(/<button id="retake-wrong-btn"[\s\S]*?<\/button>/g, '');
+    // Strip retake-wrong-btn handler block up to review-btn.onclick
+    content = content.replace(/\n            var wrongQuestions = saveWrongAnswers\(\);[\s\S]*?(?=\n            document\.getElementById\('review-btn'\)\.onclick)/m, '');
+    // Strip originalQuizData.slice() restore line from retake-btn
+    content = content.replace(/\n                quizData = originalQuizData\.slice\(\);/g, '');
+    // Strip fmt function
+    content = content.replace(/\n\n        function fmt\(str\)[\s\S]*?\n        \}/m, '');
+    // Undo fmt() wrapping in renderQuestion
+    content = content.replace(/\$\{fmt\(opt\.text\)\}/g, '${opt.text}');
+    content = content.replace(/\$\{fmt\(q\.question\)\}/g, '${q.question}');
+    content = content.replace("fmt(opt.rationale) + '</div>'", "opt.rationale + '</div>'");
+    content = content.replace("fmt(q.hint) || 'No hay pista disponible para esta pregunta.'", "q.hint || 'No hay pista disponible para esta pregunta.'");
+    // Restore const quizData
+    content = content.replace('let quizData =', 'const quizData =');
+  }
+
   // Strip any old duplicate heading first
   content = content.replace(/\n\s*<div class="quiz-heading"[\s\S]*?<\/div>\s*\n/g, '\n');
 
-  // Inject heading before quiz-container if not present
+  // Inject heading before quiz-container
   if (!content.includes('class="quiz-heading"')) {
     const heading = `
     <div class="quiz-heading" style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
@@ -505,25 +591,19 @@ quizFiles.forEach(file => {
     content = content.replace('</style>', `${QUIZ_MOBILE_CSS}\n    </style>`);
   }
 
-  // Inject dark mode toggle if not present (theme-init-v2 = split init/toggle)
-  if (!content.includes('theme-init-v2')) {
-    const themeInit = `
-  <script>/* theme-init-v2 */
+  // Inject dark mode toggle if not present
+  if (!content.includes('id="theme-toggle"')) {
+    const toggleScript = `
+  <button id="theme-toggle" title="Cambiar tema" style="position:fixed;top:8px;right:8px;background:var(--card);border:1px solid var(--stroke);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:transform 0.2s ease;z-index:100;">🌙</button>
+  <script>
     (function() {
       const saved = localStorage.getItem('theme');
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       if (saved === 'dark' || (!saved && prefersDark)) {
         document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-toggle').textContent = '☀️';
       }
-    })();
-  <\/script>`;
-    const toggleScript = `
-  <button id="theme-toggle" title="Cambiar tema" style="position:fixed;top:8px;right:8px;background:var(--card);border:1px solid var(--stroke);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:transform 0.2s ease;z-index:100;">🌙</button>
-  <script>
-    (function() {
-      const toggle = document.getElementById('theme-toggle');
-      if (document.documentElement.getAttribute('data-theme') === 'dark') toggle.textContent = '☀️';
-      toggle.addEventListener('click', function() {
+      document.getElementById('theme-toggle').addEventListener('click', function() {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
         localStorage.setItem('theme', isDark ? 'light' : 'dark');
@@ -531,14 +611,38 @@ quizFiles.forEach(file => {
       });
     })();
   <\/script>`;
-    content = content.replace('</head>', `${themeInit}\n</head>`);
     content = content.replace('</body>', `${toggleScript}\n</body>`);
   }
 
-  // Always apply formatting patterns regardless of translation state
-  FORMATTING_PATTERNS.forEach(([pattern, replacement]) => {
-    content = content.replace(pattern, replacement);
-  });
+  // Inject fmt() helper before renderQuestion — runs at render time, not on raw JSON
+  if (!content.includes('function fmt(')) {
+    content = content.replace('        function renderQuestion()', FMT_HELPER + '\n        function renderQuestion()');
+  }
+
+  // Wrap displayed text fields with fmt() in renderQuestion (idempotent — checks before replacing)
+  if (!content.includes('fmt(opt.text)')) {
+    content = content.replace('${opt.text}', '$' + '{fmt(opt.text)}');
+  }
+  if (!content.includes('fmt(q.question)')) {
+    content = content.replace('${q.question}', '$' + '{fmt(q.question)}');
+  }
+  if (!content.includes('fmt(opt.rationale)')) {
+    content = content.replace(
+      "opt.rationale ? '<div class=\"rationale\">' + opt.rationale + '</div>' : ''",
+      "opt.rationale ? '<div class=\"rationale\">' + fmt(opt.rationale) + '</div>' : ''"
+    );
+  }
+  if (!content.includes('fmt(q.hint)')) {
+    content = content
+      .replace(
+        "q.hint || 'No hay pista disponible para esta pregunta.'",
+        "fmt(q.hint) || 'No hay pista disponible para esta pregunta.'"
+      )
+      .replace(
+        "q.hint || 'No hint available for this question.'",
+        "fmt(q.hint) || 'No hint available for this question.'"
+      );
+  }
 
   // Translate if not already done (or forced)
   if (FORCE || (!content.includes("Pista") && !content.includes("Siguiente"))) {
@@ -546,6 +650,102 @@ quizFiles.forEach(file => {
       content = content.replace(pattern, replacement);
     });
   }
+
+  // Patch const quizData → let quizData so it can be filtered for wrong-answer mode
+  content = content.replace('const quizData =', 'let quizData =');
+
+  // ── Wrong-answer tracking ──────────────────────────────────────────────────
+
+  // Inject originalQuizData snapshot + startup wrong-filter
+  if (!content.includes('originalQuizData')) {
+    const initPatch = [
+      'let currentIndex = 0;',
+      "        const originalQuizData = quizData.slice();",
+      "        (function() {",
+      "          var key = 'wrong:' + window.location.pathname.split('/').pop();",
+      "          try {",
+      "            var stored = localStorage.getItem(key);",
+      "            if (stored) {",
+      "              var wrongSet = new Set(JSON.parse(stored));",
+      "              if (wrongSet.size > 0) {",
+      "                var filtered = originalQuizData.filter(function(q){ return wrongSet.has(q.question); });",
+      "                if (filtered.length > 0) quizData = filtered;",
+      "              }",
+      "            }",
+      "          } catch(e) {}",
+      "        })();",
+    ].join('\n        ');
+    content = content.replace('let currentIndex = 0;', initPatch);
+  }
+
+  // Inject saveWrongAnswers() helper before renderResults
+  if (!content.includes('saveWrongAnswers')) {
+    const saveHelper = [
+      '',
+      '        function saveWrongAnswers() {',
+      '          var wrongQuestions = state',
+      '            .map(function(s,i){return {s:s,i:i};})',
+      '            .filter(function(x){return x.s.selectedIndex !== null && !quizData[x.i].answerOptions[x.s.selectedIndex].isCorrect;})',
+      '            .map(function(x){return quizData[x.i].question;});',
+      "          var key = 'wrong:' + window.location.pathname.split('/').pop();",
+      '          if (wrongQuestions.length > 0) {',
+      '            localStorage.setItem(key, JSON.stringify(wrongQuestions));',
+      '          } else {',
+      '            localStorage.removeItem(key);',
+      '          }',
+      '          return wrongQuestions;',
+      '        }',
+      '',
+    ].join('\n');
+    content = content.replace(
+      '        function renderResults() {',
+      saveHelper + '        function renderResults() {'
+    );
+  }
+
+  // Inject "Repasar errores" button into results actions
+  if (!content.includes('retake-wrong-btn')) {
+    content = content.replace(
+      '<div class="results-actions">',
+      '<div class="results-actions"><button id="retake-wrong-btn" class="btn btn-ghost" style="display:none">Repasar errores (<span id="wrong-count">0</span>)</button>'
+    );
+  }
+
+  // Inject retake-wrong-btn handler + saveWrongAnswers call after review-btn.onclick assignment
+  if (!content.includes('retake-wrong-btn.onclick')) {
+    const handlerLines = [
+      '',
+      '            var wrongQuestions = saveWrongAnswers();',
+      '            var retakeWrongBtn = document.getElementById(' + "'retake-wrong-btn'" + ');',
+      '            if (wrongQuestions.length > 0) {',
+      "              document.getElementById('wrong-count').textContent = wrongQuestions.length;",
+      '              retakeWrongBtn.style.display = \'\';',
+      '            }',
+      '            (function() {',
+      "              var fname = window.location.pathname.split('/').pop();",
+      "              var backLink = document.querySelector(\'.quiz-heading a[href*=\"index.html\"]\');",
+      '              if (backLink) {',
+      "                var h = \'#wrong=\' + fname + \':\' + wrongQuestions.length;",
+      "                backLink.href = backLink.href.split(\'#\')[0] + h;",
+      '              }',
+      '            })();',
+      "            document.getElementById('retake-wrong-btn').onclick = function() {",
+      '              if (wrongQuestions.length === 0) return;',
+      "              mode = 'quiz';",
+      '              currentIndex = 0;',
+      '              var wrongSet = new Set(wrongQuestions);',
+      '              quizData = originalQuizData.filter(function(q){return wrongSet.has(q.question);});',
+      '              shuffleAnswers();',
+      '              resetState();',
+      '              renderQuestion();',
+      '            };',
+    ].join('\n');
+    content = content.replace(
+      "            document.getElementById('review-btn').onclick",
+      handlerLines + "\n            document.getElementById('review-btn').onclick"
+    );
+  }
+  // ── End wrong-answer tracking ───────────────────────────────────────────────
 
   if (content !== original) {
     fs.writeFileSync(filePath, content, "utf8");

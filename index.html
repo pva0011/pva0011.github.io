@@ -195,14 +195,38 @@
     font-weight: 500;
     font-size: 0.97em;
   }
-  .quiz-item a::after {
-    content: '→';
+  .quiz-item a .quiz-arrow {
     color: var(--accent);
     font-size: 1.1em;
     opacity: 0.7;
     transition: opacity 0.2s, transform 0.2s;
+    margin-left: auto;
+    flex-shrink: 0;
   }
-  .quiz-item:hover a::after { opacity: 1; transform: translateX(3px); }
+  .quiz-item:hover a .quiz-arrow { opacity: 1; transform: translateX(3px); }
+  .error-badge {
+    font-size: 0.72em;
+    font-weight: 700;
+    color: var(--accent-dark);
+    background: rgba(211, 84, 44, 0.08);
+    border: 1px solid rgba(211, 84, 44, 0.18);
+    padding: 2px 7px;
+    border-radius: 10px;
+    white-space: nowrap;
+    margin-left: 8px;
+    flex-shrink: 0;
+  }
+  .error-badge {
+    font-size: 0.72em;
+    font-weight: 700;
+    color: var(--accent-dark);
+    background: rgba(211, 84, 44, 0.1);
+    border: 1px solid rgba(211, 84, 44, 0.2);
+    padding: 2px 7px;
+    border-radius: 10px;
+    white-space: nowrap;
+    margin-right: 8px;
+  }
   .no-results {
     text-align: center;
     color: var(--muted);
@@ -215,25 +239,19 @@
     body { padding: 32px 16px; }
   }
 </style>
-
-  <script>/* theme-init-v2 */
-    (function() {
-      const saved = localStorage.getItem('theme');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (saved === 'dark' || (!saved && prefersDark)) {
-        document.documentElement.setAttribute('data-theme', 'dark');
-      }
-    })();
-  </script>
 </head>
 <body>
 
   <button id="theme-toggle" title="Cambiar tema">🌙</button>
   <script>
     (function() {
-      const toggle = document.getElementById('theme-toggle');
-      if (document.documentElement.getAttribute('data-theme') === 'dark') toggle.textContent = '☀️';
-      toggle.addEventListener('click', function() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-toggle').textContent = '☀️';
+      }
+      document.getElementById('theme-toggle').addEventListener('click', function() {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
         localStorage.setItem('theme', isDark ? 'light' : 'dark');
@@ -254,7 +272,7 @@
     <span class="count">4 quizzes</span>
   </div>
   <ul class="quiz-list">
-    <li class="quiz-item" data-subject="acceso a datos"><a href="quizzes/ad-1.html">AD · Quiz 1</a></li><li class="quiz-item" data-subject="acceso a datos"><a href="quizzes/ad-2.html">AD · Quiz 2</a></li><li class="quiz-item" data-subject="acceso a datos"><a href="quizzes/ad-3.html">AD · Quiz 3</a></li><li class="quiz-item" data-subject="acceso a datos"><a href="quizzes/ad-4.html">AD · Quiz 4</a></li>
+    <li class="quiz-item" data-subject="acceso a datos"><a href="quizzes/ad-1.html">AD · Quiz 1<span class="quiz-arrow">→</span></a></li><li class="quiz-item" data-subject="acceso a datos"><a href="quizzes/ad-2.html">AD · Quiz 2<span class="quiz-arrow">→</span></a></li><li class="quiz-item" data-subject="acceso a datos"><a href="quizzes/ad-3.html">AD · Quiz 3<span class="quiz-arrow">→</span></a></li><li class="quiz-item" data-subject="acceso a datos"><a href="quizzes/ad-4.html">AD · Quiz 4<span class="quiz-arrow">→</span></a></li>
   </ul>
 </section>
 
@@ -265,7 +283,7 @@
     <span class="count">2 quizzes</span>
   </div>
   <ul class="quiz-list">
-    <li class="quiz-item" data-subject="ciberseguridad"><a href="quizzes/cib-1.html">CIB · Quiz 1</a></li><li class="quiz-item" data-subject="ciberseguridad"><a href="quizzes/cib-2.html">CIB · Quiz 2</a></li>
+    <li class="quiz-item" data-subject="ciberseguridad"><a href="quizzes/cib-1.html">CIB · Quiz 1<span class="quiz-arrow">→</span></a></li><li class="quiz-item" data-subject="ciberseguridad"><a href="quizzes/cib-2.html">CIB · Quiz 2<span class="quiz-arrow">→</span></a></li>
   </ul>
 </section>
 
@@ -276,7 +294,7 @@
     <span class="count">4 quizzes</span>
   </div>
   <ul class="quiz-list">
-    <li class="quiz-item" data-subject="desarrollo de interfaces"><a href="quizzes/di-1.html">DI · Quiz 1</a></li><li class="quiz-item" data-subject="desarrollo de interfaces"><a href="quizzes/di-2.html">DI · Quiz 2</a></li><li class="quiz-item" data-subject="desarrollo de interfaces"><a href="quizzes/di-3.html">DI · Quiz 3</a></li><li class="quiz-item" data-subject="desarrollo de interfaces"><a href="quizzes/di-4.html">DI · Quiz 4</a></li>
+    <li class="quiz-item" data-subject="desarrollo de interfaces"><a href="quizzes/di-1.html">DI · Quiz 1<span class="quiz-arrow">→</span></a></li><li class="quiz-item" data-subject="desarrollo de interfaces"><a href="quizzes/di-2.html">DI · Quiz 2<span class="quiz-arrow">→</span></a></li><li class="quiz-item" data-subject="desarrollo de interfaces"><a href="quizzes/di-3.html">DI · Quiz 3<span class="quiz-arrow">→</span></a></li><li class="quiz-item" data-subject="desarrollo de interfaces"><a href="quizzes/di-4.html">DI · Quiz 4<span class="quiz-arrow">→</span></a></li>
   </ul>
 </section>
 
@@ -287,7 +305,7 @@
     <span class="count">2 quizzes</span>
   </div>
   <ul class="quiz-list">
-    <li class="quiz-item" data-subject="programación multimedia y dispositivos móviles"><a href="quizzes/pmydm-1.html">PMYDM · Quiz 1</a></li><li class="quiz-item" data-subject="programación multimedia y dispositivos móviles"><a href="quizzes/pmydm-2.html">PMYDM · Quiz 2</a></li>
+    <li class="quiz-item" data-subject="programación multimedia y dispositivos móviles"><a href="quizzes/pmydm-1.html">PMYDM · Quiz 1<span class="quiz-arrow">→</span></a></li><li class="quiz-item" data-subject="programación multimedia y dispositivos móviles"><a href="quizzes/pmydm-2.html">PMYDM · Quiz 2<span class="quiz-arrow">→</span></a></li>
   </ul>
 </section>
 
@@ -298,7 +316,7 @@
     <span class="count">4 quizzes</span>
   </div>
   <ul class="quiz-list">
-    <li class="quiz-item" data-subject="programación de servicios y procesos"><a href="quizzes/psp-1.html">PSP · Quiz 1</a></li><li class="quiz-item" data-subject="programación de servicios y procesos"><a href="quizzes/psp-2.html">PSP · Quiz 2</a></li><li class="quiz-item" data-subject="programación de servicios y procesos"><a href="quizzes/psp-3.html">PSP · Quiz 3</a></li><li class="quiz-item" data-subject="programación de servicios y procesos"><a href="quizzes/psp-4.html">PSP · Quiz 4</a></li>
+    <li class="quiz-item" data-subject="programación de servicios y procesos"><a href="quizzes/psp-1.html">PSP · Quiz 1<span class="quiz-arrow">→</span></a></li><li class="quiz-item" data-subject="programación de servicios y procesos"><a href="quizzes/psp-2.html">PSP · Quiz 2<span class="quiz-arrow">→</span></a></li><li class="quiz-item" data-subject="programación de servicios y procesos"><a href="quizzes/psp-3.html">PSP · Quiz 3<span class="quiz-arrow">→</span></a></li><li class="quiz-item" data-subject="programación de servicios y procesos"><a href="quizzes/psp-4.html">PSP · Quiz 4<span class="quiz-arrow">→</span></a></li>
   </ul>
 </section>
 
@@ -309,11 +327,49 @@
     <span class="count">4 quizzes</span>
   </div>
   <ul class="quiz-list">
-    <li class="quiz-item" data-subject="sistemas de gestión empresarial"><a href="quizzes/sge-1.html">SGE · Quiz 1</a></li><li class="quiz-item" data-subject="sistemas de gestión empresarial"><a href="quizzes/sge-2.html">SGE · Quiz 2</a></li><li class="quiz-item" data-subject="sistemas de gestión empresarial"><a href="quizzes/sge-3.html">SGE · Quiz 3</a></li><li class="quiz-item" data-subject="sistemas de gestión empresarial"><a href="quizzes/sge-4.html">SGE · Quiz 4</a></li>
+    <li class="quiz-item" data-subject="sistemas de gestión empresarial"><a href="quizzes/sge-1.html">SGE · Quiz 1<span class="quiz-arrow">→</span></a></li><li class="quiz-item" data-subject="sistemas de gestión empresarial"><a href="quizzes/sge-2.html">SGE · Quiz 2<span class="quiz-arrow">→</span></a></li><li class="quiz-item" data-subject="sistemas de gestión empresarial"><a href="quizzes/sge-3.html">SGE · Quiz 3<span class="quiz-arrow">→</span></a></li><li class="quiz-item" data-subject="sistemas de gestión empresarial"><a href="quizzes/sge-4.html">SGE · Quiz 4<span class="quiz-arrow">→</span></a></li>
   </ul>
 </section>
   <p class="no-results" id="no-results">No se encontraron quizzes para "<span id="no-results-term"></span>".</p>
 </div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    try {
+      var hash = window.location.hash;
+      if (hash.startsWith('#wrong=')) {
+        var parts = hash.slice(7).split(':');
+        var fname = parts[0];
+        var count = parseInt(parts[1], 10);
+        if (fname) {
+          var key = 'wrong:' + fname;
+          if (count > 0) {
+            localStorage.setItem(key, JSON.stringify(count));
+          } else {
+            localStorage.removeItem(key);
+          }
+        }
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    } catch(e) {}
+    document.querySelectorAll('.quiz-item a').forEach(function(a) {
+      var file = a.getAttribute('href').split('/').pop();
+      try {
+        var saved = localStorage.getItem('wrong:' + file);
+        if (saved) {
+          var parsed = JSON.parse(saved);
+          var count = typeof parsed === 'number' ? parsed : (Array.isArray(parsed) ? parsed.length : 0);
+          if (count > 0) {
+            var badge = document.createElement('span');
+            badge.className = 'error-badge';
+            badge.textContent = count + ' ✗';
+            var arrow = a.querySelector('.quiz-arrow');
+            a.insertBefore(badge, arrow);
+          }
+        }
+      } catch(e) {}
+    });
+  });
+</script>
 <script>
   const search = document.getElementById("search");
   const noResults = document.getElementById("no-results");
