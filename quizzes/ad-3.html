@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotebookLM - Quiz Export</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+        :root {
+            --bg: #f6f1e7;
+            --bg-deep: #efe4d6;
+            --ink: #171717;
+            --muted: #5b5b5b;
+            --accent: #d3542c;
+            --accent-light: #ff8f5a;
+            --accent-dark: #b14320;
+            --teal: #1f6f78;
+            --card: #fff7ef;
+            --stroke: #e3d6c5;
+            --shadow: 0 18px 40px rgba(23, 23, 23, 0.12);
+            --radius-sm: 10px;
+            --radius-md: 12px;
+            --radius-lg: 14px;
+            --radius-xl: 18px;
+            --radius-2xl: 22px;
+            --space-1: 6px;
+            --space-2: 8px;
+            --space-3: 10px;
+            --space-4: 12px;
+            --space-5: 14px;
+            --space-6: 16px;
+            --space-7: 18px;
+            --space-8: 20px;
+            --space-9: 24px;
+            --space-10: 32px;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --error: #b54832;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background:
+                radial-gradient(240px 140px at 10% -10%, #ffd2b9 0%, transparent 70%),
+                radial-gradient(220px 160px at 90% 0%, #cfe7e6 0%, transparent 65%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+            color: var(--ink);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 800px;
+            padding: var(--space-10) var(--space-8);
+            box-sizing: border-box;
+            background: var(--card);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+        }
+
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .progress-text {
+            color: var(--muted);
+            font-size: 0.9em;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-correct { color: var(--teal); }
+        .status-wrong { color: var(--error); }
+
+        .question-text {
+            font-family: var(--font-display);
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-item:hover:not(.selected) {
+            background-color: var(--card);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .option-item.selected.correct {
+            background-color: rgba(31, 111, 120, 0.12);
+            border-color: var(--teal);
+        }
+
+        .option-item.selected.incorrect {
+            background-color: rgba(181, 72, 50, 0.12);
+            border-color: var(--error);
+        }
+
+        .option-item.revealed-correct {
+            border-color: rgba(31, 111, 120, 0.5);
+            box-shadow: inset 0 0 0 1px rgba(31, 111, 120, 0.16);
+        }
+
+        .option-label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feedback-state {
+            font-weight: bold;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .selected .feedback-state {
+            display: block;
+        }
+
+        .revealed-correct .feedback-state {
+            display: block;
+        }
+
+        .correct .feedback-state { color: var(--teal); }
+        .incorrect .feedback-state { color: var(--error); }
+        .revealed-correct .feedback-state { color: var(--teal); }
+
+        .rationale {
+            font-size: 0.95em;
+            color: var(--muted);
+            margin-top: 4px;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .selected .rationale {
+            display: block;
+        }
+
+        .revealed-correct .rationale {
+            display: block;
+        }
+        .hint-toggle {
+            border: 1px solid var(--stroke);
+            color: var(--muted);
+            cursor: pointer;
+            padding: var(--space-2) var(--space-6);
+            border-radius: var(--radius-md);
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hint-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .hint-content {
+            margin-top: 32px;
+            padding: var(--space-6);
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-lg);
+            font-size: 0.95em;
+            color: var(--muted);
+            display: none;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .hint-content.active {
+            display: flex;
+        }
+
+        .hint-icon-box {
+            color: var(--accent-dark);
+            font-size: 1.2em;
+            margin-top: -2px;
+        }
+
+        .navigation {
+            margin-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-7);
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-prev {
+            background-color: #fff;
+            color: var(--ink);
+            border-color: var(--stroke);
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn-next {
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            color: #fff;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .results-screen {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+        }
+
+        .results-title {
+            font-family: var(--font-display);
+            font-size: 2.1em;
+            margin: 0;
+        }
+
+        .results-subtitle {
+            color: var(--muted);
+            margin: 0;
+            font-size: 1em;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .result-card {
+            padding: var(--space-6);
+            border-radius: var(--radius-xl);
+            background: #fff;
+            border: 1px solid var(--stroke);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .result-label {
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-family: var(--font-display);
+        }
+
+        .result-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            border: 1px solid var(--stroke);
+            color: var(--ink);
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 900px) {
+            .quiz-container {
+                margin: var(--space-8);
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .quiz-container {
+                padding: var(--space-8) var(--space-6);
+            }
+
+            .question-text {
+                font-size: 1.3em;
+            }
+
+            .option-item {
+                padding: var(--space-4);
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .quiz-container {
+                margin: var(--space-6);
+                padding: var(--space-7) var(--space-5);
+            }
+
+            .progress-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+
+            .navigation {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-4);
+            }
+
+            .nav-buttons {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .hint-toggle {
+                justify-content: space-between;
+            }
+
+            .results-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div id="quiz-content">
+            <!-- Dynamic Content -->
+        </div>
+        <div id="results-content" class="hidden"></div>
+
+        <div id="hint-box" class="hint-content">
+            <div class="hint-icon-box">💡</div>
+            <div id="hint-text"></div>
+        </div>
+
+        <div class="navigation">
+            <button id="hint-toggle" class="hint-toggle">
+                <span>Hint</span>
+                <span id="hint-icon-arrow">▼</span>
+            </button>
+            <div class="nav-buttons">
+                <button id="prev-btn" class="btn btn-prev">Previous</button>
+                <button id="next-btn" class="btn btn-next">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [{"answerOptions":[{"isCorrect":false,"rationale":"El OID es un valor de identidad abstracto y no está diseñado para el procesamiento aritmético por parte del usuario.","text":"El OID permite realizar operaciones matemáticas directas para agilizar las búsquedas."},{"isCorrect":false,"rationale":"La inmutabilidad es una característica clave del OID; si cambiara, se perdería la referencia persistente de la entidad.","text":"El OID cambia automáticamente si el objeto es modificado o actualizado."},{"isCorrect":true,"rationale":"A diferencia de las claves relacionales que dependen de los datos de las columnas, el OID es una identidad externa e inmutable gestionada por el motor de la base de datos.","text":"El OID es asignado por el sistema y es independiente del valor de los atributos del objeto."},{"isCorrect":false,"rationale":"En los modelos orientados a objetos, la identidad del objeto suele ser transparente y generada automáticamente para garantizar la integridad.","text":"El OID debe ser definido manualmente por el programador mediante una secuencia lógica."}],"hint":"Piense en la relación entre la identidad de la entidad y los datos que esta contiene.","question":"¿Cuál es la principal diferencia funcional entre un Identificador de Objeto (OID) en una BDOO y una clave primaria en una base de datos relacional?"},{"answerOptions":[{"isCorrect":false,"rationale":"La definición de una tabla de objetos no impone restricciones de solo lectura ni la convierte en anidada por defecto.","text":"La tabla se convierte automáticamente en una tabla anidada de solo lectura."},{"isCorrect":true,"rationale":"Al usar la cláusula 'OF', se crea una tabla de objetos donde cada fila es un objeto con identidad propia, permitiendo referencias REF.","text":"La tabla almacena objetos con su propia identidad de objeto (OID) y cada atributo actúa como una columna."},{"isCorrect":false,"rationale":"El tipo de la tabla viene determinado por los atributos del 'object type' definido previamente, que pueden ser de diversas tipologías.","text":"Se requiere que todos los campos de la tabla sean de tipo VARCHAR2 para asegurar la compatibilidad."},{"isCorrect":false,"rationale":"Las tablas de objetos están diseñadas precisamente para la persistencia de atributos de datos definidos en el tipo de objeto.","text":"La tabla solo puede contener métodos y no datos persistentes."}],"hint":"Considere cómo se gestiona la identidad del objeto en cada estructura de almacenamiento.","question":"En el contexto de Oracle, ¿qué implica definir una tabla como 'OF vehiculo_t' en lugar de una tabla con una columna de tipo 'vehiculo_t'?"},{"answerOptions":[{"isCorrect":true,"rationale":"El tipo REF actúa como un puntero o enlace; para modificar el objeto apuntado, se debe acceder a través de la referencia, no operarla como un dato simple.","text":"No es posible realizar operaciones directamente sobre las referencias."},{"isCorrect":false,"rationale":"Múltiples objetos o tablas pueden guardar referencias (REF) al mismo objeto único sin restricciones de exclusividad.","text":"Cada objeto solo puede recibir una única referencia externa en toda la base de datos."},{"isCorrect":false,"rationale":"El propósito del REF es precisamente vincular objetos complejos con identidad propia, no tipos básicos del sistema.","text":"Las referencias solo pueden apuntar a datos de tipo primitivo como NUMBER."},{"isCorrect":false,"rationale":"Las referencias son tipos de datos que se integran en el sistema transaccional estándar de la base de datos.","text":"El uso de REF inhabilita la capacidad de realizar 'rollbacks' en las transacciones."}],"hint":"Piense en la naturaleza del REF como un enlace hacia otra entidad.","question":"Al trabajar con el tipo REF en bases de datos objeto-relacionales, ¿cuál es una limitación fundamental mencionada en el material?"},{"answerOptions":[{"isCorrect":false,"rationale":"La ubicación física del almacenamiento (RAM vs. Disco) no garantiza la capacidad de manejar datos no uniformes.","text":"Persistencia en memoria volátil."},{"isCorrect":false,"rationale":"Aunque es una característica importante para el rendimiento, se refiere a la distribución física y no a la estructura lógica de los datos.","text":"Procesamiento paralelo en nodos (clusters)."},{"isCorrect":true,"rationale":"Esta flexibilidad permite que diferentes documentos o registros contengan campos distintos sin necesidad de una definición previa obligatoria.","text":"Ausencia de esquema (schemaless)."},{"isCorrect":false,"rationale":"El modelo de licencia no determina la flexibilidad estructural de la base de datos en sí.","text":"Uso exclusivo de código abierto."}],"hint":"Busque el término que describe la falta de una estructura de tabla fija.","question":"¿Qué característica de las bases de datos NoSQL permite almacenar información no uniforme y facilita la evolución del desarrollo sin rediseñar estructuras rígidas?"},{"answerOptions":[{"isCorrect":true,"rationale":"Los grupos de réplica aseguran que si un nodo falla, otros contengan la misma información para mantener el servicio activo.","text":"Proporcionar alta disponibilidad y redundancia de los datos."},{"isCorrect":false,"rationale":"La división y distribución de datos para escalabilidad horizontal es responsabilidad del 'Sharding', no directamente de la replicación básica.","text":"Dividir los datos en múltiples servidores para balanceo de carga horizontal."},{"isCorrect":false,"rationale":"Los Replica Sets se centran en la continuidad del negocio y la integridad, no en la política de ubicación de los índices.","text":"Garantizar que todos los índices se almacenen en disco en lugar de en memoria."},{"isCorrect":false,"rationale":"MongoDB no utiliza los Replica Sets para la conversión de formatos de archivos externos.","text":"Transformar automáticamente documentos BSON en formato XML para su exportación."}],"hint":"Piense en lo que sucede si un servidor físico deja de funcionar inesperadamente.","question":"En la arquitectura de MongoDB, ¿cuál es la función de los 'Replica Sets'?"},{"answerOptions":[{"isCorrect":true,"rationale":"Son colecciones circulares de tamaño fijo que mantienen el orden de inserción y sobrescriben lo más antiguo al llenarse.","text":"Los datos más antiguos son eliminados automáticamente para dar paso a los nuevos."},{"isCorrect":false,"rationale":"A diferencia de las colecciones normales, las de tipo 'capped' gestionan el espacio de forma automática y circular.","text":"La base de datos bloquea cualquier nueva inserción hasta que se realice un borrado manual."},{"isCorrect":false,"rationale":"El diseño de colecciones circulares no contempla el uso de tablas temporales de desbordamiento.","text":"Se genera un índice de desbordamiento en una tabla temporal para almacenar el exceso."},{"isCorrect":false,"rationale":"Una característica fundamental de estas colecciones es precisamente que su tamaño es fijo y preasignado.","text":"El sistema expande dinámicamente el tamaño del disco para evitar la pérdida de información."}],"hint":"Recuerde el concepto de estructura circular en el manejo de datos.","question":"Dentro de las 'Capped Collections' de MongoDB, ¿qué sucede cuando se alcanza el tamaño máximo de almacenamiento definido?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esta es una función del planificador de consultas en entornos distribuidos, no una propiedad específica de las consultas cubiertas.","text":"Asegura que la consulta se ejecute simultáneamente en todos los nodos del cluster."},{"isCorrect":false,"rationale":"La eliminación de duplicados es una operación de agregación o filtrado, no una consecuencia directa de que una consulta esté cubierta.","text":"Elimina automáticamente los duplicados antes de devolver el resultado al cliente."},{"isCorrect":true,"rationale":"Al estar todos los campos solicitados presentes en el índice, se evita el acceso a disco para leer el documento completo, mejorando drásticamente la velocidad.","text":"La consulta se resuelve íntegramente usando el índice sin necesidad de acceder a los documentos en la colección."},{"isCorrect":false,"rationale":"La cobertura de una consulta se refiere al uso eficiente de índices, no a las capacidades de descifrado de datos.","text":"Permite realizar búsquedas sobre campos que han sido cifrados previamente."}],"hint":"Considere qué sucede cuando el índice contiene toda la información necesaria para responder a la petición.","question":"¿Cuál es la principal ventaja de utilizar una 'Covered Query' (consulta cubierta) en MongoDB?"},{"answerOptions":[{"isCorrect":true,"rationale":"Este paquete extiende la funcionalidad básica para permitir el uso de lenguajes de consulta específicos y la manipulación de recursos XML complejos.","text":"Proporcionar acceso a servicios específicos como XPathQueryService y transacciones XML."},{"isCorrect":false,"rationale":"La configuración de archivos del sistema se realiza a nivel de servidor o sistema de archivos, no mediante esta API de módulos.","text":"Definir los permisos de lectura y escritura del fichero 'conf.xml' del servidor."},{"isCorrect":false,"rationale":"Este paquete es parte del estándar para bases de datos XML, no una herramienta de conversión para bases de datos objeto-relacionales.","text":"Convertir documentos JSON a formato binario para su almacenamiento en Oracle."},{"isCorrect":false,"rationale":"Las APIs de programación se encargan de la comunicación con la base de datos, no de la gestión de la instalación del software.","text":"Gestionar exclusivamente la instalación física del servidor ExistDB en el sistema operativo."}],"hint":"Piense en las herramientas necesarias para ejecutar búsquedas XPath desde el código.","question":"En el desarrollo con bases de datos nativas XML y Java, ¿qué función cumple el paquete 'org.xmldb.api.modules'?"},{"answerOptions":[{"isCorrect":false,"rationale":"La gestión del estado de las entidades y las transacciones es responsabilidad del EntityManager y de EntityTransaction.","text":"Almacenar temporalmente los registros borrados antes de realizar el commit definitivo."},{"isCorrect":false,"rationale":"JPA se orienta principalmente a bases de datos relacionales y la factoría no realiza la traducción directa de código en tiempo de ejecución.","text":"Transformar las anotaciones Java en código SQL nativo para bases de datos NoSQL."},{"isCorrect":false,"rationale":"La definición y ejecución de consultas es competencia del EntityManager y del objeto Query resultante.","text":"Definir las consultas JPQL que se ejecutarán de forma asíncrona."},{"isCorrect":true,"rationale":"Siguiendo el patrón Factory, se encarga de crear los gestores de entidades que interactuarán con el contexto de persistencia.","text":"Actuar como una fábrica para obtener instancias de objetos EntityManager."}],"hint":"Relacione el nombre de la clase con un patrón de diseño creacional común.","question":"¿Cuál es la responsabilidad principal de la clase 'EntityManagerFactory' en el estándar JPA?"},{"answerOptions":[{"isCorrect":false,"rationale":"El comportamiento estándar ante una excepción es el aborto de la transacción para proteger la consistencia de los datos.","text":"El sistema intenta reintentar la operación fallida indefinidamente hasta que tenga éxito."},{"isCorrect":false,"rationale":"Los sistemas de gestión de transacciones están diseñados para recuperarse de errores de forma automática mediante el rollback.","text":"La base de datos se bloquea permanentemente y requiere un reinicio manual del servicio."},{"isCorrect":true,"rationale":"La atomicidad garantiza que o se aplican todos los cambios del grupo o no se aplica ninguno en caso de error.","text":"Se realiza un rollback y la base de datos vuelve al estado anterior a la transacción."},{"isCorrect":false,"rationale":"Esto violaría el principio de integridad transaccional donde el conjunto de operaciones debe ser indivisible.","text":"Solo se guardan los objetos que no causaron error, ignorando el resto."}],"hint":"Recuerde el concepto de 'todo o nada' en las operaciones de base de datos.","question":"Al utilizar 'EntityTransaction' en Java, ¿qué ocurre si una de las múltiples operaciones de persistencia dentro de un grupo falla?"},{"answerOptions":[{"isCorrect":false,"rationale":"La herencia se refiere a la transmisión de propiedades entre clases, no al ocultamiento de información.","text":"Herencia."},{"isCorrect":false,"rationale":"La modularidad trata sobre la división de un sistema en partes separadas, mientras que el ocultamiento es específico de la encapsulación.","text":"Modularidad."},{"isCorrect":false,"rationale":"La persistencia es la capacidad de los datos de sobrevivir a la finalización del programa, independientemente de cómo se acceda a ellos.","text":"Persistencia."},{"isCorrect":true,"rationale":"Este principio asegura que el estado interno de un objeto solo sea accesible a través de métodos definidos, protegiendo la integridad de los datos.","text":"Encapsulación."}],"hint":"Es un pilar básico de la POO que protege el estado interno del objeto.","question":"En el modelo orientado a objetos, ¿qué concepto permite que una representación oculte los detalles internos de implementación a entidades externas?"},{"answerOptions":[{"isCorrect":false,"rationale":"El modelo objeto-relacional sigue utilizando estructuras tabulares y lenguaje SQL evolucionado.","text":"Eliminar por completo el uso de tablas para sustituirlas por archivos de texto plano."},{"isCorrect":false,"rationale":"Al contrario, estas bases de datos buscan mantener o mejorar la alta concurrencia propia de los sistemas relacionales.","text":"Reducir la capacidad de concurrencia para priorizar la velocidad de un solo usuario."},{"isCorrect":false,"rationale":"Este modelo requiere que los desarrolladores comprendan y utilicen conceptos de objetos dentro de la base de datos.","text":"Evitar que los desarrolladores necesiten aprender conceptos de herencia o clases."},{"isCorrect":true,"rationale":"El modelo híbrido busca integrar la intuición de objetos de la programación moderna con la robustez y concurrencia del modelo relacional.","text":"Acortar distancias entre las prácticas de lenguajes como Java o C# y el almacenamiento de datos."}],"hint":"Piense en la necesidad de conectar el paradigma de programación con el de almacenamiento.","question":"¿Cuál es un objetivo clave de las bases de datos objeto-relacionales al compararlas con las relacionales puras?"},{"answerOptions":[{"isCorrect":false,"rationale":"La herencia es una propiedad del tipo de objeto en sí, no una restricción exclusiva de un tipo de colección.","text":"Solo las tablas anidadas permiten el uso de la herencia de tipos."},{"isCorrect":false,"rationale":"Ambas colecciones pueden almacenar tipos de datos complejos u objetos definidos por el usuario.","text":"Las tablas anidadas solo pueden almacenar tipos NUMBER, mientras que el VARRAY admite objetos complejos."},{"isCorrect":false,"rationale":"Generalmente, los VARRAYs se almacenan dentro de la propia fila (inline), a diferencia de las tablas anidadas que pueden requerir almacenamiento externo.","text":"El VARRAY se almacena en una tabla física separada del registro padre."},{"isCorrect":true,"rationale":"Los VARRAYs son colecciones de tamaño fijo en su definición, mientras que las tablas anidadas ofrecen mayor flexibilidad para conjuntos de datos de tamaño variable.","text":"El VARRAY tiene un número máximo de elementos definido, mientras que la tabla anidada no tiene un límite preestablecido."}],"hint":"Considere la restricción de tamaño al definir el tipo de colección.","question":"En Oracle, ¿cuál es la diferencia principal entre un tipo VARRAY y una Tabla Anidada para representar relaciones 1:N?"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque las bases de datos de grafos pueden correr en clusters, el concepto de cluster es aplicable a cualquier arquitectura NoSQL distribuida.","text":"Un tipo de base de datos que solo almacena información en formato de gráficos."},{"isCorrect":true,"rationale":"La arquitectura de cluster permite distribuir la carga y los datos entre múltiples nodos para escalar el rendimiento.","text":"Un conjunto de máquinas que funcionan entre sí como un único recurso de procesamiento paralelo."},{"isCorrect":false,"rationale":"El término cluster en este contexto se refiere a la infraestructura de hardware y red, no a algoritmos de compresión.","text":"Una técnica de compresión de archivos para reducir el espacio en disco."},{"isCorrect":false,"rationale":"El identificador único se denomina normalmente _id o OID, no cluster.","text":"El identificador único que se le asigna a cada documento JSON en MongoDB."}],"hint":"Piense en la colaboración de múltiples servidores para una misma tarea.","question":"De acuerdo con las características de NoSQL, ¿qué define a un 'Cluster' en la gestión de grandes volúmenes de datos?"},{"answerOptions":[{"isCorrect":false,"rationale":"Apache Cassandra es una base de datos orientada a columnas (column-family).","text":"Cassandra."},{"isCorrect":false,"rationale":"CouchDB es una base de datos orientada a documentos que utiliza formato JSON.","text":"CouchDB."},{"isCorrect":false,"rationale":"Redis es principalmente un motor de tipo clave-valor basado en tablas hash.","text":"Redis."},{"isCorrect":true,"rationale":"Neo4J es la referencia principal para bases de datos orientadas a grafos, optimizada para gestionar conexiones complejas entre datos.","text":"Neo4J."}],"hint":"Es la base de datos mencionada para representar redes sociales o jerarquías complejas.","question":"¿Cuál de las siguientes bases de datos NoSQL se especializa en el almacenamiento orientado a grafos utilizando nodos y relaciones?"},{"answerOptions":[{"isCorrect":false,"rationale":"BSON es un formato interno de almacenamiento; los navegadores suelen consumir JSON estándar.","text":"Permitir que la base de datos pueda ser leída por cualquier navegador web sin usar controladores."},{"isCorrect":false,"rationale":"El formato de los datos es independiente de la estrategia de indexación utilizada por el motor.","text":"Sustituir el uso de índices para que las búsquedas se realicen siempre en memoria RAM."},{"isCorrect":true,"rationale":"BSON (Binary JSON) permite una serialización más eficiente de los documentos para su almacenamiento físico y transmisión.","text":"Optimizar el almacenamiento y la velocidad de escaneo al ser una representación binaria de JSON."},{"isCorrect":false,"rationale":"BSON mantiene la flexibilidad de tamaño de JSON; los documentos pueden variar según sus campos.","text":"Garantizar que todos los documentos tengan exactamente el mismo tamaño en bytes."}],"hint":"Considere la eficiencia del procesamiento de datos en formato binario frente a texto plano.","question":"En MongoDB, ¿cuál es el propósito del formato interno BSON?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los índices son estructuras persistentes y dinámicas que no requieren reinicios del servicio.","text":"Obligan a que la base de datos se reinicie tras cada consulta de agregación."},{"isCorrect":false,"rationale":"Compass permite precisamente visualizar y analizar la eficacia de los índices creados.","text":"Inhabilitan el uso de la herramienta gráfica MongoDB Compass."},{"isCorrect":false,"rationale":"Al contrario, el propósito principal de los índices es acelerar drásticamente las operaciones de lectura.","text":"Aumentan el tiempo necesario para realizar lecturas frecuentes."},{"isCorrect":true,"rationale":"Cada vez que se modifica un documento, el motor debe actualizar también todos los índices asociados, lo que consume tiempo adicional.","text":"Pueden ralentizar las operaciones de escritura (inserciones y actualizaciones)."}],"hint":"Piense en el trabajo extra que debe realizar el motor al añadir un nuevo registro.","question":"Respecto a los índices en MongoDB, ¿qué penalización técnica suelen introducir en el sistema?"},{"answerOptions":[{"isCorrect":false,"rationale":"El tipo de dato del campo _id no influye en la capacidad del índice para procesar operadores de negación.","text":"Requiere que el campo _id sea de tipo binario para poder usar índices de negación."},{"isCorrect":false,"rationale":"Por el contrario, la negación suele ser menos eficiente y a menudo ignora los índices existentes.","text":"Los operadores de negación son los que mayor rendimiento obtienen gracias al uso de índices monoclave."},{"isCorrect":false,"rationale":"MongoDB no genera índices dinámicos invertidos para gestionar negaciones de forma estándar.","text":"Crea automáticamente un índice invertido en una colección temporal."},{"isCorrect":true,"rationale":"Debido a su naturaleza, las consultas que buscan 'lo que no es' suelen requerir un escaneo completo ya que los índices están optimizados para coincidencias positivas.","text":"Los operadores de negación no utilizan índices para resolver la búsqueda."}],"hint":"Piense en la dificultad de encontrar algo basándose únicamente en lo que no es.","question":"¿Cómo maneja MongoDB la indexación de los operadores de negación en las consultas?"},{"answerOptions":[{"isCorrect":false,"rationale":"JSONPath se utiliza para documentos JSON; para XML, el lenguaje correspondiente es XPath.","text":"JSONPath."},{"isCorrect":false,"rationale":"X-Shell no es un lenguaje de consulta estándar para la navegación de nodos en documentos XML.","text":"X-Shell."},{"isCorrect":false,"rationale":"Aunque existen extensiones de SQL para XML, las bases de datos nativas utilizan lenguajes propios como XPath y XQuery.","text":"SQL-XML."},{"isCorrect":true,"rationale":"XPath es el estándar del W3C diseñado específicamente para recorrer la estructura jerárquica de árbol de un documento XML.","text":"XPath."}],"hint":"Es un lenguaje basado en expresiones de ruta similar a las rutas de directorios.","question":"¿Cuál es el lenguaje estándar utilizado para navegar y seleccionar nodos dentro de documentos en una base de datos XML nativa?"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque relacionado, el 'cacheSize' general suele ser el parámetro principal para el rendimiento global de la conexión.","text":"collectionCache."},{"isCorrect":false,"rationale":"Este atributo controla el tiempo máximo de ejecución de una consulta antes de ser abortada, no la memoria física.","text":"query-timeout."},{"isCorrect":true,"rationale":"Este atributo define el tamaño de la caché para optimizar el acceso a los datos procesados frecuentemente.","text":"cacheSize."},{"isCorrect":false,"rationale":"Este parámetro limita el tamaño de los resultados devueltos por una consulta, no el tamaño de la memoria de caché de la base de datos.","text":"output-size-limit."}],"hint":"Busque el término técnico asociado a la memoria de acceso rápido.","question":"En el archivo 'conf.xml' de ExistDB, ¿qué parámetro se debe modificar para ajustar la cantidad de memoria reservada para el almacenamiento temporal de datos?"},{"answerOptions":[{"isCorrect":true,"rationale":"La anotación indica al proveedor de JPA que esa clase debe ser mapeada a una tabla y sus instancias gestionadas por el EntityManager.","text":"Una clase persistente cuyos objetos se corresponden con registros en una base de datos."},{"isCorrect":false,"rationale":"La anotación @Entity pertenece a la capa de persistencia de datos, no a la capa de presentación o interfaz.","text":"Una interfaz obligatoria para todos los controladores de la interfaz de usuario."},{"isCorrect":false,"rationale":"Se trata de un concepto de mapeo objeto-relacional para clases completas, no un tipo de dato simple.","text":"Un tipo de dato primitivo que solo admite valores booleanos."},{"isCorrect":false,"rationale":"@Entity es una anotación de clase, no de método, y no tiene funciones de validación de seguridad por defecto.","text":"Un método estático encargado de validar las contraseñas de los usuarios."}],"hint":"Piense en la relación entre los objetos de negocio y el almacenamiento persistente.","question":"¿Qué representa una clase marcada con la anotación '@Entity' en el contexto de Java Persistence API (JPA)?"},{"answerOptions":[{"isCorrect":false,"rationale":"BSON es el formato de MongoDB, y JPA es un estándar orientado principalmente a entornos relacionales SQL.","text":"BSON-Query."},{"isCorrect":false,"rationale":"XPath es exclusivo para la navegación en documentos XML, no para el mapeo de objetos Java a bases de datos relacionales.","text":"XPath."},{"isCorrect":false,"rationale":"Aunque OQL es un lenguaje de consultas para objetos, JPA utiliza específicamente JPQL (o SQL nativo).","text":"OQL."},{"isCorrect":true,"rationale":"JPQL (Java Persistence Query Language) permite escribir consultas orientadas al modelo de clases Java, que luego se traducen a SQL.","text":"JPQL."}],"hint":"Es un lenguaje de consulta muy similar a SQL pero que apunta a nombres de clases y atributos.","question":"¿Qué lenguaje utiliza JPA para permitir realizar consultas sobre objetos en lugar de hacerlo directamente sobre tablas relacionales?"},{"answerOptions":[{"isCorrect":true,"rationale":"La herencia permite crear jerarquías de tipos donde las subclases reutilizan y extienden las definiciones de sus superclases.","text":"Propiedades de herencia."},{"isCorrect":false,"rationale":"La abstracción se refiere a simplificar la realidad, mientras que la herencia es el mecanismo específico de transmisión de propiedades.","text":"Abstracción modular."},{"isCorrect":false,"rationale":"La persistencia asegura la vida del dato en el tiempo, pero no define cómo se relacionan las estructuras de clases.","text":"Persistencia indefinida."},{"isCorrect":false,"rationale":"La identidad (OID) asegura que cada objeto es único, pero no gestiona la relación jerárquica entre tipos.","text":"Identidad única externa."}],"hint":"Es un concepto central de la POO que organiza las clases en estructuras de padre e hijo.","question":"En el modelo OODBMS, ¿qué permite que un objeto recupere las propiedades y comportamientos de otro objeto superior?"},{"answerOptions":[{"isCorrect":false,"rationale":"Para listar documentos se utiliza el método find() sobre una colección específica, no 'show dbs'.","text":"Mostrar el contenido detallado de todos los documentos en la colección actual."},{"isCorrect":false,"rationale":"Es un comando de consulta informativa y no realiza acciones destructivas de borrado.","text":"Eliminar todas las bases de datos que no tengan índices activos."},{"isCorrect":false,"rationale":"MongoDB no utiliza este comando para la gestión de lógica programada como disparadores.","text":"Visualizar el código fuente de los disparadores (triggers) de la base de datos."},{"isCorrect":true,"rationale":"Es una operación administrativa básica para verificar la existencia de los almacenes de datos en la instancia activa.","text":"Listar todas las bases de datos creadas disponibles en el servidor."}],"hint":"Se utiliza para comprobar si la base de datos que acabamos de crear es visible.","question":"¿Cuál es la función del comando 'show dbs' tras acceder al shell de MongoDB mediante el comando 'mongo'?"},{"answerOptions":[{"isCorrect":true,"rationale":"Permite al administrador definir en qué directorio se almacenará el repositorio XML de la base de datos.","text":"Indica la ubicación física de los ficheros de datos en el sistema de archivos."},{"isCorrect":false,"rationale":"Esa suele ser una configuración a nivel de sistema operativo o descriptores de archivo, no el propósito del atributo 'files'.","text":"Establece el número máximo de archivos que pueden abrirse simultáneamente."},{"isCorrect":false,"rationale":"El sistema acepta diversos formatos (XML, JSON, etc.), pero este atributo se refiere a la ruta de almacenamiento, no a filtros de extensión.","text":"Define la extensión de los archivos permitidos para ser importados."},{"isCorrect":false,"rationale":"La gestión de usuarios se realiza en otras secciones o colecciones de seguridad del sistema.","text":"Es una lista de los nombres de los usuarios con permiso de administrador."}],"hint":"Relaciónelo con la ruta o directorio donde la aplicación guarda su información.","question":"Al configurar ExistDB, ¿cuál es el significado del atributo 'files' dentro del bloque 'db-connection' del fichero de configuración?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los objetos no persistidos simplemente se pierden al terminar la ejecución, no requieren un cierre para ser 'borrados'.","text":"Para borrar permanentemente todos los objetos que no fueron persistidos durante la sesión."},{"isCorrect":false,"rationale":"El alcance de este método se limita a la gestión de recursos de la librería JPA dentro de la aplicación.","text":"Obliga al sistema operativo a reiniciar la máquina virtual de Java."},{"isCorrect":true,"rationale":"Cerrar el EntityManager es una buena práctica necesaria para evitar fugas de memoria y agotar el pool de conexiones.","text":"Para liberar los recursos asociados al gestor de entidades y cerrar la conexión."},{"isCorrect":false,"rationale":"El commit debe invocarse explícitamente sobre el objeto Transaction; el cierre del gestor no garantiza la persistencia si no se confirmó antes.","text":"Es el comando necesario para realizar el 'commit' automático de la transacción."}],"hint":"Considere la gestión eficiente de la memoria y las conexiones en el servidor.","question":"En el ciclo de vida de una aplicación JPA, ¿por qué es importante ejecutar el método 'em.close()'?"},{"answerOptions":[{"isCorrect":true,"rationale":"MongoDB requiere que todo documento tenga un _id; si no se especifica, el driver o el servidor crean un ObjectId único.","text":"El sistema genera un valor por defecto automáticamente para identificar el documento."},{"isCorrect":false,"rationale":"Cada documento debe tener un identificador unívoco; el nombre de la colección no cumpliría esta función para múltiples registros.","text":"Se utiliza el nombre de la colección como identificador único para todos los registros nuevos."},{"isCorrect":false,"rationale":"No es posible tener documentos sin el campo _id en MongoDB debido a su diseño de indexación primaria.","text":"El documento se almacena sin identificador, lo que impide su futura recuperación."},{"isCorrect":false,"rationale":"Al ser una base de datos flexible, el sistema ayuda en la creación de la identidad única si el desarrollador la omite.","text":"La inserción falla inmediatamente devolviendo un error de esquema."}],"hint":"MongoDB garantiza que siempre haya una forma de identificar cada registro de forma única.","question":"¿Qué ocurre si se intenta realizar una operación 'Create' en MongoDB pero el campo _id no es proporcionado por el usuario?"}];
+        let currentIndex = 0;
+        let mode = 'quiz';
+        let state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+
+        function getStats() {
+            const answered = state.filter((s) => s.selectedIndex !== null).length;
+            const correct = state.filter((s, i) => s.selectedIndex !== null && quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const wrong = state.filter((s, i) => s.selectedIndex !== null && !quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const skipped = quizData.length - answered;
+            const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+            return { answered, correct, wrong, skipped, accuracy };
+        }
+
+        function shuffleAnswers() {
+            quizData.forEach((q) => {
+                for (let i = q.answerOptions.length - 1; i > 0; i -= 1) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.answerOptions[i], q.answerOptions[j]] = [q.answerOptions[j], q.answerOptions[i]];
+                }
+            });
+        }
+
+        function shuffleQuestions() {
+            for (let i = quizData.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [quizData[i], quizData[j]] = [quizData[j], quizData[i]];
+            }
+        }
+
+        function resetState() {
+            state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+        }
+
+        function renderQuestion() {
+            const q = quizData[currentIndex];
+            const s = state[currentIndex];
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+
+            let optionsHtml = '';
+            const correctIndex = q.answerOptions.findIndex((o) => o.isCorrect);
+            const selectedCorrect = s.selectedIndex !== null && q.answerOptions[s.selectedIndex].isCorrect;
+            q.answerOptions.forEach((opt, idx) => {
+                const isSelected = s.selectedIndex === idx;
+                const statusClass = isSelected ? (opt.isCorrect ? 'correct' : 'incorrect') : '';
+                const selectedClass = isSelected ? 'selected' : '';
+                const revealCorrect = (s.selectedIndex !== null && !selectedCorrect && opt.isCorrect) || (mode === 'review' && opt.isCorrect);
+                const revealClass = revealCorrect ? 'revealed-correct' : '';
+
+                optionsHtml += `
+                    <li class="option-item ${selectedClass} ${statusClass} ${revealClass}" onclick="selectOption(${idx})">
+                        <div class="option-label">
+                            <span>${String.fromCharCode(65 + idx)}. ${opt.text}</span>
+                        </div>
+                        <div class="feedback-state">
+                            ${opt.isCorrect ? '✓ Right answer' : '✕ Not quite'}
+                        </div>
+                        ${opt.rationale ? '<div class="rationale">' + opt.rationale + '</div>' : ''}
+                    </li>
+                `;
+            });
+
+            const stats = getStats();
+
+            content.innerHTML = `
+                <div class="progress-container">
+                    <div class="progress-text">${currentIndex + 1} / ${quizData.length}</div>
+                    <div class="status-bar">
+                        <div class="status-item status-correct">
+                            <span>✓</span>
+                            <span>${stats.correct}</span>
+                        </div>
+                        <div class="status-item status-wrong">
+                            <span>✕</span>
+                            <span>${stats.wrong}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="question-text">${q.question}</div>
+                <ul class="options-list">
+                    ${optionsHtml}
+                </ul>
+            `;
+
+            // Update Hint Box
+            const hintText = document.getElementById('hint-text');
+            hintText.innerText = q.hint || 'No hint available for this question.';
+            if (s.hintVisible) {
+                hintBox.classList.add('active');
+            } else {
+                hintBox.classList.remove('active');
+            }
+
+            results.classList.add('hidden');
+            content.classList.remove('hidden');
+            hintBox.classList.remove('hidden');
+            nav.classList.remove('hidden');
+
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = false;
+            if (mode === 'review') {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Back to Results' : 'Next';
+            } else {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finish' : 'Next';
+            }
+            document.getElementById('hint-icon-arrow').innerText = s.hintVisible ? '▲' : '▼';
+        }
+
+        function selectOption(idx) {
+            if (mode !== 'quiz') return;
+            if (state[currentIndex].selectedIndex !== null) return; // Prevent re-selection
+            state[currentIndex].selectedIndex = idx;
+            renderQuestion();
+        }
+
+        function toggleHint() {
+            if (mode === 'results') return;
+            state[currentIndex].hintVisible = !state[currentIndex].hintVisible;
+            renderQuestion();
+        }
+
+        function renderResults() {
+            const stats = getStats();
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+
+            const score = `${stats.correct} / ${quizData.length}`;
+
+            results.innerHTML = `
+                <div class="results-screen">
+                    <div>
+                        <h1 class="results-title">You did it! Quiz Complete.</h1>
+                        <p class="results-subtitle">Review your score or take another run.</p>
+                    </div>
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-label">Score</div>
+                            <div class="result-value">${score}</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Accuracy</div>
+                            <div class="result-value">${stats.accuracy}%</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-metrics">
+                                <div>Right <strong>${stats.correct}</strong></div>
+                                <div>Wrong <strong>${stats.wrong}</strong></div>
+                                <div>Skipped <strong>${stats.skipped}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="results-actions">
+                        <button id="review-btn" class="btn btn-ghost">Review Quiz</button>
+                        <button id="retake-btn" class="btn btn-next">Retake Quiz</button>
+                    </div>
+                </div>
+            `;
+
+            content.classList.add('hidden');
+            results.classList.remove('hidden');
+            hintBox.classList.add('hidden');
+            nav.classList.add('hidden');
+
+            document.getElementById('review-btn').onclick = () => {
+                mode = 'review';
+                currentIndex = 0;
+                renderQuestion();
+            };
+
+            document.getElementById('retake-btn').onclick = () => {
+                mode = 'quiz';
+                currentIndex = 0;
+                shuffleQuestions();
+                shuffleAnswers();
+                resetState();
+                renderQuestion();
+            };
+        }
+
+        document.getElementById('prev-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        };
+
+        document.getElementById('next-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (mode === 'review') {
+                if (currentIndex < quizData.length - 1) {
+                    currentIndex++;
+                    renderQuestion();
+                } else {
+                    mode = 'results';
+                    renderResults();
+                }
+                return;
+            }
+            if (currentIndex < quizData.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                mode = 'results';
+                renderResults();
+            }
+        };
+
+        document.getElementById('hint-toggle').onclick = toggleHint;
+
+        renderQuestion();
+    </script>
+</body>
+</html>
