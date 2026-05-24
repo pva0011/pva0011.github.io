@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotebookLM - Quiz Export</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+        :root {
+            --bg: #f6f1e7;
+            --bg-deep: #efe4d6;
+            --ink: #171717;
+            --muted: #5b5b5b;
+            --accent: #d3542c;
+            --accent-light: #ff8f5a;
+            --accent-dark: #b14320;
+            --teal: #1f6f78;
+            --card: #fff7ef;
+            --stroke: #e3d6c5;
+            --shadow: 0 18px 40px rgba(23, 23, 23, 0.12);
+            --radius-sm: 10px;
+            --radius-md: 12px;
+            --radius-lg: 14px;
+            --radius-xl: 18px;
+            --radius-2xl: 22px;
+            --space-1: 6px;
+            --space-2: 8px;
+            --space-3: 10px;
+            --space-4: 12px;
+            --space-5: 14px;
+            --space-6: 16px;
+            --space-7: 18px;
+            --space-8: 20px;
+            --space-9: 24px;
+            --space-10: 32px;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --error: #b54832;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background:
+                radial-gradient(240px 140px at 10% -10%, #ffd2b9 0%, transparent 70%),
+                radial-gradient(220px 160px at 90% 0%, #cfe7e6 0%, transparent 65%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+            color: var(--ink);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 800px;
+            padding: var(--space-10) var(--space-8);
+            box-sizing: border-box;
+            background: var(--card);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+        }
+
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .progress-text {
+            color: var(--muted);
+            font-size: 0.9em;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-correct { color: var(--teal); }
+        .status-wrong { color: var(--error); }
+
+        .question-text {
+            font-family: var(--font-display);
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-item:hover:not(.selected) {
+            background-color: var(--card);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .option-item.selected.correct {
+            background-color: rgba(31, 111, 120, 0.12);
+            border-color: var(--teal);
+        }
+
+        .option-item.selected.incorrect {
+            background-color: rgba(181, 72, 50, 0.12);
+            border-color: var(--error);
+        }
+
+        .option-item.revealed-correct {
+            border-color: rgba(31, 111, 120, 0.5);
+            box-shadow: inset 0 0 0 1px rgba(31, 111, 120, 0.16);
+        }
+
+        .option-label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feedback-state {
+            font-weight: bold;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .selected .feedback-state {
+            display: block;
+        }
+
+        .revealed-correct .feedback-state {
+            display: block;
+        }
+
+        .correct .feedback-state { color: var(--teal); }
+        .incorrect .feedback-state { color: var(--error); }
+        .revealed-correct .feedback-state { color: var(--teal); }
+
+        .rationale {
+            font-size: 0.95em;
+            color: var(--muted);
+            margin-top: 4px;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .selected .rationale {
+            display: block;
+        }
+
+        .revealed-correct .rationale {
+            display: block;
+        }
+        .hint-toggle {
+            border: 1px solid var(--stroke);
+            color: var(--muted);
+            cursor: pointer;
+            padding: var(--space-2) var(--space-6);
+            border-radius: var(--radius-md);
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hint-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .hint-content {
+            margin-top: 32px;
+            padding: var(--space-6);
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-lg);
+            font-size: 0.95em;
+            color: var(--muted);
+            display: none;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .hint-content.active {
+            display: flex;
+        }
+
+        .hint-icon-box {
+            color: var(--accent-dark);
+            font-size: 1.2em;
+            margin-top: -2px;
+        }
+
+        .navigation {
+            margin-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-7);
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-prev {
+            background-color: #fff;
+            color: var(--ink);
+            border-color: var(--stroke);
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn-next {
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            color: #fff;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .results-screen {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+        }
+
+        .results-title {
+            font-family: var(--font-display);
+            font-size: 2.1em;
+            margin: 0;
+        }
+
+        .results-subtitle {
+            color: var(--muted);
+            margin: 0;
+            font-size: 1em;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .result-card {
+            padding: var(--space-6);
+            border-radius: var(--radius-xl);
+            background: #fff;
+            border: 1px solid var(--stroke);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .result-label {
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-family: var(--font-display);
+        }
+
+        .result-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            border: 1px solid var(--stroke);
+            color: var(--ink);
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 900px) {
+            .quiz-container {
+                margin: var(--space-8);
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .quiz-container {
+                padding: var(--space-8) var(--space-6);
+            }
+
+            .question-text {
+                font-size: 1.3em;
+            }
+
+            .option-item {
+                padding: var(--space-4);
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .quiz-container {
+                margin: var(--space-6);
+                padding: var(--space-7) var(--space-5);
+            }
+
+            .progress-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+
+            .navigation {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-4);
+            }
+
+            .nav-buttons {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .hint-toggle {
+                justify-content: space-between;
+            }
+
+            .results-actions {
+                flex-direction: column;
+            }
+        }
+    
+    [data-theme="dark"] {
+      --bg: #1a1612;
+      --bg-deep: #141210;
+      --ink: #f0ebe0;
+      --muted: #9a9080;
+      --accent: #e8673a;
+      --accent-light: #ff9a6a;
+      --accent-dark: #c45528;
+      --teal: #2a9aa8;
+      --card: #221e18;
+      --stroke: #3a3028;
+      --shadow: 0 18px 40px rgba(0,0,0,0.4);
+      --error: #e06050;
+    }
+    [data-theme="dark"] body {
+      background:
+        radial-gradient(240px 140px at 10% -10%, #3a1a08 0%, transparent 70%),
+        radial-gradient(220px 160px at 90% 0%, #0a2a2e 0%, transparent 65%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    }
+    [data-theme="dark"] .option-item { background-color: var(--card); }
+    [data-theme="dark"] .hint-toggle,
+    [data-theme="dark"] .hint-content,
+    [data-theme="dark"] .btn-prev { background-color: var(--card); color: var(--ink); }
+    [data-theme="dark"] .result-card { background: var(--card); }
+    [data-theme="dark"] .btn-next {
+      background: linear-gradient(90deg, #e8673a, #f28c5e);
+      box-shadow: 0 4px 20px rgba(232, 103, 58, 0.35);
+      color: #fff;
+    }
+    [data-theme="dark"] .btn-next:hover:not(:disabled) {
+      box-shadow: 0 6px 24px rgba(232, 103, 58, 0.5);
+    }
+    
+    /* quiz-mobile-v3 */
+    @media (max-width: 640px) {
+      body {
+        height: 100dvh;
+        overflow: hidden;
+        align-items: flex-start;
+        padding: 0;
+      }
+      .quiz-container {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        margin: 0;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+        padding-bottom: 0;
+      }
+      #quiz-content,
+      #results-content {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        min-height: 0;
+        padding-bottom: 8px;
+      }
+      #hint-box { flex-shrink: 0; }
+      .navigation {
+        flex-shrink: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        margin-top: 0;
+        background: var(--card);
+        border-top: 1px solid var(--stroke);
+      }
+    }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+
+    <div class="quiz-heading" style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
+      <a href="../index.html" style="font-size:0.82em;color:var(--muted);text-decoration:none;font-family:var(--font-body)">← Índice</a>
+      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">Desarrollo de Interfaces · Quiz 6</h1>
+    </div>
+        <div id="quiz-content">
+            <!-- Dynamic Content -->
+        </div>
+        <div id="results-content" class="hidden"></div>
+
+        <div id="hint-box" class="hint-content">
+            <div class="hint-icon-box">💡</div>
+            <div id="hint-text"></div>
+        </div>
+
+        <div class="navigation">
+            <button id="hint-toggle" class="hint-toggle">
+                <span>Pista</span>
+                <span id="hint-icon-arrow">▼</span>
+            </button>
+            <div class="nav-buttons">
+                <button id="prev-btn" class="btn btn-prev">Anterior</button>
+                <button id="next-btn" class="btn btn-next">Siguiente</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let quizData = [{"answerOptions":[{"isCorrect":false,"rationale":"La documentación de entrada no puede detallar errores que aún no han sido detectados mediante las pruebas.","text":"La de entrada detalla los errores encontrados y la de salida los procedimientos para corregirlos."},{"isCorrect":true,"rationale":"La documentación de entrada prepara el terreno para la ejecución de pruebas y la de salida registra lo ocurrido tras dicha ejecución.","text":"La de entrada especifica escenarios y procedimientos, mientras que la de salida detalla los informes de resultados."},{"isCorrect":false,"rationale":"Esta opción confunde la documentación técnica interna con la documentación de procesos de prueba.","text":"La de entrada se refiere al código fuente y la de salida a los manuales de usuario final."},{"isCorrect":false,"rationale":"Ambos tipos de documentación de pruebas suelen ser responsabilidad del equipo técnico o de calidad.","text":"La de entrada es redactada por el cliente y la de salida por el equipo de desarrollo."}],"hint":"Piense en el orden cronológico de una fase de evaluación: qué se necesita antes de empezar y qué se obtiene al terminar.","question":"¿Cuál es la principal distinción entre la documentación de entrada y la documentación de salida en el ámbito de las pruebas de software?"},{"answerOptions":[{"isCorrect":false,"rationale":"Documentar los identificadores clave ayuda significativamente al mantenimiento futuro de la aplicación.","text":"Describir el propósito de las variables y constantes globales."},{"isCorrect":false,"rationale":"Esta es una práctica recomendada para contextualizar el propósito de cada parte del sistema.","text":"Incluir comentarios introductorios al inicio de cada módulo."},{"isCorrect":true,"rationale":"El exceso de comentarios evidentes puede oscurecer la lógica del programa y dificultar su lectura.","text":"Comentar lo obvio dentro de los bloques de código."},{"isCorrect":false,"rationale":"La claridad estructural es el objetivo principal de la documentación interna, no un inconveniente.","text":"Utilizar un estilo de programación ordenado y claro."}],"hint":"A veces, 'menos es más' cuando se trata de explicar instrucciones de código que ya son autoexplicativas.","question":"En la documentación técnica interna, ¿qué práctica se considera contraproducente para la claridad del código?"},{"answerOptions":[{"isCorrect":false,"rationale":"El fichero de ayuda está orientado al uso de la aplicación, no a su implementación técnica interna.","text":"Código fuente y comentarios del desarrollador."},{"isCorrect":false,"rationale":"Estos son tipos de manuales independientes, no las partes internas de la estructura de un fichero de ayuda.","text":"Manual de usuario y guía de explotación."},{"isCorrect":true,"rationale":"El mapa permite la localización jerárquica de temas y la vista muestra el contenido detallado seleccionado.","text":"Mapa de navegación y vista de la información."},{"isCorrect":false,"rationale":"Estos elementos son más propios de una guía de referencia para usuarios expertos.","text":"Índice de errores y tabla de comandos técnicos."}],"hint":"Considere la relación entre cómo el usuario busca un tema y cómo visualiza el contenido de dicho tema.","question":"¿Qué elementos componen la estructura general de un fichero de ayuda digital estándar?"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque es completo, el manual de usuario suele ser más genérico y menos centrado en especificaciones técnicas de error.","text":"Manual de usuario."},{"isCorrect":true,"rationale":"Las guías de referencia contienen información técnica específica para usuarios con experiencia previa en la aplicación.","text":"Guía de referencia."},{"isCorrect":false,"rationale":"La guía rápida se centra en procedimientos muy concretos y básicos para un uso inmediato.","text":"Guía rápida."},{"isCorrect":false,"rationale":"Este término se refiere a los resultados de las pruebas de software, no a una guía de uso para el cliente.","text":"Documentación de salida."}],"hint":"Identifique el manual que está diseñado específicamente para profundizar en aspectos técnicos y parámetros del sistema.","question":"Un usuario experto necesita conocer la relación de mensajes de error y los tipos de datos de entrada permitidos. ¿A qué documento debería recurrir?"},{"answerOptions":[{"isCorrect":false,"rationale":"Son categorías distintas que requieren diferentes estrategias de detección y corrección.","text":"No existe diferencia, ambos términos son sinónimos en el desarrollo de interfaces."},{"isCorrect":true,"rationale":"Los errores lógicos son fallos en el diseño que permiten que el programa corra pero entregue resultados incorrectos.","text":"El error de lógica no devuelve mensajes de error, mientras que el de ejecución sí suele hacerlo."},{"isCorrect":false,"rationale":"Los errores de compilación son los detectados por el compilador; los de ejecución ocurren durante el tiempo de proceso.","text":"El error de ejecución es detectado por el compilador y el de lógica por el sistema operativo."},{"isCorrect":false,"rationale":"Es al revés: la sintaxis incorrecta provoca errores de compilación y el algoritmo mal diseñado errores lógicos.","text":"El error de lógica se debe a una sintaxis incorrecta y el de ejecución a un algoritmo mal diseñado."}],"hint":"Piense en cuál de los dos fallos permite que el programa finalice su tarea, aunque lo haga con un resultado equivocado.","question":"En el contexto de la depuración, ¿qué diferencia fundamental existe entre un error de ejecución y uno de lógica?"},{"answerOptions":[{"isCorrect":true,"rationale":"Este tipo de regresión se manifiesta específicamente al unir partes del programa que funcionaban bien por separado.","text":"Pruebas de regresión remota o a distancia."},{"isCorrect":false,"rationale":"Este tipo ocurre cuando los cambios exponen errores preexistentes que no tienen relación con la modificación actual.","text":"Pruebas de regresión desenmascarada."},{"isCorrect":false,"rationale":"La regresión local se refiere a errores introducidos directamente en el área donde se aplicaron los cambios recientes.","text":"Pruebas de regresión local."},{"isCorrect":false,"rationale":"El término 'regresión unitaria' no es una categoría estándar definida para errores de integración.","text":"Pruebas de regresión unitaria."}],"hint":"Relacione el nombre de la prueba con la 'distancia' o conexión entre los diferentes módulos del sistema.","question":"Si al integrar varios módulos aparecen errores que no ocurrían de forma individual, ¿ante qué tipo de regresión nos encontramos?"},{"answerOptions":[{"isCorrect":true,"rationale":"Este enfoque requiere controladores para coordinar las entradas y salidas de los casos de prueba desde la base hacia arriba.","text":"Comienzan evaluando los niveles más bajos de la arquitectura del software."},{"isCorrect":false,"rationale":"Las pruebas de integración son responsabilidad del equipo de desarrollo, no del cliente final.","text":"Son realizadas únicamente por el cliente final antes de la producción."},{"isCorrect":false,"rationale":"Las pruebas de integración pueden usar técnicas mixtas, pero su definición no se limita a la caja negra.","text":"Utilizan exclusivamente técnicas de caja negra para evaluar la interfaz."},{"isCorrect":false,"rationale":"Esa descripción corresponde a las pruebas de integración descendente.","text":"Se realizan desde el módulo principal hacia los subordinados."}],"hint":"Piense en la dirección del flujo de evaluación si se empieza por los componentes más pequeños o básicos.","question":"¿Cuál es la característica principal de las pruebas de integración ascendente?"},{"answerOptions":[{"isCorrect":true,"rationale":"El volumen se centra en la masa de datos entrante y el estrés en el punto de ruptura y recuperación del sistema.","text":"El estrés evalúa la recuperación ante sobrecargas, mientras que el volumen evalúa el procesamiento de grandes cantidades de datos."},{"isCorrect":false,"rationale":"Ambas suelen considerarse pruebas no funcionales de caja negra, ya que evalúan el comportamiento externo.","text":"El volumen es una prueba de caja blanca y el estrés es una prueba de caja negra."},{"isCorrect":false,"rationale":"Aunque relacionadas, tienen objetivos de evaluación distintos (procesamiento vs. recuperación).","text":"No hay distinción técnica; el estrés es simplemente un volumen muy elevado."},{"isCorrect":false,"rationale":"La velocidad de respuesta es el objetivo principal de las pruebas de rendimiento.","text":"El estrés mide la velocidad de respuesta y el volumen mide la integridad de los datos."}],"hint":"Una se enfoca en 'cuánto' puede digerir el sistema y la otra en 'cómo' reacciona cuando se le obliga a fallar.","question":"¿Cómo se define una prueba de estrés en comparación con una prueba de volumen?"},{"answerOptions":[{"isCorrect":false,"rationale":"Se recomienda un mínimo de quince usuarios para alcanzar una tasa de detección cercana al 100%.","text":"Garantizar que el 100% de los errores se detecten con solo dos o tres participantes."},{"isCorrect":true,"rationale":"El DCU prioriza la experiencia y comportamiento del usuario final sobre las suposiciones de los expertos.","text":"Observar la interacción real de los usuarios con el producto mediante cuestionarios tipo."},{"isCorrect":false,"rationale":"Los usuarios de estas pruebas deben representar el perfil real del cliente, que no suele ser un experto desarrollador.","text":"Asegurar que el usuario tenga conocimientos avanzados en programación para detectar fallos de código."},{"isCorrect":false,"rationale":"Las pruebas deben ser específicas, factibles y con un tiempo de realización razonable.","text":"Realizar pruebas genéricas y de larga duración para cansar al usuario."}],"hint":"El foco está en la palabra 'Centrado': ¿quién es el protagonista y qué herramientas se usan para medir su experiencia?","question":"Según el Diseño Centrado en el Usuario (DCU), ¿qué aspecto es fundamental en los test de usuario?"},{"answerOptions":[{"isCorrect":true,"rationale":"Un View no puede contener otros elementos en su interior, a diferencia del ViewGroup (como los layouts).","text":"El View representa componentes individuales, mientras que el ViewGroup actúa como contenedor de otros elementos."},{"isCorrect":false,"rationale":"Botones y cajas de texto son ambos tipos de View; el ViewGroup gestiona su disposición.","text":"El ViewGroup es un elemento de tipo botón y el View es exclusivamente una caja de texto."},{"isCorrect":false,"rationale":"Ambos tipos de elementos pueden tener dimensiones variables o dinámicas según sus propiedades.","text":"Un View siempre tiene un tamaño fijo, mientras que el ViewGroup es dinámico."},{"isCorrect":false,"rationale":"Ambos pueden definirse y manipularse tanto en XML como en código fuente.","text":"El View se define en el código Kotlin y el ViewGroup únicamente en el fichero XML."}],"hint":"Piense en la jerarquía de una interfaz: quién es el objeto contenido y quién es el objeto contenedor.","question":"En el desarrollo con Android Studio, ¿qué diferencia a un elemento 'View' de un 'ViewGroup'?"},{"answerOptions":[{"isCorrect":false,"rationale":"La gravedad determina la alineación o posicionamiento del elemento, no su tamaño.","text":"layout_gravity"},{"isCorrect":false,"rationale":"El margen define el espacio exterior alrededor del componente, no su dimensión propia.","text":"layout_margin"},{"isCorrect":true,"rationale":"Esta propiedad define cómo se expande o contrae horizontalmente un elemento dentro de su contenedor.","text":"layout_width"},{"isCorrect":false,"rationale":"Esta propiedad se encarga exclusivamente de la dimensión vertical (altura) del elemento.","text":"layout_height"}],"hint":"Utilice la traducción directa del inglés para identificar el término relacionado con el ancho.","question":"¿Qué propiedad de un layout en Android determina el valor de la anchura del componente insertado?"},{"answerOptions":[{"isCorrect":false,"rationale":"Las animaciones son atributos específicos (como enterAnim), no el contenedor principal.","text":"Es la animación que se ejecuta al entrar en un nuevo fragmento."},{"isCorrect":false,"rationale":"Esa tarea lógica de gestión de la navegación corresponde al NavController.","text":"Es el objeto que gestiona lógicamente el paso de una pantalla a otra."},{"isCorrect":true,"rationale":"El NavHost aloja los fragmentos y permite que cambien a medida que el usuario navega.","text":"Es un contenedor vacío donde se van intercambiando los destinos o pantallas."},{"isCorrect":false,"rationale":"El editor visual es una herramienta del IDE, el NavHost es un componente funcional de la interfaz.","text":"Es el editor visual donde se dibujan las flechas de transición."}],"hint":"Imagine un escenario de teatro: ¿quién es el escenario que se mantiene fijo mientras cambian los decorados y actores?","question":"En el componente 'Navigation' de Android, ¿qué función cumple el 'NavHost'?"},{"answerOptions":[{"isCorrect":false,"rationale":"El uso excesivo de colores puede comprometer la integridad estética y distraer de la funcionalidad.","text":"Utilizar la mayor cantidad de colores posibles para llamar la atención del usuario."},{"isCorrect":true,"rationale":"Un diseño profesional en iOS requiere coherencia visual y un uso prudente del color para no saturar al usuario.","text":"Seleccionar una paleta concreta y limitada, utilizando colores complementarios."},{"isCorrect":false,"rationale":"Se recomienda escoger un color característico que identifique la aplicación en todo su flujo.","text":"Evitar el uso de colores característicos para que la app parezca genérica."},{"isCorrect":false,"rationale":"Es aconsejable proporcionar colores adaptados tanto para entornos claros como oscuros.","text":"No proporcionar opciones para entornos oscuros para ahorrar recursos de desarrollo."}],"hint":"Menos suele ser más en el diseño de Apple: busque el equilibrio y la armonía visual.","question":"Al diseñar interfaces para iOS, ¿cuál es una recomendación clave sobre el uso del color?"},{"answerOptions":[{"isCorrect":false,"rationale":"El filtrado se realiza en el modelado de consultas, el adaptador solo provee la conexión base.","text":"Filtrar los datos mediante sentencias SQL de tipo WHERE."},{"isCorrect":false,"rationale":"La internacionalización no es la función de un adaptador de datos.","text":"Traducir el informe a diferentes idiomas de forma automática."},{"isCorrect":false,"rationale":"El diseño de gráficas es una tarea estética que se realiza con las herramientas de la paleta, no con el adaptador.","text":"Diseñar visualmente las gráficas de tarta y barras en el encabezado."},{"isCorrect":true,"rationale":"Los adaptadores permiten que el informe 'hable' con la base de datos o el fichero de origen.","text":"Establecer la configuración necesaria para la conexión con una fuente de datos específica."}],"hint":"Piense en la pieza de hardware que permite conectar un enchufe de un tipo en una toma de corriente de otro.","question":"En la creación de informes con JasperReports, ¿cuál es la función de los 'Data Adapters'?"},{"answerOptions":[{"isCorrect":false,"rationale":"La obligatoriedad depende de la configuración de la consulta, no de la naturaleza del parámetro.","text":"Los parámetros de usuario son de lectura obligatoria y los integrados son opcionales."},{"isCorrect":false,"rationale":"Los parámetros de usuario son fundamentales para crear consultas dinámicas y filtradas.","text":"Solo los parámetros integrados permiten el filtrado mediante cláusulas WHERE."},{"isCorrect":true,"rationale":"Los parámetros integrados vienen listos para usar en el entorno (como la fecha), mientras que los de usuario ofrecen flexibilidad total.","text":"Los integrados están disponibles por defecto, mientras que los de usuario se crean de forma personalizada."},{"isCorrect":false,"rationale":"Ambos tipos pueden ser utilizados en expresiones y operaciones dentro del informe.","text":"Los integrados no pueden usarse en cálculos y los de usuario sí."}],"hint":"Uno viene 'de fábrica' con la herramienta y el otro es 'hecho a medida' por el desarrollador.","question":"¿Qué diferencia a los parámetros 'integrados' de los parámetros 'de usuario' en un sistema de informes?"},{"answerOptions":[{"isCorrect":false,"rationale":"El control de acceso se gestiona mediante el servidor de informes o la lógica de la app, no por el uso de subinformes.","text":"Ocultar información confidencial a ciertos perfiles de usuario."},{"isCorrect":false,"rationale":"Los subinformes siguen necesitando acceso a fuentes de datos para mostrar información.","text":"Sustituir la necesidad de realizar conexiones a bases de datos externas."},{"isCorrect":false,"rationale":"De hecho, los subinformes pueden añadir carga de procesamiento, aunque mejoran el diseño y mantenimiento.","text":"Acelerar el tiempo de compilación del informe principal."},{"isCorrect":true,"rationale":"Los subinformes permiten manejar datos complejos de manera modular y organizada.","text":"Mejorar la legibilidad y garantizar una estructura más óptima al organizar consultas diferentes."}],"hint":"Piense en la modularidad: dividir un problema grande en partes más pequeñas y manejables.","question":"¿Cuál es el propósito fundamental de incluir subinformes dentro de un informe principal?"},{"answerOptions":[{"isCorrect":true,"rationale":"La accesibilidad busca eliminar barreras para usuarios con discapacidades o limitaciones técnicas.","text":"Accesibilidad."},{"isCorrect":false,"rationale":"La usabilidad se centra en la facilidad de uso y aprendizaje para el usuario promedio.","text":"Usabilidad."},{"isCorrect":false,"rationale":"La efectividad mide si el usuario logra completar sus objetivos, pero no la inclusión general.","text":"Efectividad."},{"isCorrect":false,"rationale":"La eficiencia mide los recursos (tiempo, esfuerzo) empleados para completar una tarea.","text":"Eficiencia."}],"hint":"Este término está estrechamente vinculado con la inclusión y la eliminación de barreras de acceso.","question":"En el desarrollo de interfaces, ¿qué concepto se refiere a la capacidad de un sistema para ser utilizado por el mayor número de personas posible, independientemente de sus capacidades técnicas o físicas?"},{"answerOptions":[{"isCorrect":true,"rationale":"El certificado vincula la identidad del usuario con su clave pública para garantizar la autenticidad.","text":"Demostrar que un usuario concreto es el dueño legítimo de una clave pública determinada."},{"isCorrect":false,"rationale":"La entidad de confianza certifica identidades, no actúa necesariamente como repositorio de documentos.","text":"Almacenar todos los documentos firmados en una base de datos centralizada."},{"isCorrect":false,"rationale":"La encriptación es una técnica, pero la función del certificado es la validación de identidad.","text":"Encriptar el mensaje para que nadie pueda leerlo durante el transporte."},{"isCorrect":false,"rationale":"La clave privada debe ser secreta y custodiada permanentemente por el usuario, no generarse en cada sesión.","text":"Generar automáticamente la clave privada del usuario en cada sesión."}],"hint":"Es como un documento de identidad digital que valida quién dice ser el poseedor de la 'llave' pública.","question":"Sobre la firma digital, ¿cuál es la función del certificado emitido por una entidad de confianza?"},{"answerOptions":[{"isCorrect":false,"rationale":"Tres menús suelen ser insuficientes para la mayoría de aplicaciones complejas de escritorio o móviles.","text":"Exactamente 3 menús principales."},{"isCorrect":false,"rationale":"Aunque la resolución influye, existen límites psicológicos de procesamiento de información humana.","text":"No hay límite, depende de la resolución de la pantalla."},{"isCorrect":true,"rationale":"Superar este número puede dificultar la localización de opciones y fatigar cognitivamente al usuario.","text":"Entre 7 y 10 menús máximo."},{"isCorrect":false,"rationale":"Tener tantos menús visibles a la vez suele considerarse un error de diseño de interfaz.","text":"Mínimo 15 para mostrar todas las funcionalidades."}],"hint":"Piense en un número que sea manejable de un vistazo rápido por la memoria a corto plazo del ser humano.","question":"¿Cuál es el límite recomendado de menús en una interfaz para no saturar al usuario?"},{"answerOptions":[{"isCorrect":false,"rationale":"Estos términos no corresponden a la estructura estándar de detección de eventos en Android.","text":"Método initActivity y escuchador ProyectListener."},{"isCorrect":false,"rationale":"Estos se usan para gestos táctiles complejos, no para una acción de click simple estándar.","text":"Método onTouch y escuchador GestureListener."},{"isCorrect":true,"rationale":"El método vincula el componente con la lógica, y el escuchador define qué ocurre tras el evento de click.","text":"Método de escucha setOnClickListener y escuchador ClickListener."},{"isCorrect":false,"rationale":"El primero es para pulsaciones prolongadas y el segundo para eventos de teclado hardware.","text":"Método setOnLongClickListener y escuchador KeyListener."}],"hint":"Busque los términos que incluyen la palabra inglesa para 'hacer click'.","question":"En Android, si queremos que un elemento realice una acción al ser pulsado, ¿qué par de componentes de código debemos implementar?"},{"answerOptions":[{"isCorrect":false,"rationale":"Ambas versiones están diseñadas precisamente para detectar errores; las funcionalidades deben estar cerradas en la beta.","text":"La alfa no permite errores y la beta es para introducir nuevas funcionalidades."},{"isCorrect":false,"rationale":"Son fases universales del ciclo de vida del desarrollo de software independientemente de la plataforma.","text":"Son términos idénticos que dependen de si el sistema operativo es Android o iOS."},{"isCorrect":true,"rationale":"La fase beta sirve para encontrar errores finales en entornos reales antes del lanzamiento oficial.","text":"La alfa es la primera versión testeada internamente; la beta es casi definitiva y testeada por usuarios externos."},{"isCorrect":false,"rationale":"Es al contrario: la alfa es muy temprana e interna, y la beta puede tener una distribución más amplia y externa.","text":"La alfa se distribuye en tiendas oficiales y la beta es solo para programadores."}],"hint":"Utilice el orden del alfabeto griego para determinar cuál es la versión más temprana y cuál la más madura.","question":"¿Qué diferencia a una versión alfa de una versión beta de un software?"},{"answerOptions":[{"isCorrect":false,"rationale":"El código es correcto para la máquina pero el resultado no es el que el humano esperaba del algoritmo.","text":"Error de lógica."},{"isCorrect":false,"rationale":"Este no es un error de desarrollo de código, sino un fallo del sistema ante una carga excesiva de datos.","text":"Error de volumen."},{"isCorrect":true,"rationale":"Si el código no cumple las reglas del lenguaje, el compilador no puede traducirlo a lenguaje máquina.","text":"Error de compilación."},{"isCorrect":false,"rationale":"Estos ocurren cuando el código es sintácticamente correcto pero intenta una operación imposible (como dividir por cero).","text":"Error de ejecución."}],"hint":"Es el primer filtro que debe pasar el código; si está mal escrito, la aplicación ni siquiera llega a 'arrancar'.","question":"¿Qué tipo de error de depuración es causado por un fallo en la sintaxis del lenguaje de programación?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esta sección solo aparece una vez al inicio del documento, no es apta para iterar sobre múltiples registros.","text":"Sección Title."},{"isCorrect":true,"rationale":"La sección Detail se repite para cada fila obtenida de la fuente de datos, mostrando así toda la información.","text":"Sección Detail."},{"isCorrect":false,"rationale":"Si se colocan aquí, normalmente solo aparecería el primer elemento de la tabla como encabezado de columna.","text":"Sección Column Header."},{"isCorrect":false,"rationale":"El sumario está destinado a totales o conclusiones finales, no al listado detallado de datos.","text":"Sección Summary."}],"hint":"Piense en la parte del informe que necesita 'clonarse' o repetirse para cada dato individual de la base de datos.","question":"En el contexto de informes, ¿dónde deben colocarse los campos de texto si queremos que se muestren todos los registros de una tabla?"},{"answerOptions":[{"isCorrect":false,"rationale":"JUnit es un framework para realizar pruebas unitarias automáticas en Java, no un sistema de seguimiento de errores.","text":"JUnit."},{"isCorrect":false,"rationale":"JMeter se especializa en pruebas de carga y rendimiento, no en el seguimiento de defectos individuales.","text":"JMeter."},{"isCorrect":true,"rationale":"Es una herramienta especializada en la gestión del ciclo de vida de los 'bugs' o errores detectados.","text":"Bugzilla."},{"isCorrect":false,"rationale":"SonarQube analiza la calidad del código, pero el reporte y gestión de errores específicos suele recaer en herramientas como Bugzilla.","text":"SonarQube."}],"hint":"El nombre de la herramienta contiene la palabra inglesa para 'bicho' o error de software.","question":"¿Qué herramienta online se utiliza comúnmente para el seguimiento de errores y defectos a través de diferentes versiones de una aplicación?"},{"answerOptions":[{"isCorrect":false,"rationale":"Ese comportamiento es más característico del FrameLayout.","text":"Superpone todos los elementos uno encima de otro en el centro de la pantalla."},{"isCorrect":true,"rationale":"Su simplicidad radica en que los componentes se apilan linealmente siguiendo la orientación definida.","text":"Alinea los elementos uno tras otro en una dirección única (horizontal o vertical)."},{"isCorrect":false,"rationale":"Como cualquier layout, permite definir dimensiones mediante layout_width y layout_height.","text":"No permite modificar el ancho o alto de los elementos internos."},{"isCorrect":false,"rationale":"El posicionamiento absoluto es propio de otros tipos de contenedores y no se recomienda por falta de adaptabilidad.","text":"Permite colocar elementos de forma libre utilizando coordenadas X e Y absolutas."}],"hint":"Su nombre sugiere una línea recta; piense en cómo se colocarían objetos en una fila o en una columna.","question":"Al crear un layout tipo 'LinearLayout' en Android, ¿qué característica lo define principalmente?"},{"answerOptions":[{"isCorrect":true,"rationale":"Permite diferenciar entre una pulsación corta (acción estándar) y una larga (menú contextual o acciones extra).","text":"Se invoca cuando el usuario mantiene pulsado un elemento durante un tiempo prolongado."},{"isCorrect":false,"rationale":"Eso correspondería a eventos de tipo 'fling' o gestos táctiles complejos.","text":"Detecta cuando el usuario desliza el dedo rápidamente por la pantalla."},{"isCorrect":false,"rationale":"No tiene una función predefinida de cierre; simplemente captura la duración de la pulsación.","text":"Finaliza la aplicación de forma segura tras una pulsación doble."},{"isCorrect":false,"rationale":"Los eventos de teclas físicas se gestionan mediante otros escuchadores como onKey.","text":"Se activa únicamente cuando se pulsa una tecla física de volumen."}],"hint":"Traduza 'Long' del inglés para entender qué tipo de interacción está midiendo este método.","question":"¿Cuál es la función del método 'onLongClick' en una interfaz Android?"},{"answerOptions":[{"isCorrect":false,"rationale":"Swift utiliza 'var' para variables y 'let' para constantes.","text":"Se declaran siempre con la palabra reservada 'variable'."},{"isCorrect":true,"rationale":"Swift es un lenguaje con tipado fuerte, lo que obliga a crear una nueva variable si se requiere otro tipo de dato.","text":"No es posible cambiar el tipo de una variable una vez declarada."},{"isCorrect":false,"rationale":"Todas las variables en Swift deben ser declaradas (usualmente con var o let) antes de su uso.","text":"No hace falta declararlas expresamente antes de usarlas."},{"isCorrect":false,"rationale":"Esto ocurre en lenguajes de tipado dinámico como JavaScript, pero no en Swift.","text":"Pueden cambiar de tipo libremente a lo largo de la ejecución del programa."}],"hint":"Considere la rigidez de los lenguajes modernos de Apple para evitar errores de tipo en tiempo de ejecución.","question":"En el desarrollo de interfaces en iOS con Swift, ¿qué característica tienen las variables en cuanto a su tipo de dato?"},{"answerOptions":[{"isCorrect":false,"rationale":"La satisfacción es otra métrica distinta dentro de la usabilidad, no se limita a la eficiencia.","text":"El grado de satisfacción subjetiva del usuario al interactuar con el sistema."},{"isCorrect":false,"rationale":"Esa definición corresponde a la Efectividad.","text":"La precisión y completitud con la que los usuarios alcanzan sus metas."},{"isCorrect":true,"rationale":"La eficiencia optimiza la relación entre el resultado obtenido y el coste para lograrlo.","text":"Los recursos empleados (como tiempo o esfuerzo) para alcanzar un objetivo determinado."},{"isCorrect":false,"rationale":"La ausencia de errores es un objetivo de la calidad técnica o 'robustez', no de la eficiencia de uso.","text":"La ausencia de errores en el código fuente de la aplicación."}],"hint":"No se trata solo de llegar a la meta, sino de cuánto te ha costado (en tiempo o clics) llegar hasta ella.","question":"Dentro de la normativa ISO aplicada a interfaces, ¿qué mide la 'Eficiencia'?"},{"answerOptions":[{"isCorrect":true,"rationale":"El grupo Widgets aloja elementos extra de control y visualización que enriquecen la interfaz.","text":"Widgets."},{"isCorrect":false,"rationale":"Los Containers incluyen elementos que alojan a otros, como el ScrollView o el RecyclerView.","text":"Containers."},{"isCorrect":false,"rationale":"Este grupo se limita a elementos de pulsación como Checkbox, RadioButton o botones estándar.","text":"Buttons."},{"isCorrect":false,"rationale":"Los Layouts son contenedores para organizar la distribución, no componentes visuales de control como un calendario.","text":"Layouts."}],"hint":"Piense en el nombre que reciben los 'artilugios' o pequeños controles adicionales en los sistemas operativos modernos.","question":"En Android, ¿qué grupo de elementos de la paleta contiene componentes como calendarios o barras de progreso?"},{"answerOptions":[{"isCorrect":false,"rationale":"Forzaría el icono siempre, lo cual puede romper el diseño en pantallas muy pequeñas.","text":"showAsAction=\"always\""},{"isCorrect":false,"rationale":"Este valor no es una opción válida por sí sola sin especificar condiciones de visibilidad.","text":"showAsAction=\"asAction\""},{"isCorrect":true,"rationale":"Este valor es dinámico: muestra el icono si cabe, o lo envía al menú de 'tres puntos' si no hay sitio.","text":"showAsAction=\"ifRoom\""},{"isCorrect":false,"rationale":"Ocultaría el icono siempre, dejándolo únicamente dentro del menú desplegable.","text":"showAsAction=\"never\""}],"hint":"La opción utiliza una expresión en inglés que significa 'si hay habitación/espacio'.","question":"¿Qué atributo de un ítem de menú en Android permite que el icono aparezca en la barra si hay espacio suficiente?"}];
+        let currentIndex = 0;
+                const originalQuizData = quizData.slice();
+                (function() {
+                  var key = 'wrong:' + window.location.pathname.split('/').pop();
+                  try {
+                    var stored = localStorage.getItem(key);
+                    if (stored) {
+                      var wrongSet = new Set(JSON.parse(stored));
+                      if (wrongSet.size > 0) {
+                        var filtered = originalQuizData.filter(function(q){ return wrongSet.has(q.question); });
+                        if (filtered.length > 0) quizData = filtered;
+                      }
+                    }
+                  } catch(e) {}
+                })();
+        let mode = 'quiz';
+        let state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+
+        function getStats() {
+            const answered = state.filter((s) => s.selectedIndex !== null).length;
+            const correct = state.filter((s, i) => s.selectedIndex !== null && quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const wrong = state.filter((s, i) => s.selectedIndex !== null && !quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const skipped = quizData.length - answered;
+            const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+            return { answered, correct, wrong, skipped, accuracy };
+        }
+
+        function shuffleAnswers() {
+            quizData.forEach((q) => {
+                for (let i = q.answerOptions.length - 1; i > 0; i -= 1) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.answerOptions[i], q.answerOptions[j]] = [q.answerOptions[j], q.answerOptions[i]];
+                }
+            });
+        }
+
+        function shuffleQuestions() {
+            for (let i = quizData.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [quizData[i], quizData[j]] = [quizData[j], quizData[i]];
+            }
+        }
+
+        function resetState() {
+            state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+        }
+
+
+        function fmt(str) {
+          if (!str) return str;
+          return str
+            .replace(/\$\$(.*?)\$\$/gs, function(_,m){return m;})
+            .replace(/\$([^$<>]+?)\$/g, function(_,m){return m;})
+            .replace(/\*\*(.*?)\*\*/g, function(_,m){return "<strong>"+m+"</strong>";})
+            .replace(/\*(.*?)\*/g, function(_,m){return "<em>"+m+"</em>";})
+            .replace(/`(.*?)`/g, function(_,m){return "<code>"+m+"</code>";})
+        }
+        function renderQuestion() {
+            const q = quizData[currentIndex];
+            const s = state[currentIndex];
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+
+            let optionsHtml = '';
+            const correctIndex = q.answerOptions.findIndex((o) => o.isCorrect);
+            const selectedCorrect = s.selectedIndex !== null && q.answerOptions[s.selectedIndex].isCorrect;
+            q.answerOptions.forEach((opt, idx) => {
+                const isSelected = s.selectedIndex === idx;
+                const statusClass = isSelected ? (opt.isCorrect ? 'correct' : 'incorrect') : '';
+                const selectedClass = isSelected ? 'selected' : '';
+                const revealCorrect = (s.selectedIndex !== null && !selectedCorrect && opt.isCorrect) || (mode === 'review' && opt.isCorrect);
+                const revealClass = revealCorrect ? 'revealed-correct' : '';
+
+                optionsHtml += `
+                    <li class="option-item ${selectedClass} ${statusClass} ${revealClass}" onclick="selectOption(${idx})">
+                        <div class="option-label">
+                            <span>${String.fromCharCode(65 + idx)}. ${fmt(opt.text)}</span>
+                        </div>
+                        <div class="feedback-state">
+                            ${opt.isCorrect ? '✓ Correcto' : '✕ Incorrecto'}
+                        </div>
+                        ${opt.rationale ? '<div class="rationale">' + fmt(opt.rationale) + '</div>' : ''}
+                    </li>
+                `;
+            });
+
+            const stats = getStats();
+
+            content.innerHTML = `
+                <div class="progress-container">
+                    <div class="progress-text">${currentIndex + 1} / ${quizData.length}</div>
+                    <div class="status-bar">
+                        <div class="status-item status-correct">
+                            <span>✓</span>
+                            <span>${stats.correct}</span>
+                        </div>
+                        <div class="status-item status-wrong">
+                            <span>✕</span>
+                            <span>${stats.wrong}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="question-text">${fmt(q.question)}</div>
+                <ul class="options-list">
+                    ${optionsHtml}
+                </ul>
+            `;
+
+            // Update Pista Box
+            const hintText = document.getElementById('hint-text');
+            hintText.innerText = fmt(q.hint) || 'No hay pista disponible para esta pregunta.';
+            if (s.hintVisible) {
+                hintBox.classList.add('active');
+            } else {
+                hintBox.classList.remove('active');
+            }
+
+            results.classList.add('hidden');
+            content.classList.remove('hidden');
+            hintBox.classList.remove('hidden');
+            nav.classList.remove('hidden');
+
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = false;
+            if (mode === 'review') {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Volver a resultados' : 'Siguiente';
+            } else {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finalizar' : 'Siguiente';
+            }
+            document.getElementById('hint-icon-arrow').innerText = s.hintVisible ? '▲' : '▼';
+        }
+
+        function selectOption(idx) {
+            if (mode !== 'quiz') return;
+            if (state[currentIndex].selectedIndex !== null) return; // Prevent re-selection
+            state[currentIndex].selectedIndex = idx;
+            renderQuestion();
+        }
+
+        function toggleHint() {
+            if (mode === 'results') return;
+            state[currentIndex].hintVisible = !state[currentIndex].hintVisible;
+            renderQuestion();
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        function saveWrongAnswers() {
+          var wrongQuestions = state
+            .map(function(s,i){return {s:s,i:i};})
+            .filter(function(x){return x.s.selectedIndex !== null && !quizData[x.i].answerOptions[x.s.selectedIndex].isCorrect;})
+            .map(function(x){return quizData[x.i].question;});
+          var key = 'wrong:' + window.location.pathname.split('/').pop();
+          if (wrongQuestions.length > 0) {
+            localStorage.setItem(key, JSON.stringify(wrongQuestions));
+          } else {
+            localStorage.removeItem(key);
+          }
+          return wrongQuestions;
+        }
+        function renderResults() {
+            const stats = getStats();
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+
+            const score = `${stats.correct} / ${quizData.length}`;
+
+            results.innerHTML = `
+                <div class="results-screen">
+                    <div>
+                        <h1 class="results-title">¡Lo lograste! Quiz completado.</h1>
+                        <p class="results-subtitle">Revisa tu puntuación o inténtalo de nuevo.</p>
+                    </div>
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-label">Puntuación</div>
+                            <div class="result-value">${score}</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Precisión</div>
+                            <div class="result-value">${stats.accuracy}%</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-metrics">
+                                <div>Correctas <strong>${stats.correct}</strong></div>
+                                <div>Incorrectas <strong>${stats.wrong}</strong></div>
+                                <div>Omitidas <strong>${stats.skipped}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="results-actions"><button id="retake-wrong-btn" class="btn btn-ghost" style="display:none">Repasar errores (<span id="wrong-count">0</span>)</button>
+                        <button id="review-btn" class="btn btn-ghost">Revisar Quiz</button>
+                        <button id="retake-btn" class="btn btn-next">Repetir Quiz</button>
+                    </div>
+                </div>
+            `;
+
+            content.classList.add('hidden');
+            results.classList.remove('hidden');
+            hintBox.classList.add('hidden');
+            nav.classList.add('hidden');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            var wrongQuestions = saveWrongAnswers();
+            var retakeWrongBtn = document.getElementById('retake-wrong-btn');
+            if (wrongQuestions.length > 0) {
+              document.getElementById('wrong-count').textContent = wrongQuestions.length;
+              retakeWrongBtn.style.display = '';
+            }
+            (function() {
+              var fname = window.location.pathname.split('/').pop();
+              var backLink = document.querySelector('.quiz-heading a[href*="index.html"]');
+              if (backLink) {
+                var h = '#wrong=' + fname + ':' + wrongQuestions.length;
+                backLink.href = backLink.href.split('#')[0] + h;
+              }
+            })();
+            document.getElementById('retake-wrong-btn').onclick = function() {
+              if (wrongQuestions.length === 0) return;
+              mode = 'quiz';
+              currentIndex = 0;
+              var wrongSet = new Set(wrongQuestions);
+              quizData = originalQuizData.filter(function(q){return wrongSet.has(q.question);});
+              shuffleAnswers();
+              resetState();
+              renderQuestion();
+            };
+            document.getElementById('review-btn').onclick = () => {
+                mode = 'review';
+                currentIndex = 0;
+                renderQuestion();
+            };
+
+            document.getElementById('retake-btn').onclick = () => {
+                mode = 'quiz';
+                currentIndex = 0;
+                shuffleQuestions();
+                shuffleAnswers();
+                resetState();
+                renderQuestion();
+            };
+        }
+
+        document.getElementById('prev-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        };
+
+        document.getElementById('next-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (mode === 'review') {
+                if (currentIndex < quizData.length - 1) {
+                    currentIndex++;
+                    renderQuestion();
+                } else {
+                    mode = 'results';
+                    renderResults();
+                }
+                return;
+            }
+            if (currentIndex < quizData.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                mode = 'results';
+                renderResults();
+            }
+        };
+
+        document.getElementById('hint-toggle').onclick = toggleHint;
+
+        renderQuestion();
+    </script>
+
+  <button id="theme-toggle" title="Cambiar tema" style="position:fixed;top:8px;right:8px;background:var(--card);border:1px solid var(--stroke);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:transform 0.2s ease;z-index:100;">🌙</button>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-toggle').textContent = '☀️';
+      }
+      document.getElementById('theme-toggle').addEventListener('click', function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        this.textContent = isDark ? '🌙' : '☀️';
+      });
+    })();
+  </script>
+</body>
+</html>
