@@ -12,7 +12,7 @@ const PREFIXES = {
   psp: "Programación de Servicios y Procesos",
   cib: "Ciberseguridad",
   pmydm: "Programación Multimedia y Dispositivos Móviles",
-  itn: "Itinerario Personal para la Empleabilidad",
+  ipe: "Itinerario Personal para la Empleabilidad",
   acc: "Acceso a Datos",
   di: "Desarrollo de Interfaces"
 };

@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotebookLM - Quiz Export</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+        :root {
+            --bg: #f6f1e7;
+            --bg-deep: #efe4d6;
+            --ink: #171717;
+            --muted: #5b5b5b;
+            --accent: #d3542c;
+            --accent-light: #ff8f5a;
+            --accent-dark: #b14320;
+            --teal: #1f6f78;
+            --card: #fff7ef;
+            --stroke: #e3d6c5;
+            --shadow: 0 18px 40px rgba(23, 23, 23, 0.12);
+            --radius-sm: 10px;
+            --radius-md: 12px;
+            --radius-lg: 14px;
+            --radius-xl: 18px;
+            --radius-2xl: 22px;
+            --space-1: 6px;
+            --space-2: 8px;
+            --space-3: 10px;
+            --space-4: 12px;
+            --space-5: 14px;
+            --space-6: 16px;
+            --space-7: 18px;
+            --space-8: 20px;
+            --space-9: 24px;
+            --space-10: 32px;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --error: #b54832;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background:
+                radial-gradient(240px 140px at 10% -10%, #ffd2b9 0%, transparent 70%),
+                radial-gradient(220px 160px at 90% 0%, #cfe7e6 0%, transparent 65%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+            color: var(--ink);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 800px;
+            padding: var(--space-10) var(--space-8);
+            box-sizing: border-box;
+            background: var(--card);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+        }
+
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .progress-text {
+            color: var(--muted);
+            font-size: 0.9em;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-correct { color: var(--teal); }
+        .status-wrong { color: var(--error); }
+
+        .question-text {
+            font-family: var(--font-display);
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-item:hover:not(.selected) {
+            background-color: var(--card);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .option-item.selected.correct {
+            background-color: rgba(31, 111, 120, 0.12);
+            border-color: var(--teal);
+        }
+
+        .option-item.selected.incorrect {
+            background-color: rgba(181, 72, 50, 0.12);
+            border-color: var(--error);
+        }
+
+        .option-item.revealed-correct {
+            border-color: rgba(31, 111, 120, 0.5);
+            box-shadow: inset 0 0 0 1px rgba(31, 111, 120, 0.16);
+        }
+
+        .option-label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feedback-state {
+            font-weight: bold;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .selected .feedback-state {
+            display: block;
+        }
+
+        .revealed-correct .feedback-state {
+            display: block;
+        }
+
+        .correct .feedback-state { color: var(--teal); }
+        .incorrect .feedback-state { color: var(--error); }
+        .revealed-correct .feedback-state { color: var(--teal); }
+
+        .rationale {
+            font-size: 0.95em;
+            color: var(--muted);
+            margin-top: 4px;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .selected .rationale {
+            display: block;
+        }
+
+        .revealed-correct .rationale {
+            display: block;
+        }
+        .hint-toggle {
+            border: 1px solid var(--stroke);
+            color: var(--muted);
+            cursor: pointer;
+            padding: var(--space-2) var(--space-6);
+            border-radius: var(--radius-md);
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hint-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .hint-content {
+            margin-top: 32px;
+            padding: var(--space-6);
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-lg);
+            font-size: 0.95em;
+            color: var(--muted);
+            display: none;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .hint-content.active {
+            display: flex;
+        }
+
+        .hint-icon-box {
+            color: var(--accent-dark);
+            font-size: 1.2em;
+            margin-top: -2px;
+        }
+
+        .navigation {
+            margin-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-7);
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-prev {
+            background-color: #fff;
+            color: var(--ink);
+            border-color: var(--stroke);
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn-next {
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            color: #fff;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .results-screen {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+        }
+
+        .results-title {
+            font-family: var(--font-display);
+            font-size: 2.1em;
+            margin: 0;
+        }
+
+        .results-subtitle {
+            color: var(--muted);
+            margin: 0;
+            font-size: 1em;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .result-card {
+            padding: var(--space-6);
+            border-radius: var(--radius-xl);
+            background: #fff;
+            border: 1px solid var(--stroke);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .result-label {
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-family: var(--font-display);
+        }
+
+        .result-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            border: 1px solid var(--stroke);
+            color: var(--ink);
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 900px) {
+            .quiz-container {
+                margin: var(--space-8);
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .quiz-container {
+                padding: var(--space-8) var(--space-6);
+            }
+
+            .question-text {
+                font-size: 1.3em;
+            }
+
+            .option-item {
+                padding: var(--space-4);
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .quiz-container {
+                margin: var(--space-6);
+                padding: var(--space-7) var(--space-5);
+            }
+
+            .progress-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+
+            .navigation {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-4);
+            }
+
+            .nav-buttons {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .hint-toggle {
+                justify-content: space-between;
+            }
+
+            .results-actions {
+                flex-direction: column;
+            }
+        }
+    
+    [data-theme="dark"] {
+      --bg: #1a1612;
+      --bg-deep: #141210;
+      --ink: #f0ebe0;
+      --muted: #9a9080;
+      --accent: #e8673a;
+      --accent-light: #ff9a6a;
+      --accent-dark: #c45528;
+      --teal: #2a9aa8;
+      --card: #221e18;
+      --stroke: #3a3028;
+      --shadow: 0 18px 40px rgba(0,0,0,0.4);
+      --error: #e06050;
+    }
+    [data-theme="dark"] body {
+      background:
+        radial-gradient(240px 140px at 10% -10%, #3a1a08 0%, transparent 70%),
+        radial-gradient(220px 160px at 90% 0%, #0a2a2e 0%, transparent 65%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    }
+    [data-theme="dark"] .option-item { background-color: var(--card); }
+    [data-theme="dark"] .hint-toggle,
+    [data-theme="dark"] .hint-content,
+    [data-theme="dark"] .btn-prev { background-color: var(--card); color: var(--ink); }
+    [data-theme="dark"] .result-card { background: var(--card); }
+    [data-theme="dark"] .btn-next {
+      background: linear-gradient(90deg, #e8673a, #f28c5e);
+      box-shadow: 0 4px 20px rgba(232, 103, 58, 0.35);
+      color: #fff;
+    }
+    [data-theme="dark"] .btn-next:hover:not(:disabled) {
+      box-shadow: 0 6px 24px rgba(232, 103, 58, 0.5);
+    }
+    
+    /* quiz-mobile-v3 */
+    @media (max-width: 640px) {
+      body {
+        height: 100dvh;
+        overflow: hidden;
+        align-items: flex-start;
+        padding: 0;
+      }
+      .quiz-container {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        margin: 0;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+        padding-bottom: 0;
+      }
+      #quiz-content,
+      #results-content {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        min-height: 0;
+        padding-bottom: 8px;
+      }
+      #hint-box { flex-shrink: 0; }
+      .navigation {
+        flex-shrink: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        margin-top: 0;
+        background: var(--card);
+        border-top: 1px solid var(--stroke);
+      }
+    }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+
+    <div class="quiz-heading" style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
+      <a href="../index.html" style="font-size:0.82em;color:var(--muted);text-decoration:none;font-family:var(--font-body)">← Índice</a>
+      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">Acceso a Datos · Quiz 5</h1>
+    </div>
+        <div id="quiz-content">
+            <!-- Dynamic Content -->
+        </div>
+        <div id="results-content" class="hidden"></div>
+
+        <div id="hint-box" class="hint-content">
+            <div class="hint-icon-box">💡</div>
+            <div id="hint-text"></div>
+        </div>
+
+        <div class="navigation">
+            <button id="hint-toggle" class="hint-toggle">
+                <span>Pista</span>
+                <span id="hint-icon-arrow">▼</span>
+            </button>
+            <div class="nav-buttons">
+                <button id="prev-btn" class="btn btn-prev">Anterior</button>
+                <button id="next-btn" class="btn btn-next">Siguiente</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let quizData = [{"answerOptions":[{"isCorrect":true,"rationale":"Los atributos compartidos usan eventos para informar sin esperar respuesta, mientras que los restringidos buscan el 'visto bueno' de componentes receptores antes de modificar el valor.","text":"Los atributos compartidos notifican cambios de forma unidireccional, mientras que los restringidos requieren aprobación previa de otros componentes."},{"isCorrect":false,"rationale":"El tipo de dato no define si un atributo es compartido o restringido, sino su comportamiento ante eventos de cambio.","text":"Los atributos restringidos solo aceptan tipos primitivos y los compartidos aceptan objetos serializables."},{"isCorrect":false,"rationale":"Ambos forman parte de la interfaz pública del componente; la diferencia radica en la lógica de aprobación y notificación.","text":"Los atributos restringidos son privados para el componente, mientras que los compartidos son públicos y estáticos."},{"isCorrect":false,"rationale":"La distinción no se basa en el manejo de hilos, sino en el mecanismo de notificación de eventos y validación de cambios.","text":"Los atributos compartidos permiten el acceso multihilo y los restringidos bloquean el acceso concurrente."}],"hint":"Piense en quién tiene la última palabra antes de que el valor de la propiedad se actualice efectivamente.","question":"¿Cuál es la distinción técnica fundamental entre un atributo compartido y un atributo restringido en un componente Java Bean?"},{"answerOptions":[{"isCorrect":false,"rationale":"No es necesaria una interfaz; la reflexión puede descubrir cualquier elemento declarado como público sin contratos adicionales.","text":"Obliga al desarrollador a implementar una interfaz específica llamada 'Introspectable'."},{"isCorrect":false,"rationale":"La reflexión es una característica del lenguaje Java para el análisis de objetos en memoria, independientemente de su persistencia.","text":"Solo funciona si el componente tiene estado persistente en una base de datos relacional."},{"isCorrect":true,"rationale":"La reflexión es un mecanismo de bajo nivel que analiza la estructura de la clase en tiempo de ejecución para identificar miembros públicos.","text":"Permite a los objetos Java descubrir información sobre métodos, campos y constructores de clases cargadas durante la ejecución."},{"isCorrect":false,"rationale":"La reflexión actúa directamente sobre el bytecode de la clase cargada, no depende exclusivamente de ficheros externos.","text":"Utiliza obligatoriamente un fichero XML de configuración para mapear los nombres de los métodos."}],"hint":"Se trata de un proceso que ocurre 'durante la ejecución' del programa.","question":"En el contexto de la introspección de componentes EJB, ¿cómo permite la 'reflexión' descubrir las características del software?"},{"answerOptions":[{"isCorrect":false,"rationale":"Son compatibles, pero con la limitación de que solo un campo en un índice compuesto puede ser un array.","text":"Ninguna, ya que los índices Hashed no son compatibles con campos de tipo array."},{"isCorrect":true,"rationale":"MongoDB crea una entrada de índice por cada elemento del array para optimizar las búsquedas de valores específicos.","text":"Cinco entradas independientes, una para cada valor del array."},{"isCorrect":false,"rationale":"El índice debe cubrir todos los elementos para ser efectivo en consultas de igualdad sobre cualquier posición.","text":"Dos entradas: una para el primer elemento y otra para el último como delimitadores."},{"isCorrect":false,"rationale":"Esto dificultaría las búsquedas de elementos individuales dentro del array.","text":"Una única entrada que representa el hash de la colección completa de elementos."}],"hint":"Recuerde que el objetivo es que buscar un elemento específico dentro de la lista sea extremadamente rápido.","question":"Al configurar un índice 'Hashed' en MongoDB para un campo que contiene un array con 5 elementos, ¿cuántas entradas genera el índice para ese documento?"},{"answerOptions":[{"isCorrect":false,"rationale":"La estructura de la clave primaria no condiciona la elección entre estos dos métodos.","text":"get() solo funciona con claves primarias simples y load() con claves compuestas."},{"isCorrect":true,"rationale":"get() accede a la base de datos inmediatamente y devuelve null si no hay fila, mientras que load() asume que el objeto existe y falla al intentar acceder a él.","text":"get() devuelve null, mientras que load() lanza una excepción ObjectNotFoundException."},{"isCorrect":false,"rationale":"Load está diseñado para escenarios donde se tiene la certeza de la existencia del objeto, por lo que su ausencia se considera un error crítico.","text":"Ambos devuelven null para evitar la interrupción del flujo del programa."},{"isCorrect":false,"rationale":"Es exactamente al revés en términos de la excepción lanzada.","text":"get() devuelve una excepción de tipo Runtime y load() devuelve un objeto vacío."}],"hint":"Piense en cuál de los dos es más 'optimista' respecto a la existencia de los datos.","question":"En Hibernate, ¿cuál es la diferencia de comportamiento principal entre los métodos Session.get() y Session.load() cuando el objeto no existe?"},{"answerOptions":[{"isCorrect":true,"rationale":"El Resource Adapter Archive (.rar) contiene las bibliotecas y descriptores necesarios para conectar con sistemas externos mediante JCA.","text":".rar"},{"isCorrect":false,"rationale":"Este formato se reserva para la capa de presentación web.","text":".war"},{"isCorrect":false,"rationale":"El .ear es el contenedor de nivel superior que puede incluir otros módulos, pero no es el adaptador en sí mismo.","text":".ear"},{"isCorrect":false,"rationale":"Aunque es un formato genérico, no es el específico definido para adaptadores de recursos en el estándar J2EE.","text":".jar"}],"hint":"Sus siglas significan 'Resource Adapter Archive'.","question":"Según el modelo de componentes J2EE, ¿qué archivo de empaquetado se utiliza específicamente para integrar sistemas externos mediante la arquitectura JCA?"},{"answerOptions":[{"isCorrect":false,"rationale":"Se permite un campo array, lo cual es muy útil para filtrar por una categoría y una etiqueta simultáneamente.","text":"Ninguno de los campos puede ser un array; los índices compuestos solo admiten valores escalares."},{"isCorrect":false,"rationale":"La posición del campo array no está restringida, lo que importa es la cantidad total de campos de ese tipo.","text":"Los campos array deben ocupar obligatoriamente la primera posición en la definición del índice."},{"isCorrect":true,"rationale":"Esta limitación evita que el número de entradas de índice crezca exponencialmente con cada documento.","text":"Solo un campo de los incluidos en el índice compuesto puede contener valores de tipo array."},{"isCorrect":false,"rationale":"Esto causaría una explosión combinatoria de entradas de índice inmanejable para el motor.","text":"Todos los campos del índice compuesto deben ser arrays para permitir la indexación multidimensional."}],"hint":"Considere el impacto en el almacenamiento si se cruzaran múltiples listas de valores para un solo documento.","question":"Al crear un índice compuesto en MongoDB que involucra campos de tipo array, ¿cuál es la restricción crítica que se debe observar?"},{"answerOptions":[{"isCorrect":true,"rationale":"Un objeto Detached tiene representación en la base de datos pero ya no está vinculado a una sesión activa.","text":"Detached"},{"isCorrect":false,"rationale":"Para ser Persistent, el objeto requiere obligatoriamente una asociación viva con una sesión de Hibernate.","text":"Persistent"},{"isCorrect":false,"rationale":"Transient se refiere a objetos nuevos que nunca han sido asociados a una sesión ni tienen ID.","text":"Transient"},{"isCorrect":false,"rationale":"El cierre de la sesión no implica el borrado de los datos en la base de datos relacional.","text":"Removed"}],"hint":"El objeto está 'separado' de la conexión física que lo mantenía sincronizado.","question":"En Hibernate, ¿qué estado adquiere una instancia de una clase persistente inmediatamente después de que se cierra el objeto Session?"},{"answerOptions":[{"isCorrect":false,"rationale":"Las clases abstractas no pueden ser instanciadas, lo que impediría la creación de los objetos persistentes.","text":"Porque las tablas de la base de datos requieren que las clases sean abstractas para poder insertar registros."},{"isCorrect":false,"rationale":"El recolector de basura gestiona clases finales sin problemas; la limitación es puramente de la arquitectura del ORM.","text":"Porque el recolector de basura de Java no puede procesar objetos de tipo final que provienen de JDBC."},{"isCorrect":true,"rationale":"Si la clase es final, Hibernate no puede crear subclases dinámicas para gestionar la carga eficiente de datos bajo demanda.","text":"Porque Hibernate utiliza proxies para la carga perezosa (lazy loading) que heredan de la clase original."},{"isCorrect":false,"rationale":"La restricción 'final' no afecta a la visibilidad de los métodos internos de la clase.","text":"Porque las clases finales no pueden implementar métodos getter y setter privados."}],"hint":"Piense en cómo Hibernate intenta 'engañar' al sistema para no cargar todos los datos de golpe.","question":"Al definir una clase persistente en Hibernate, ¿por qué es una 'buena práctica' que la clase no sea de tipo 'final'?"},{"answerOptions":[{"isCorrect":true,"rationale":"El valor 'native' permite delegar la creación del ID en la base de datos (identity, sequence o hilo) automáticamente.","text":"Indica a Hibernate que debe usar el algoritmo de generación de claves primarias más adecuado según las capacidades de la base de datos."},{"isCorrect":false,"rationale":"Es una confusión conceptual; el generador se encarga de la integridad referencial a través de la clave primaria.","text":"Genera un código QR único para cada registro insertado en la tabla."},{"isCorrect":false,"rationale":"Asignar IDs manualmente requeriría una configuración de tipo 'assigned', no 'native'.","text":"Obliga a que el programador asigne manualmente el ID antes de llamar al método save()."},{"isCorrect":false,"rationale":"No tiene relación con otros lenguajes; se limita a la estrategia de generación de identificadores únicos.","text":"Convierte automáticamente todos los atributos de la clase en tipos de datos nativos de C++."}],"hint":"Este elemento actúa como un camaleón que se adapta a SQL Server, Oracle o MySQL según convenga.","question":"¿Cuál es la función del elemento <generator class=\"native\"/> dentro del fichero de mapeo .hbm.xml de Hibernate?"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque es una característica del componente, no es el objetivo de definir sus atributos y operaciones.","text":"Garantizar que el componente no tenga estado visible desde el exterior."},{"isCorrect":false,"rationale":"La lógica interna pertenece al nivel semántico o de comportamiento.","text":"Definir la lógica interna de procesamiento y el algoritmo de negocio."},{"isCorrect":false,"rationale":"La interfaz sintáctica es independiente del motor de persistencia utilizado.","text":"Mapear directamente las variables locales a columnas de una base de datos NoSQL."},{"isCorrect":true,"rationale":"El nivel sintáctico define 'cómo se ve' el componente desde fuera, permitiendo la comunicación formal entre módulos.","text":"Establecer la interfaz pública del componente para que otros puedan interactuar con él."}],"hint":"Se refiere a la 'forma' o contrato externo del componente.","question":"En el desarrollo de componentes, ¿cuál es el objetivo del nivel sintáctico representado por los atributos, operaciones y eventos?"},{"answerOptions":[{"isCorrect":true,"rationale":"Los índices 'Sparse' solo contienen entradas para documentos que poseen el campo, ignorando el resto.","text":"No se incluyen en el índice, lo que ahorra espacio pero impide encontrarlos a través de dicho índice."},{"isCorrect":false,"rationale":"MongoDB es flexible (schema-less) y permite documentos con diferentes estructuras sin obligar a la presencia de todos los campos.","text":"El motor de la base de datos rechaza la inserción de esos documentos por falta de integridad."},{"isCorrect":false,"rationale":"MongoDB no modifica el documento original al crear el índice; simplemente decide si incluir la referencia o no.","text":"Se les asigna automáticamente un valor por defecto para poder incluirlos en el árbol del índice."},{"isCorrect":false,"rationale":"Ese es el comportamiento de un índice normal, no de uno de tipo 'Sparse'.","text":"Se indexan con un valor nulo para asegurar que aparezcan en todas las consultas."}],"hint":"Piense en la palabra 'escaso' o 'disperso' para entender cómo se puebla este índice.","question":"Al utilizar un índice 'Sparse' en MongoDB, ¿qué sucede con los documentos que no contienen el campo indexado?"},{"answerOptions":[{"isCorrect":false,"rationale":"Update suele ser más rápido precisamente porque no tiene que gestionar estados mezclados de sesiones.","text":"Merge es mucho más rápido porque no verifica la existencia del registro en la base de datos."},{"isCorrect":false,"rationale":"Ambos métodos están orientados a la actualización de datos, no al borrado.","text":"Merge permite borrar registros de forma lógica en lugar de física."},{"isCorrect":true,"rationale":"Merge es más robusto ante conflictos de estados de objetos que ya están en la caché de la sesión.","text":"Merge puede gestionar la actualización incluso si ya existe otra instancia de la sesión ejecutándose."},{"isCorrect":false,"rationale":"HQL se ejecuta mediante el objeto Query, no directamente a través de métodos de sincronización de estado como merge o update.","text":"Merge es el único método que permite el uso de sentencias HQL complejas."}],"hint":"Considere qué sucede cuando un objeto 'Detached' intenta volver a entrar en una sesión donde ya hay un objeto similar.","question":"¿Qué ventaja operativa ofrece el método Session.merge() frente a Session.update() en Hibernate?"},{"answerOptions":[{"isCorrect":false,"rationale":"HQL es muy similar a SQL y admite casi todas sus cláusulas estándar, pero aplicadas al modelo de objetos.","text":"HQL no admite cláusulas de filtrado como WHERE o ORDER BY."},{"isCorrect":true,"rationale":"Al ser un lenguaje orientado a objetos, permite escribir consultas que son independientes del esquema físico de la base de datos.","text":"HQL trabaja con objetos persistentes y sus propiedades en lugar de tablas y columnas."},{"isCorrect":false,"rationale":"HQL se traduce a SQL para interactuar con bases de datos relacionales tradicionales como Oracle o MySQL.","text":"HQL solo puede ser utilizado con bases de datos orientadas a objetos puras."},{"isCorrect":false,"rationale":"HQL opera sobre clases y propiedades de Java, no sobre tablas físicas.","text":"HQL opera sobre nombres de tablas físicas y SQL sobre alias de memoria."}],"hint":"Piense en qué nivel de abstracción se sitúa el desarrollador al escribir la consulta.","question":"En el lenguaje HQL, ¿cuál es la diferencia fundamental respecto al SQL nativo al realizar una consulta?"},{"answerOptions":[{"isCorrect":false,"rationale":"Eso es una función de los IDEs o herramientas de generación de código, no del gestor de transacciones.","text":"Generar automáticamente el código fuente de los métodos getter y setter."},{"isCorrect":true,"rationale":"Gestiona el inicio, compromiso (commit) y retroceso (rollback) de un conjunto de operaciones de persistencia.","text":"Permitir operaciones conjuntas que deben tener éxito o fallar en grupo (atomicidad)."},{"isCorrect":false,"rationale":"La gestión de caché suele ser responsabilidad del EntityManager o del proveedor de persistencia, no de la transacción.","text":"Almacenar en caché todos los objetos de la aplicación para evitar consultas repetitivas."},{"isCorrect":false,"rationale":"Esa tarea corresponde a la especificación de metadatos o anotaciones @Entity.","text":"Mapear las clases Java a las tablas físicas de la base de datos mediante anotaciones."}],"hint":"Recuerde el concepto de 'todo o nada' en las operaciones de datos.","question":"Dentro de la arquitectura JPA, ¿cuál es la responsabilidad de la clase EntityTransaction?"},{"answerOptions":[{"isCorrect":false,"rationale":"No hay una restricción fija de niveles, aunque la complejidad aumenta con la profundidad.","text":"Solo se pueden indexar documentos embebidos que tengan menos de tres niveles de profundidad."},{"isCorrect":true,"rationale":"MongoDB trata los documentos embebidos como valores binarios exactos; si el orden cambia, el hash o la comparación fallan.","text":"El orden de los campos dentro del documento embebido debe coincidir exactamente con el orden definido en el índice."},{"isCorrect":false,"rationale":"MongoDB permite indexar documentos anidados con tipos de datos mixtos (números, fechas, booleanos, etc.).","text":"Es obligatorio que todos los campos del documento anidado sean de tipo String."},{"isCorrect":false,"rationale":"Los documentos anidados no necesitan un campo _id propio para ser indexados.","text":"El índice solo funciona si el documento embebido contiene al menos un campo de tipo ID."}],"hint":"Piense en qué sucede si compara dos objetos JSON donde las claves están en posiciones distintas.","question":"Al indexar entidades embebidas (documentos anidados) en MongoDB, ¿qué factor es determinante para que una consulta utilice el índice?"},{"answerOptions":[{"isCorrect":true,"rationale":"Es esencial para mantener la disponibilidad del sistema mientras se procesan grandes volúmenes de datos para el nuevo índice.","text":"Evita que la base de datos se bloquee, permitiendo operaciones de lectura y escritura durante la creación del índice."},{"isCorrect":false,"rationale":"La estructura final del índice y su tamaño son idénticos; solo cambia el proceso de construcción.","text":"Reduce el consumo de espacio en disco en comparación con un índice normal."},{"isCorrect":false,"rationale":"La creación en background es generalmente más lenta porque cede prioridad a otras operaciones.","text":"Permite que el índice se cree mucho más rápido que en primer plano."},{"isCorrect":false,"rationale":"Los índices son persistentes en disco independientemente de cómo se hayan creado.","text":"Garantiza que el índice se borre automáticamente si el servidor se reinicia."}],"hint":"Piense en la continuidad del servicio para los usuarios finales.","question":"¿Qué utilidad tiene la creación de un índice en 'Background' (segundo plano) en un entorno de producción de MongoDB?"},{"answerOptions":[{"isCorrect":false,"rationale":"Su ámbito de actuación es la creación de objetos locales para la gestión de datos persistentes.","text":"Sincronizar los datos de la base de datos con servidores en la nube."},{"isCorrect":false,"rationale":"No realiza funciones de limpieza automática por tiempo; eso depende de la gestión de la sesión y el ciclo de vida del objeto.","text":"Eliminar todos los objetos que no han sido utilizados en los últimos 10 minutos."},{"isCorrect":false,"rationale":"Eso es parte del proceso de compilación o herramientas específicas de binding, no de JPA.","text":"Convertir archivos XML en código Java ejecutable automáticamente."},{"isCorrect":true,"rationale":"EntityManagerFactory es una factoría costosa de crear que se encarga de proveer gestores de entidades ligeros para cada hilo o unidad de trabajo.","text":"Crear instancias de objetos de tipo EntityManager para gestionar la persistencia."}],"hint":"Una fábrica sirve para producir 'productos' específicos bajo demanda.","question":"En el contexto de JPA, ¿cuál es la función del patrón 'Factory' implementado por EntityManagerFactory?"},{"answerOptions":[{"isCorrect":false,"rationale":"Su función es de configuración de despliegue, no de almacenamiento de datos de usuario.","text":"Guardar una copia de seguridad de todos los datos insertados por el usuario."},{"isCorrect":false,"rationale":"La compilación ocurre antes del despliegue; el descriptor solo configura cómo se ejecuta ese código ya compilado.","text":"Compilar el código fuente de Java en tiempo real mientras se ejecuta la aplicación."},{"isCorrect":true,"rationale":"El descriptor (ej. ejb-jar.xml) define reglas que el servidor de aplicaciones debe aplicar a los componentes sin cambiar el código.","text":"Especificar atributos de transacción y autorizaciones de seguridad para los componentes."},{"isCorrect":false,"rationale":"Los módulos EJB son para lógica de negocio (back-end) y carecen de elementos de diseño visual.","text":"Definir el diseño visual y los colores de la interfaz de usuario."}],"hint":"Se encarga de aspectos transversales como 'quién puede acceder' o 'cómo se manejan los errores'.","question":"Dentro del empaquetado Java EE, ¿cuál es la función principal del descriptor de despliegue en un módulo EJB?"},{"answerOptions":[{"isCorrect":false,"rationale":"No tiene funciones de seguridad o cifrado; es una herramienta de gestión del ciclo de vida del dato.","text":"Cifrar la información sensible una vez que ha pasado una hora desde su creación."},{"isCorrect":false,"rationale":"Para eso existen los índices geoespaciales 2dsphere o 2d.","text":"Acelerar las consultas geoespaciales complejas en tiempo real."},{"isCorrect":true,"rationale":"Permite una gestión de limpieza automática de datos temporales sin intervención manual o scripts externos.","text":"Eliminar automáticamente documentos después de un tiempo determinado, como sesiones de usuario o logs."},{"isCorrect":false,"rationale":"TTL borra documentos; no implementa lógica de 'solo lectura' o inmutabilidad.","text":"Evitar que los documentos sean modificados después de una fecha concreta."}],"hint":"Piense en datos que tienen una fecha de caducidad intrínseca.","question":"Al trabajar con índices de tipo 'TTL' (Time-To-Live) en MongoDB, ¿cuál es su aplicación más común en sistemas reales?"},{"answerOptions":[{"isCorrect":false,"rationale":"Eso se refiere a la propiedad de 'Aislamiento' (Isolation).","text":"Que una transacción no debe ser visible para otras transacciones concurrentes."},{"isCorrect":false,"rationale":"Eso describe la propiedad de 'Consistencia'.","text":"Que los datos deben ser consistentes con las reglas de integridad de la base de datos."},{"isCorrect":false,"rationale":"Eso describe la propiedad de 'Durabilidad'.","text":"Que una vez confirmada la transacción, los cambios persistirán incluso ante fallos del sistema."},{"isCorrect":true,"rationale":"Garantiza que si un paso intermedio falla, todo el progreso se revierte para evitar estados parciales corruptos.","text":"Que la transacción es una unidad de trabajo indivisible: o se realiza toda o no se realiza nada."}],"hint":"Proviene de la idea de 'átomo' como algo que no se puede dividir.","question":"¿Qué representa la característica de 'Atomicidad' en una transacción gestionada por Hibernate?"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque es descriptivo, no cumple con el estándar de componentes para ser reconocido por herramientas de introspección.","text":"$updateValue(Tipo\\ valor)$"},{"isCorrect":false,"rationale":"Este es el método de consulta o lectura, no de modificación.","text":"$Tipo\\ getNombrePropiedad()$"},{"isCorrect":false,"rationale":"Esta es una asignación directa de variable, no una llamada a una función de acceso.","text":"$Tipo\\ setPropiedad\\ =\\ valor$"},{"isCorrect":true,"rationale":"Sigue la convención de nomenclatura de los JavaBeans para la mutación de estado.","text":"$setNombrePropiedad(Tipo\\ valor)$"}],"hint":"Busque el prefijo estándar utilizado para establecer valores.","question":"¿Cuál es la sintaxis general en Java para el método de acceso que permite modificar el valor de un atributo simple en un componente?"},{"answerOptions":[{"isCorrect":false,"rationale":"Eso describe el 'control activo'.","text":"El componente se activa únicamente cuando otro componente llama directamente a sus métodos públicos."},{"isCorrect":false,"rationale":"No es un término de seguridad, sino de flujo de ejecución basado en eventos.","text":"Es una medida de seguridad que reacciona bloqueando el acceso ante ataques de fuerza bruta."},{"isCorrect":false,"rationale":"El control reactivo gestiona la lógica de interacción entre módulos, no la infraestructura del servidor.","text":"Un mecanismo que reinicia el servidor automáticamente cuando un componente deja de responder."},{"isCorrect":true,"rationale":"Permite un desacoplamiento donde el emisor no necesita conocer quién procesará la solicitud.","text":"Los componentes generan eventos que son recolectados por otros para activar llamadas a operaciones según sea necesario."}],"hint":"Piense en la metáfora de un sistema que 'reacciona' ante estímulos externos (eventos).","question":"En el desarrollo de componentes EJB, ¿qué se entiende por 'control reactivo'?"},{"answerOptions":[{"isCorrect":false,"rationale":"HQL selecciona propiedades de objetos; no limita columnas mediante estos métodos.","text":"Para definir el nombre de la primera y la última columna que se quieren recuperar de la tabla."},{"isCorrect":false,"rationale":"La ordenación se realiza mediante la cláusula 'ORDER BY' dentro de la cadena HQL.","text":"Para ordenar los resultados de forma ascendente y descendente simultáneamente."},{"isCorrect":false,"rationale":"No son métodos de validación de datos, sino de restricción del conjunto de resultados.","text":"Para validar que el primer resultado sea un número entero y el máximo no supere los 1000."},{"isCorrect":true,"rationale":"Permiten extraer fragmentos específicos de un conjunto de datos grande, mejorando el rendimiento y la experiencia de usuario.","text":"Para implementar la paginación de resultados, indicando el índice de inicio y el número total de filas a obtener."}],"hint":"Considere cómo mostraría miles de registros en una interfaz que solo permite ver 10 a la vez.","question":"Al realizar una consulta HQL, ¿para qué se utilizan los métodos setFirstResult() y setMaxResults() del objeto Query?"},{"answerOptions":[{"isCorrect":false,"rationale":"Una entidad puede y debe tener lógica de acceso y comportamiento básico.","text":"Indicar que la clase no puede tener métodos, solo atributos privados."},{"isCorrect":false,"rationale":"Las anotaciones de persistencia gestionan el almacenamiento, no la seguridad de la capa de transporte.","text":"Cifrar el contenido del objeto antes de enviarlo a través de la red."},{"isCorrect":true,"rationale":"Es la marca que utiliza el proveedor de JPA para saber qué clases deben ser mapeadas al esquema relacional.","text":"Representar cada instancia de esa clase como un registro diferente en la base de datos."},{"isCorrect":false,"rationale":"JPA se centra en la capa de datos; mezclarlo con la interfaz gráfica violaría el principio de separación de capas.","text":"Obligar a que la clase herede de un componente de interfaz gráfica Swing."}],"hint":"Piense en el puente entre el mundo de los objetos y el mundo de las tablas.","question":"En la persistencia JPA, ¿cuál es el propósito de la anotación @Entity al mismo nivel que las clases Java serializables?"},{"answerOptions":[{"isCorrect":false,"rationale":"Se refiere a la capacidad de operar con componentes de terceros.","text":"Interoperabilidad"},{"isCorrect":true,"rationale":"Los componentes se diseñan para ser unidades funcionales que no exponen su estado interno directamente, facilitando su reutilización.","text":"Carencia de estado (Stateless)"},{"isCorrect":false,"rationale":"Es la capacidad de guardar su información en un soporte duradero, no tiene que ver con la visibilidad del estado.","text":"Persistencia"},{"isCorrect":false,"rationale":"La independencia se refiere a la capacidad de ser instalado y utilizado por separado.","text":"Independencia"}],"hint":"Significa que no 'recuerdan' interacciones previas de una manera accesible externamente.","question":"¿Cuál es la característica de los componentes de software que indica que su estado no es visible desde 'fuera'?"},{"answerOptions":[{"isCorrect":false,"rationale":"El estándar utiliza XML y formatos de archivo JAR específicos, no texto plano sin estructura.","text":"Utilizar únicamente archivos .txt para definir las rutas de acceso a los datos."},{"isCorrect":true,"rationale":"Esta separación física en módulos dentro de un contenedor empresarial facilitaba el mantenimiento y la escalabilidad.","text":"Crear un archivo .ear que contenga un módulo .war para la web y un ejb-jar para los EJB."},{"isCorrect":false,"rationale":"Los descriptores son fundamentales para que el servidor gestione los componentes.","text":"Crear un archivo .zip que contuviera todas las clases compiladas sin descriptores."},{"isCorrect":false,"rationale":"Mezclar lógica de negocio con presentación es una práctica desaconsejada y técnicamente imposible en este estándar.","text":"Mapear todos los EJB directamente dentro del código HTML para mayor velocidad."}],"hint":"Se trata de un 'contenedor de contenedores' con tres letras.","question":"En una arquitectura J2EE típica anterior a EJB 3.1, ¿qué estructura se recomendaba para separar el front-end del back-end?"}];
+        let currentIndex = 0;
+                const originalQuizData = quizData.slice();
+                (function() {
+                  var key = 'wrong:' + window.location.pathname.split('/').pop();
+                  try {
+                    var stored = localStorage.getItem(key);
+                    if (stored) {
+                      var wrongSet = new Set(JSON.parse(stored));
+                      if (wrongSet.size > 0) {
+                        var filtered = originalQuizData.filter(function(q){ return wrongSet.has(q.question); });
+                        if (filtered.length > 0) quizData = filtered;
+                      }
+                    }
+                  } catch(e) {}
+                })();
+        let mode = 'quiz';
+        let state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+
+        function getStats() {
+            const answered = state.filter((s) => s.selectedIndex !== null).length;
+            const correct = state.filter((s, i) => s.selectedIndex !== null && quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const wrong = state.filter((s, i) => s.selectedIndex !== null && !quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const skipped = quizData.length - answered;
+            const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+            return { answered, correct, wrong, skipped, accuracy };
+        }
+
+        function shuffleAnswers() {
+            quizData.forEach((q) => {
+                for (let i = q.answerOptions.length - 1; i > 0; i -= 1) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.answerOptions[i], q.answerOptions[j]] = [q.answerOptions[j], q.answerOptions[i]];
+                }
+            });
+        }
+
+        function shuffleQuestions() {
+            for (let i = quizData.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [quizData[i], quizData[j]] = [quizData[j], quizData[i]];
+            }
+        }
+
+        function resetState() {
+            state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+        }
+
+
+        function fmt(str) {
+          if (!str) return str;
+          return str
+            .replace(/\$\$(.*?)\$\$/gs, function(_,m){return m;})
+            .replace(/\$([^$<>]+?)\$/g, function(_,m){return m;})
+            .replace(/\*\*(.*?)\*\*/g, function(_,m){return "<strong>"+m+"</strong>";})
+            .replace(/\*(.*?)\*/g, function(_,m){return "<em>"+m+"</em>";})
+            .replace(/`(.*?)`/g, function(_,m){return "<code>"+m+"</code>";})
+        }
+        function renderQuestion() {
+            const q = quizData[currentIndex];
+            const s = state[currentIndex];
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+
+            let optionsHtml = '';
+            const correctIndex = q.answerOptions.findIndex((o) => o.isCorrect);
+            const selectedCorrect = s.selectedIndex !== null && q.answerOptions[s.selectedIndex].isCorrect;
+            q.answerOptions.forEach((opt, idx) => {
+                const isSelected = s.selectedIndex === idx;
+                const statusClass = isSelected ? (opt.isCorrect ? 'correct' : 'incorrect') : '';
+                const selectedClass = isSelected ? 'selected' : '';
+                const revealCorrect = (s.selectedIndex !== null && !selectedCorrect && opt.isCorrect) || (mode === 'review' && opt.isCorrect);
+                const revealClass = revealCorrect ? 'revealed-correct' : '';
+
+                optionsHtml += `
+                    <li class="option-item ${selectedClass} ${statusClass} ${revealClass}" onclick="selectOption(${idx})">
+                        <div class="option-label">
+                            <span>${String.fromCharCode(65 + idx)}. ${fmt(opt.text)}</span>
+                        </div>
+                        <div class="feedback-state">
+                            ${opt.isCorrect ? '✓ Correcto' : '✕ Incorrecto'}
+                        </div>
+                        ${opt.rationale ? '<div class="rationale">' + fmt(opt.rationale) + '</div>' : ''}
+                    </li>
+                `;
+            });
+
+            const stats = getStats();
+
+            content.innerHTML = `
+                <div class="progress-container">
+                    <div class="progress-text">${currentIndex + 1} / ${quizData.length}</div>
+                    <div class="status-bar">
+                        <div class="status-item status-correct">
+                            <span>✓</span>
+                            <span>${stats.correct}</span>
+                        </div>
+                        <div class="status-item status-wrong">
+                            <span>✕</span>
+                            <span>${stats.wrong}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="question-text">${fmt(q.question)}</div>
+                <ul class="options-list">
+                    ${optionsHtml}
+                </ul>
+            `;
+
+            // Update Pista Box
+            const hintText = document.getElementById('hint-text');
+            hintText.innerText = fmt(q.hint) || 'No hay pista disponible para esta pregunta.';
+            if (s.hintVisible) {
+                hintBox.classList.add('active');
+            } else {
+                hintBox.classList.remove('active');
+            }
+
+            results.classList.add('hidden');
+            content.classList.remove('hidden');
+            hintBox.classList.remove('hidden');
+            nav.classList.remove('hidden');
+
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = false;
+            if (mode === 'review') {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Volver a resultados' : 'Siguiente';
+            } else {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finalizar' : 'Siguiente';
+            }
+            document.getElementById('hint-icon-arrow').innerText = s.hintVisible ? '▲' : '▼';
+        }
+
+        function selectOption(idx) {
+            if (mode !== 'quiz') return;
+            if (state[currentIndex].selectedIndex !== null) return; // Prevent re-selection
+            state[currentIndex].selectedIndex = idx;
+            renderQuestion();
+        }
+
+        function toggleHint() {
+            if (mode === 'results') return;
+            state[currentIndex].hintVisible = !state[currentIndex].hintVisible;
+            renderQuestion();
+        }
+
+
+        function saveWrongAnswers() {
+          var wrongQuestions = state
+            .map(function(s,i){return {s:s,i:i};})
+            .filter(function(x){return x.s.selectedIndex !== null && !quizData[x.i].answerOptions[x.s.selectedIndex].isCorrect;})
+            .map(function(x){return quizData[x.i].question;});
+          var key = 'wrong:' + window.location.pathname.split('/').pop();
+          if (wrongQuestions.length > 0) {
+            localStorage.setItem(key, JSON.stringify(wrongQuestions));
+          } else {
+            localStorage.removeItem(key);
+          }
+          return wrongQuestions;
+        }
+        function renderResults() {
+            const stats = getStats();
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+
+            const score = `${stats.correct} / ${quizData.length}`;
+
+            results.innerHTML = `
+                <div class="results-screen">
+                    <div>
+                        <h1 class="results-title">¡Lo lograste! Quiz completado.</h1>
+                        <p class="results-subtitle">Revisa tu puntuación o inténtalo de nuevo.</p>
+                    </div>
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-label">Puntuación</div>
+                            <div class="result-value">${score}</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Precisión</div>
+                            <div class="result-value">${stats.accuracy}%</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-metrics">
+                                <div>Correctas <strong>${stats.correct}</strong></div>
+                                <div>Incorrectas <strong>${stats.wrong}</strong></div>
+                                <div>Omitidas <strong>${stats.skipped}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="results-actions"><button id="retake-wrong-btn" class="btn btn-ghost" style="display:none">Repasar errores (<span id="wrong-count">0</span>)</button>
+                        <button id="review-btn" class="btn btn-ghost">Revisar Quiz</button>
+                        <button id="retake-btn" class="btn btn-next">Repetir Quiz</button>
+                    </div>
+                </div>
+            `;
+
+            content.classList.add('hidden');
+            results.classList.remove('hidden');
+            hintBox.classList.add('hidden');
+            nav.classList.add('hidden');
+
+
+            var wrongQuestions = saveWrongAnswers();
+            var retakeWrongBtn = document.getElementById('retake-wrong-btn');
+            if (wrongQuestions.length > 0) {
+              document.getElementById('wrong-count').textContent = wrongQuestions.length;
+              retakeWrongBtn.style.display = '';
+            }
+            (function() {
+              var fname = window.location.pathname.split('/').pop();
+              var backLink = document.querySelector('.quiz-heading a[href*="index.html"]');
+              if (backLink) {
+                var h = '#wrong=' + fname + ':' + wrongQuestions.length;
+                backLink.href = backLink.href.split('#')[0] + h;
+              }
+            })();
+            document.getElementById('retake-wrong-btn').onclick = function() {
+              if (wrongQuestions.length === 0) return;
+              mode = 'quiz';
+              currentIndex = 0;
+              var wrongSet = new Set(wrongQuestions);
+              quizData = originalQuizData.filter(function(q){return wrongSet.has(q.question);});
+              shuffleAnswers();
+              resetState();
+              renderQuestion();
+            };
+
+            var wrongQuestions = saveWrongAnswers();
+            var retakeWrongBtn = document.getElementById('retake-wrong-btn');
+            if (wrongQuestions.length > 0) {
+              document.getElementById('wrong-count').textContent = wrongQuestions.length;
+              retakeWrongBtn.style.display = '';
+            }
+            (function() {
+              var fname = window.location.pathname.split('/').pop();
+              var backLink = document.querySelector('.quiz-heading a[href*="index.html"]');
+              if (backLink) {
+                var h = '#wrong=' + fname + ':' + wrongQuestions.length;
+                backLink.href = backLink.href.split('#')[0] + h;
+              }
+            })();
+            document.getElementById('retake-wrong-btn').onclick = function() {
+              if (wrongQuestions.length === 0) return;
+              mode = 'quiz';
+              currentIndex = 0;
+              var wrongSet = new Set(wrongQuestions);
+              quizData = originalQuizData.filter(function(q){return wrongSet.has(q.question);});
+              shuffleAnswers();
+              resetState();
+              renderQuestion();
+            };
+            document.getElementById('review-btn').onclick = () => {
+                mode = 'review';
+                currentIndex = 0;
+                renderQuestion();
+            };
+
+            document.getElementById('retake-btn').onclick = () => {
+                mode = 'quiz';
+                currentIndex = 0;
+                shuffleQuestions();
+                shuffleAnswers();
+                resetState();
+                renderQuestion();
+            };
+        }
+
+        document.getElementById('prev-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        };
+
+        document.getElementById('next-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (mode === 'review') {
+                if (currentIndex < quizData.length - 1) {
+                    currentIndex++;
+                    renderQuestion();
+                } else {
+                    mode = 'results';
+                    renderResults();
+                }
+                return;
+            }
+            if (currentIndex < quizData.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                mode = 'results';
+                renderResults();
+            }
+        };
+
+        document.getElementById('hint-toggle').onclick = toggleHint;
+
+        renderQuestion();
+    </script>
+
+  <button id="theme-toggle" title="Cambiar tema" style="position:fixed;top:8px;right:8px;background:var(--card);border:1px solid var(--stroke);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:transform 0.2s ease;z-index:100;">🌙</button>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-toggle').textContent = '☀️';
+      }
+      document.getElementById('theme-toggle').addEventListener('click', function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        this.textContent = isDark ? '🌙' : '☀️';
+      });
+    })();
+  </script>
+</body>
+</html>

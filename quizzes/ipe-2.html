@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotebookLM - Quiz Export</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+        :root {
+            --bg: #f6f1e7;
+            --bg-deep: #efe4d6;
+            --ink: #171717;
+            --muted: #5b5b5b;
+            --accent: #d3542c;
+            --accent-light: #ff8f5a;
+            --accent-dark: #b14320;
+            --teal: #1f6f78;
+            --card: #fff7ef;
+            --stroke: #e3d6c5;
+            --shadow: 0 18px 40px rgba(23, 23, 23, 0.12);
+            --radius-sm: 10px;
+            --radius-md: 12px;
+            --radius-lg: 14px;
+            --radius-xl: 18px;
+            --radius-2xl: 22px;
+            --space-1: 6px;
+            --space-2: 8px;
+            --space-3: 10px;
+            --space-4: 12px;
+            --space-5: 14px;
+            --space-6: 16px;
+            --space-7: 18px;
+            --space-8: 20px;
+            --space-9: 24px;
+            --space-10: 32px;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --error: #b54832;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background:
+                radial-gradient(240px 140px at 10% -10%, #ffd2b9 0%, transparent 70%),
+                radial-gradient(220px 160px at 90% 0%, #cfe7e6 0%, transparent 65%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+            color: var(--ink);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 800px;
+            padding: var(--space-10) var(--space-8);
+            box-sizing: border-box;
+            background: var(--card);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+        }
+
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .progress-text {
+            color: var(--muted);
+            font-size: 0.9em;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-correct { color: var(--teal); }
+        .status-wrong { color: var(--error); }
+
+        .question-text {
+            font-family: var(--font-display);
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-item:hover:not(.selected) {
+            background-color: var(--card);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .option-item.selected.correct {
+            background-color: rgba(31, 111, 120, 0.12);
+            border-color: var(--teal);
+        }
+
+        .option-item.selected.incorrect {
+            background-color: rgba(181, 72, 50, 0.12);
+            border-color: var(--error);
+        }
+
+        .option-item.revealed-correct {
+            border-color: rgba(31, 111, 120, 0.5);
+            box-shadow: inset 0 0 0 1px rgba(31, 111, 120, 0.16);
+        }
+
+        .option-label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feedback-state {
+            font-weight: bold;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .selected .feedback-state {
+            display: block;
+        }
+
+        .revealed-correct .feedback-state {
+            display: block;
+        }
+
+        .correct .feedback-state { color: var(--teal); }
+        .incorrect .feedback-state { color: var(--error); }
+        .revealed-correct .feedback-state { color: var(--teal); }
+
+        .rationale {
+            font-size: 0.95em;
+            color: var(--muted);
+            margin-top: 4px;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .selected .rationale {
+            display: block;
+        }
+
+        .revealed-correct .rationale {
+            display: block;
+        }
+        .hint-toggle {
+            border: 1px solid var(--stroke);
+            color: var(--muted);
+            cursor: pointer;
+            padding: var(--space-2) var(--space-6);
+            border-radius: var(--radius-md);
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hint-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .hint-content {
+            margin-top: 32px;
+            padding: var(--space-6);
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-lg);
+            font-size: 0.95em;
+            color: var(--muted);
+            display: none;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .hint-content.active {
+            display: flex;
+        }
+
+        .hint-icon-box {
+            color: var(--accent-dark);
+            font-size: 1.2em;
+            margin-top: -2px;
+        }
+
+        .navigation {
+            margin-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-7);
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-prev {
+            background-color: #fff;
+            color: var(--ink);
+            border-color: var(--stroke);
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn-next {
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            color: #fff;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .results-screen {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+        }
+
+        .results-title {
+            font-family: var(--font-display);
+            font-size: 2.1em;
+            margin: 0;
+        }
+
+        .results-subtitle {
+            color: var(--muted);
+            margin: 0;
+            font-size: 1em;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .result-card {
+            padding: var(--space-6);
+            border-radius: var(--radius-xl);
+            background: #fff;
+            border: 1px solid var(--stroke);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .result-label {
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-family: var(--font-display);
+        }
+
+        .result-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            border: 1px solid var(--stroke);
+            color: var(--ink);
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 900px) {
+            .quiz-container {
+                margin: var(--space-8);
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .quiz-container {
+                padding: var(--space-8) var(--space-6);
+            }
+
+            .question-text {
+                font-size: 1.3em;
+            }
+
+            .option-item {
+                padding: var(--space-4);
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .quiz-container {
+                margin: var(--space-6);
+                padding: var(--space-7) var(--space-5);
+            }
+
+            .progress-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+
+            .navigation {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-4);
+            }
+
+            .nav-buttons {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .hint-toggle {
+                justify-content: space-between;
+            }
+
+            .results-actions {
+                flex-direction: column;
+            }
+        }
+    
+    [data-theme="dark"] {
+      --bg: #1a1612;
+      --bg-deep: #141210;
+      --ink: #f0ebe0;
+      --muted: #9a9080;
+      --accent: #e8673a;
+      --accent-light: #ff9a6a;
+      --accent-dark: #c45528;
+      --teal: #2a9aa8;
+      --card: #221e18;
+      --stroke: #3a3028;
+      --shadow: 0 18px 40px rgba(0,0,0,0.4);
+      --error: #e06050;
+    }
+    [data-theme="dark"] body {
+      background:
+        radial-gradient(240px 140px at 10% -10%, #3a1a08 0%, transparent 70%),
+        radial-gradient(220px 160px at 90% 0%, #0a2a2e 0%, transparent 65%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    }
+    [data-theme="dark"] .option-item { background-color: var(--card); }
+    [data-theme="dark"] .hint-toggle,
+    [data-theme="dark"] .hint-content,
+    [data-theme="dark"] .btn-prev { background-color: var(--card); color: var(--ink); }
+    [data-theme="dark"] .result-card { background: var(--card); }
+    [data-theme="dark"] .btn-next {
+      background: linear-gradient(90deg, #e8673a, #f28c5e);
+      box-shadow: 0 4px 20px rgba(232, 103, 58, 0.35);
+      color: #fff;
+    }
+    [data-theme="dark"] .btn-next:hover:not(:disabled) {
+      box-shadow: 0 6px 24px rgba(232, 103, 58, 0.5);
+    }
+    
+    /* quiz-mobile-v3 */
+    @media (max-width: 640px) {
+      body {
+        height: 100dvh;
+        overflow: hidden;
+        align-items: flex-start;
+        padding: 0;
+      }
+      .quiz-container {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        margin: 0;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+        padding-bottom: 0;
+      }
+      #quiz-content,
+      #results-content {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        min-height: 0;
+        padding-bottom: 8px;
+      }
+      #hint-box { flex-shrink: 0; }
+      .navigation {
+        flex-shrink: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        margin-top: 0;
+        background: var(--card);
+        border-top: 1px solid var(--stroke);
+      }
+    }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+
+    <div class="quiz-heading" style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
+      <a href="../index.html" style="font-size:0.82em;color:var(--muted);text-decoration:none;font-family:var(--font-body)">← Índice</a>
+      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">Itinerario Personal para la Empleabilidad · Quiz 2</h1>
+    </div>
+        <div id="quiz-content">
+            <!-- Dynamic Content -->
+        </div>
+        <div id="results-content" class="hidden"></div>
+
+        <div id="hint-box" class="hint-content">
+            <div class="hint-icon-box">💡</div>
+            <div id="hint-text"></div>
+        </div>
+
+        <div class="navigation">
+            <button id="hint-toggle" class="hint-toggle">
+                <span>Pista</span>
+                <span id="hint-icon-arrow">▼</span>
+            </button>
+            <div class="nav-buttons">
+                <button id="prev-btn" class="btn btn-prev">Anterior</button>
+                <button id="next-btn" class="btn btn-next">Siguiente</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let quizData = [{"answerOptions":[{"isCorrect":true,"rationale":"El autónomo tiene responsabilidad ilimitada frente a las deudas, a diferencia de las sociedades mercantiles donde la responsabilidad se restringe a la aportación inicial.","text":"El empresario individual responde con todo su patrimonio personal, mientras que el socio de la S.L. solo responde con el capital aportado."},{"isCorrect":false,"rationale":"El autónomo tiene responsabilidad ilimitada y tributa por el IRPF, no por el Impuesto de Sociedades.","text":"Ambos poseen responsabilidad limitada, pero el autónomo tributa por el Impuesto de Sociedades."},{"isCorrect":false,"rationale":"Independientemente del capital mínimo de 1 €, la característica fundamental de la S.L. es la limitación de la responsabilidad al capital aportado.","text":"El socio de la S.L. responde de manera solidaria con su patrimonio personal si el capital es inferior a 3.000 €."},{"isCorrect":false,"rationale":"La S.L. sí tiene un capital mínimo de 1 € y su responsabilidad es precisamente limitada, no ilimitada.","text":"La S.L. no requiere un capital mínimo legal, lo que obliga a los socios a responder de forma ilimitada."}],"hint":"Reflexiona sobre quién arriesga sus bienes personales en caso de deudas del negocio.","question":"¿Cuál es la principal diferencia en la responsabilidad patrimonial entre un empresario individual y un socio de una Sociedad de Responsabilidad Limitada (S.L.)?"},{"answerOptions":[{"isCorrect":true,"rationale":"Esta fase se centra específicamente en identificar nuevas aplicaciones o mercados para un producto que ya existe.","text":"Proponer otros usos"},{"isCorrect":false,"rationale":"Reorganizar trata sobre el orden de los procesos o la estructura interna, no sobre la aplicación externa del producto.","text":"Reorganizar"},{"isCorrect":false,"rationale":"Sustituir se refiere a cambiar componentes o materiales del producto, no a buscar nuevos mercados.","text":"Sustituir"},{"isCorrect":false,"rationale":"Adaptar implica ajustar funcionalidades para un nuevo público, mientras que proponer otros usos busca aplicaciones externas al propósito original.","text":"Adaptar"}],"hint":"Se trata de la 'P' en el acrónimo, enfocada en la versatilidad del mercado.","question":"En el método SCAMPER, ¿qué acción se está realizando cuando buscamos encontrar nuevos segmentos de clientes que puedan beneficiarse de un producto actual?"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque tributa por sociedades, su capital mínimo suele fijarse en los estatutos y se basa en la participación democrática, no necesariamente en 60.000 €.","text":"Sociedad Cooperativa"},{"isCorrect":true,"rationale":"La S.A. es la forma jurídica diseñada para grandes capitales y exige un mínimo de 60.000 € para su constitución.","text":"Sociedad Anónima (S.A.)"},{"isCorrect":false,"rationale":"La sociedad civil no tiene un capital mínimo legal establecido y la responsabilidad de sus socios suele ser ilimitada.","text":"Sociedad Civil con objeto mercantil"},{"isCorrect":false,"rationale":"La S.L. solo requiere un capital mínimo de 1 €, siendo más adecuada para PYMES.","text":"Sociedad de Responsabilidad Limitada (S.L.)"}],"hint":"Esta forma es común en empresas de gran tamaño cuyas acciones pueden negociarse en bolsa.","question":"Si una empresa decide tributar a través del Impuesto de Sociedades y requiere un capital social mínimo de 60.000 €, ¿qué forma jurídica debe adoptar?"},{"answerOptions":[{"isCorrect":true,"rationale":"En esta etapa se procesa la información de la fase de empatía para concretar el problema específico que se intentará resolver.","text":"Definir"},{"isCorrect":false,"rationale":"Idear es el paso posterior a la definición, donde se buscan soluciones al problema ya concretado.","text":"Idear"},{"isCorrect":false,"rationale":"Empatizar es la fase de recolección de datos y observación, previa a la síntesis del problema.","text":"Empatizar"},{"isCorrect":false,"rationale":"Testear es la validación final con usuarios, no la síntesis inicial del problema.","text":"Testear"}],"hint":"Es el paso necesario antes de empezar a generar múltiples soluciones creativas.","question":"Dentro del proceso de Design Thinking, ¿en qué fase se sintetiza la información recopilada para establecer un punto de vista claro sobre el problema?"},{"answerOptions":[{"isCorrect":true,"rationale":"Este bloque representa la red de proveedores y socios que optimizan el modelo de negocio y reducen riesgos.","text":"Alianzas clave"},{"isCorrect":false,"rationale":"Los recursos clave son los activos físicos, intelectuales o humanos propios, no las entidades externas asociadas.","text":"Recursos clave"},{"isCorrect":false,"rationale":"Este bloque define el vínculo con los compradores, no con los socios o proveedores.","text":"Relación con el cliente"},{"isCorrect":false,"rationale":"Los canales definen cómo se entrega la propuesta de valor, no quiénes son los socios estratégicos.","text":"Canales de distribución"}],"hint":"Piensa en las colaboraciones externas indispensables para operar.","question":"En el modelo Canvas, ¿cuál de los bloques se encarga de identificar a los socios y proveedores estratégicos que ayudan a que el negocio funcione?"},{"answerOptions":[{"isCorrect":false,"rationale":"El liderazgo transaccional se basa en premios y castigos por tareas dadas, no en la libertad para innovar proyectos propios.","text":"Liderazgo transaccional"},{"isCorrect":false,"rationale":"El emprendimiento por necesidad ocurre cuando alguien inicia un negocio por falta de empleo, no dentro de una empresa establecida.","text":"Emprendimiento por necesidad"},{"isCorrect":false,"rationale":"El benchmarking es una comparación con la competencia, no una iniciativa de innovación interna de los empleados.","text":"Benchmarking"},{"isCorrect":true,"rationale":"El intraemprendimiento implica que los empleados adopten comportamientos emprendedores para innovar dentro de su propia organización.","text":"Intraemprendimiento"}],"hint":"Es el término que une 'emprender' con estar 'dentro' de una organización.","question":"Una empresa que permite a sus empleados dedicar parte de su jornada a proyectos de pasión para mejorar procesos internos está fomentando el:"},{"answerOptions":[{"isCorrect":false,"rationale":"El precio define el valor monetario, aunque la logística influya en los costes, no es el bloque encargado de gestionarla.","text":"Precio"},{"isCorrect":true,"rationale":"La distribución o 'plaza' abarca toda la logística necesaria para que el producto llegue efectivamente al consumidor.","text":"Distribución (Plaza)"},{"isCorrect":false,"rationale":"La promoción se ocupa de dar a conocer el producto, no de su almacenamiento o transporte.","text":"Promoción"},{"isCorrect":false,"rationale":"El producto se centra en el diseño, envase y calidad, no en cómo se mueve físicamente hacia el cliente.","text":"Producto"}],"hint":"Se refiere al camino que recorre el producto hasta el cliente.","question":"¿A qué elemento del Marketing Mix (4P) pertenecen la gestión de inventarios y la ubicación de los puntos de venta?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esto explora las preocupaciones internas, no las fuentes externas que originan esa información.","text":"¿Qué piensa y siente?"},{"isCorrect":true,"rationale":"Esta sección recopila las influencias externas, como amigos, familia o medios de comunicación, que impactan al usuario.","text":"¿Qué escucha el usuario?"},{"isCorrect":false,"rationale":"Se centra en el comportamiento público del usuario, no en los mensajes que recibe de su entorno.","text":"¿Qué dice y hace?"},{"isCorrect":false,"rationale":"Esta parte se refiere al entorno visual y lo que percibe en el mercado, no específicamente a las influencias de comunicación.","text":"¿Qué ve el usuario?"}],"hint":"Busca el sentido relacionado con percibir mensajes y opiniones de otros.","question":"En un Mapa de Empatía, ¿qué sección analiza las fuentes de información que consulta el usuario y quiénes influyen en sus decisiones?"},{"answerOptions":[{"isCorrect":false,"rationale":"Dos socios son suficientes para una Comunidad de Bienes o Sociedad Civil, pero no para una Cooperativa.","text":"2"},{"isCorrect":true,"rationale":"La ley española establece un mínimo de tres socios para formar una cooperativa, reforzando su carácter de colaboración mutua.","text":"3"},{"isCorrect":false,"rationale":"Aunque es un número común en organizaciones grandes, el mínimo legal para la constitución de una cooperativa es tres.","text":"5"},{"isCorrect":false,"rationale":"Solo las sociedades unipersonales o los autónomos permiten un único socio inicial.","text":"1"}],"hint":"Es un número impar pequeño que fomenta la toma de decisiones democrática.","question":"¿Cuál es el número mínimo de socios requeridos para constituir una Sociedad Cooperativa en España?"},{"answerOptions":[{"isCorrect":true,"rationale":"El estado general de la economía y las tasas de empleo influyen directamente en la disposición de los individuos para iniciar negocios.","text":"Situación económica del entorno"},{"isCorrect":false,"rationale":"Este factor se refiere a la disponibilidad de capital y préstamos, no a las tendencias del mercado laboral.","text":"Acceso a recursos y financiamiento"},{"isCorrect":false,"rationale":"La capacitación es un factor personal relacionado con habilidades, no un factor macroeconómico del entorno.","text":"Capacitación empresarial (EET)"},{"isCorrect":false,"rationale":"El marco regulatorio trata sobre leyes e impuestos, no sobre el estado del empleo en la región.","text":"Marco regulatorio"}],"hint":"Se trata del contexto exterior que rodea al emprendedor antes de empezar.","question":"En relación con los factores económicos, ¿qué aspecto analiza las tendencias del mercado laboral y la disponibilidad de empleo al decidir emprender?"},{"answerOptions":[{"isCorrect":false,"rationale":"No se puede recopilar información sin haber seleccionado primero las empresas de referencia que servirán de estudio.","text":"Recopilar información detallada"},{"isCorrect":false,"rationale":"El análisis es una fase posterior que requiere tener ya los datos de las empresas seleccionadas.","text":"Analizar la información comparada"},{"isCorrect":false,"rationale":"La aplicación es el paso final del proceso, una vez validado qué prácticas son útiles.","text":"Aplicar las lecciones aprendidas"},{"isCorrect":true,"rationale":"Una vez definido qué mejorar, el siguiente paso lógico es buscar a los líderes del sector que destacan en esas áreas.","text":"Identificar empresas de referencia"}],"hint":"Necesitas encontrar a los 'líderes' o modelos a seguir para tu estudio.","question":"Al aplicar el método de Benchmarking, ¿qué paso sigue inmediatamente después de identificar las áreas de interés que se desean mejorar?"},{"answerOptions":[{"isCorrect":true,"rationale":"Esta estructura busca la implicación de los empleados en la gestión y los beneficios, promoviendo estabilidad laboral.","text":"La mayoría del capital social es propiedad de los trabajadores que prestan servicios en ella de forma directa e indefinida."},{"isCorrect":false,"rationale":"Al ser una sociedad de capital (sea S.L.L. o S.A.L.), la responsabilidad está limitada a las aportaciones.","text":"La responsabilidad de los socios es ilimitada y solidaria."},{"isCorrect":false,"rationale":"Como sociedades mercantiles con personalidad jurídica, tributan por el Impuesto de Sociedades.","text":"Tributan obligatoriamente por el IRPF en lugar del Impuesto de Sociedades."},{"isCorrect":false,"rationale":"Las sociedades laborales pueden tener socios no trabajadores, pero el control mayoritario debe recaer en los empleados.","text":"No permiten la entrada de socios que no sean trabajadores."}],"hint":"El nombre 'Laboral' indica el protagonismo de quienes ejecutan el trabajo en la propiedad.","question":"¿Cuál es una característica fundamental de las Sociedades Laborales en comparación con una S.L. ordinaria?"},{"answerOptions":[{"isCorrect":false,"rationale":"Es un factor económico relacionado con el acceso a financiamiento externo.","text":"La disponibilidad de capital de riesgo"},{"isCorrect":false,"rationale":"Esto forma parte del ambiente empresarial y regulatorio, que es un factor externo/económico.","text":"El clima general para hacer negocios"},{"isCorrect":false,"rationale":"Pertenece al marco regulatorio, un factor externo al emprendedor.","text":"Las políticas gubernamentales sobre impuestos"},{"isCorrect":true,"rationale":"La formación proporciona las habilidades necesarias para gestionar el negocio de forma efectiva, siendo una característica intrínseca del individuo.","text":"La educación y capacitación empresarial (EET)"}],"hint":"Busca algo que dependa directamente de la trayectoria o preparación del individuo.","question":"¿Cuál de los siguientes se considera un factor personal influyente en el emprendimiento?"},{"answerOptions":[{"isCorrect":false,"rationale":"La estructura de costos detalla los gastos de operación, no los ingresos generados.","text":"Estructura de costos"},{"isCorrect":true,"rationale":"Este bloque detalla los mecanismos de flujo de caja, especificando cómo se captura el valor monetario creado.","text":"Fuentes de ingresos"},{"isCorrect":false,"rationale":"Las actividades son las tareas operativas, no los resultados financieros por ventas.","text":"Actividades clave"},{"isCorrect":false,"rationale":"La propuesta de valor describe el beneficio para el cliente, no el método financiero de cobro.","text":"Propuesta de valor"}],"hint":"Se refiere a la entrada de capital en el negocio.","question":"¿Qué bloque del modelo Canvas describe cómo la empresa genera dinero a partir de cada segmento de clientes?"},{"answerOptions":[{"isCorrect":false,"rationale":"Incluso los emprendedores más capacitados enfrentan riesgos; el fracaso no siempre implica falta de formación.","text":"Una señal de falta de capacitación empresarial."},{"isCorrect":true,"rationale":"Una cultura emprendedora fuerte integra el error como una oportunidad para innovar y mejorar habilidades futuras.","text":"Una parte esencial del proceso de aprendizaje."},{"isCorrect":false,"rationale":"Esta visión es contraria al espíritu emprendedor, que requiere proactividad ante la incertidumbre.","text":"Un obstáculo insalvable que debe evitarse a toda costa."},{"isCorrect":false,"rationale":"El espíritu emprendedor fomenta la resiliencia y la persistencia ante las adversidades.","text":"Un motivo para el cese inmediato de la actividad económica."}],"hint":"Es una visión constructiva de los obstáculos en el camino empresarial.","question":"En el contexto de la cultura emprendedora, la aceptación del riesgo y el fracaso se ve principalmente como:"},{"answerOptions":[{"isCorrect":false,"rationale":"Es una técnica de presentación oral rápida, no una herramienta de diseño de satisfacción del cliente.","text":"Elevator Pitch"},{"isCorrect":true,"rationale":"Este lienzo ayuda a ajustar el producto a los problemas específicos de los primeros clientes potenciales del negocio.","text":"Lienzo de propuesta de valor"},{"isCorrect":false,"rationale":"Es un resumen visual de la idea, pero no analiza específicamente el encaje con los adoptantes tempranos.","text":"Mapa conceptual"},{"isCorrect":false,"rationale":"Aunque incluye la propuesta de valor, el lienzo específico para los 'early adopters' es el de propuesta de valor, que profundiza en el encaje problema-solución.","text":"Modelo Canvas"}],"hint":"Se enfoca en los primeros usuarios que consumirán el producto.","question":"¿Qué herramienta estratégica permite concretar cómo se satisfarán las necesidades de los 'early adopters'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Maximizar beneficios es un objetivo económico, no necesariamente un valor ético per se.","text":"Optimizar el modelo de negocio para maximizar dividendos."},{"isCorrect":false,"rationale":"Esta acción se encuadra en los valores sociales de ciudadano corporativo.","text":"Apoyar a comunidades locales con programas sin ánimo de lucro."},{"isCorrect":false,"rationale":"Aunque ético, esto se clasifica específicamente como un valor social/medioambiental dentro de la RSC.","text":"Reducir la huella ambiental mediante prácticas sostenibles."},{"isCorrect":true,"rationale":"La transparencia y la honestidad son pilares de la ética empresarial, influyendo en la confianza de todos los involucrados.","text":"Ser transparente en las prácticas contables y de marketing."}],"hint":"Busca la integridad y honestidad en la gestión interna y externa.","question":"Dentro de los valores éticos de una empresa, ¿cuál de estas acciones destaca por encima de la generación de beneficios?"},{"answerOptions":[{"isCorrect":false,"rationale":"La distribución es parte del modelo de negocio, no una fase específica de la metodología de diseño creativo.","text":"Definir los canales de distribución del producto."},{"isCorrect":true,"rationale":"El testeo permite iterar y mejorar el diseño basándose en la experiencia real del usuario final.","text":"Obtener retroalimentación de los usuarios para validar soluciones."},{"isCorrect":false,"rationale":"Si bien importante, el testeo en Design Thinking se centra en el encaje con el usuario, no en el balance contable.","text":"Analizar la viabilidad económica del proyecto."},{"isCorrect":false,"rationale":"La creación del prototipo es la fase anterior ('Prototipar'); testear es la evaluación del mismo.","text":"Crear el primer prototipo funcional de bajo coste."}],"hint":"Es el momento de escuchar la opinión de quien usará el producto.","question":"En la fase de 'Testear' del Design Thinking, el objetivo principal es:"},{"answerOptions":[{"isCorrect":false,"rationale":"Es al revés: el autónomo tributa por IRPF y cualquier S.L. (incluida la S.L.U.) por sociedades.","text":"El autónomo tributa por el Impuesto de Sociedades y la S.L.U. por el IRPF."},{"isCorrect":false,"rationale":"Por definición, la S.L.U. tiene un único propietario (un socio).","text":"La S.L.U. requiere al menos tres socios para ser inscrita en el Registro Mercantil."},{"isCorrect":true,"rationale":"La unipersonalidad permite que una sola persona goce de la protección del patrimonio personal que ofrece la estructura societaria.","text":"La S.L.U. ofrece responsabilidad limitada frente a las deudas, mientras que el autónomo responde ilimitadamente."},{"isCorrect":false,"rationale":"Existen diferencias legales profundas en cuanto a responsabilidad y obligaciones fiscales/registrales.","text":"No hay diferencia real, solo cambia el nombre comercial."}],"hint":"Enfócate en la seguridad jurídica del patrimonio del propietario.","question":"¿Qué distingue a una Sociedad Limitada Unipersonal (S.L.U.) de la figura de un Autónomo?"},{"answerOptions":[{"isCorrect":false,"rationale":"Se centra en la base técnica de los servicios, independientemente de la situación laboral previa del fundador.","text":"Emprendimiento tecnológico"},{"isCorrect":false,"rationale":"El escalable busca crecimiento masivo rápido con tecnología, no es una respuesta a la falta de empleo.","text":"Emprendimiento escalable"},{"isCorrect":true,"rationale":"Esta categoría se diferencia del emprendimiento por oportunidad, ya que su motivación es la subsistencia económica.","text":"Emprendimiento por necesidad"},{"isCorrect":false,"rationale":"El emprendimiento social busca resolver problemas comunitarios, no necesariamente paliar la falta de empleo personal.","text":"Emprendimiento social"}],"hint":"Es una reacción ante una situación de desempleo o subempleo.","question":"El emprendimiento que surge porque una persona carece de otras opciones laborales tradicionales se denomina:"},{"answerOptions":[{"isCorrect":false,"rationale":"El democrático se basa en la participación del grupo, no en una estructura rígida de incentivos transaccionales.","text":"Democrático"},{"isCorrect":false,"rationale":"El transformacional busca inspirar y cambiar la cultura, no se limita a un sistema de premios/castigos mecánicos.","text":"Transformacional"},{"isCorrect":false,"rationale":"Un liderazgo orientado a la innovación radical suele dar más autonomía y no basarse puramente en el castigo.","text":"Innovador"},{"isCorrect":true,"rationale":"Este modelo se centra en el intercambio (transacción) entre el líder y el seguidor para el cumplimiento de objetivos específicos.","text":"Transaccional"}],"hint":"Piensa en una relación de intercambio directo por tareas realizadas.","question":"En el contexto de liderazgo mencionado en el material visual, el enfoque basado en 'recompensas y castigos' es característico del liderazgo:"},{"answerOptions":[{"isCorrect":false,"rationale":"Este es el capital mínimo requerido para las Sociedades Anónimas (S.A.).","text":"60.000 €"},{"isCorrect":true,"rationale":"La legislación actual ha reducido el capital mínimo a 1 € para facilitar la creación de empresas.","text":"1 €"},{"isCorrect":false,"rationale":"Las sociedades mercantiles siempre requieren una aportación mínima; solo el empresario individual o comunidades de bienes carecen de mínimo legal.","text":"No existe mínimo legal"},{"isCorrect":false,"rationale":"Este era el mínimo histórico tradicional, pero el material especifica que ahora el requisito es de 1 €.","text":"3.000 €"}],"hint":"Es la mínima expresión monetaria posible para una sociedad en España.","question":"¿Cuál es el capital mínimo exigido para constituir una Sociedad de Responsabilidad Limitada (S.L.) según los datos más recientes del material?"},{"answerOptions":[{"isCorrect":false,"rationale":"El producto define las características físicas y de calidad, no su coste para el cliente.","text":"Producto"},{"isCorrect":false,"rationale":"La plaza o distribución trata sobre la logística de entrega, no sobre el cobro al usuario.","text":"Plaza"},{"isCorrect":false,"rationale":"La promoción se encarga de la comunicación y publicidad, no del valor de venta.","text":"Promoción"},{"isCorrect":true,"rationale":"El precio debe considerar a los consumidores, la competencia y los costes de fabricación para ser competitivo.","text":"Precio"}],"hint":"Es el factor que determina directamente los ingresos de la empresa.","question":"En el análisis del Marketing Mix, ¿qué 'P' define el valor monetario que el consumidor debe pagar por el producto?"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque no tiene personalidad jurídica propia, el empresario individual es una sola persona, no una unión de dos o más.","text":"Empresario Individual"},{"isCorrect":false,"rationale":"La S.L. tiene personalidad jurídica propia y la responsabilidad está limitada.","text":"Sociedad de Responsabilidad Limitada"},{"isCorrect":true,"rationale":"Es una forma sencilla donde los socios mantienen su patrimonio personal expuesto ante las deudas de la comunidad.","text":"Comunidad de bienes"},{"isCorrect":false,"rationale":"Las cooperativas son entidades con personalidad jurídica y responsabilidad limitada al capital aportado.","text":"Sociedad Cooperativa"}],"hint":"Se asocia frecuentemente a la gestión compartida de un local o derecho entre varios autónomos.","question":"¿Qué estructura empresarial carece de personalidad jurídica y consiste en dos o más personas que comparten la titularidad de un bien común con responsabilidad ilimitada?"},{"answerOptions":[{"isCorrect":true,"rationale":"Eliminar ayuda a reducir costes y mejorar el enfoque del producto en lo que realmente importa al cliente.","text":"Simplificar el producto suprimiendo características superfluas que no aportan valor."},{"isCorrect":false,"rationale":"Esto pertenecería a 'Sustituir', no a 'Eliminar' elementos del diseño o proceso.","text":"Sustituir a los proveedores actuales por otros más eficientes."},{"isCorrect":false,"rationale":"Se refiere a características del producto o pasos del proceso, no a la gestión de recursos humanos de forma directa.","text":"Despedir personal para reducir la estructura de costos."},{"isCorrect":false,"rationale":"SCAMPER es una técnica de creación e innovación, no un plan de liquidación empresarial.","text":"Retirar el producto del mercado por falta de rentabilidad."}],"hint":"Menos es más: piensa en la eficiencia a través de la sustracción.","question":"Dentro de la técnica SCAMPER, la acción de 'Eliminar' busca:"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque similar, 'piensa y siente' se enfoca en el estado interno privado, mientras que los retos/oportunidades son las fuerzas motivadoras de acción.","text":"¿Qué piensa y siente?"},{"isCorrect":false,"rationale":"Esta sección observa la conducta externa, no el motor emocional o la necesidad subyacente.","text":"¿Qué dice y hace?"},{"isCorrect":true,"rationale":"Este bloque resume los 'dolores' (frustraciones) y las 'ganancias' (deseos) que mueven al cliente.","text":"¿Cuáles son los retos y oportunidades?"},{"isCorrect":false,"rationale":"Esta es la sección de soluciones de la empresa, no el análisis de la motivación del usuario.","text":"¿Qué podemos hacer nosotros?"}],"hint":"Identifica los obstáculos que el usuario quiere superar y lo que espera ganar.","question":"En el Mapa de Empatía, ¿en qué sección se exploran las frustraciones, necesidades y deseos que motivan al usuario?"},{"answerOptions":[{"isCorrect":true,"rationale":"Fomenta el pensamiento divergente y la colaboración para explorar múltiples soluciones creativas.","text":"Generar la mayor cantidad posible de ideas sin juzgarlas inicialmente."},{"isCorrect":false,"rationale":"En esta fase se busca cantidad y diversidad; la selección ocurre al final o durante el prototipado.","text":"Seleccionar la única idea viable para pasar a producción."},{"isCorrect":false,"rationale":"Las entrevistas pertenecen a la fase de 'Empatizar'.","text":"Entrevistar a profundidad a los clientes potenciales."},{"isCorrect":false,"rationale":"El cálculo de costes es parte del modelo de negocio, no de la generación creativa de soluciones en esta fase.","text":"Calcular los costes operativos de cada propuesta."}],"hint":"Es un proceso de expansión mental donde la cantidad es más importante que la calidad inmediata.","question":"¿Cuál es el objetivo principal de la fase de 'Idear' en la metodología de Design Thinking?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los bonos son instrumentos de deuda, no la forma en que se divide la propiedad básica de la sociedad.","text":"Bonos convertibles en activos fijos."},{"isCorrect":true,"rationale":"A diferencia de las acciones, las participaciones no pueden negociarse libremente en bolsa y requieren consentimiento de los socios para su venta.","text":"Participaciones sociales indivisibles."},{"isCorrect":false,"rationale":"El IRPF es un impuesto, no un método de división del capital social.","text":"Cuotas sociales restringidas únicamente por el IRPF."},{"isCorrect":false,"rationale":"Las acciones son la división característica de la Sociedad Anónima (S.A.).","text":"Acciones de libre venta."}],"hint":"Es una unidad de capital más 'cerrada' que la de una S.A.","question":"En una Sociedad de Responsabilidad Limitada, el capital social está dividido en:"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque puede ser escalable, la oportunidad solo define el motivo de inicio, no la capacidad técnica de crecimiento masivo.","text":"Emprendimiento por oportunidad"},{"isCorrect":true,"rationale":"Se caracteriza por tener la capacidad de multiplicar ingresos sin aumentar los costes en la misma proporción.","text":"Emprendimiento escalable"},{"isCorrect":false,"rationale":"El emprendimiento local suele estar limitado geográficamente, justo lo contrario a lo escalable.","text":"Emprendimiento local"},{"isCorrect":false,"rationale":"Su fin es el impacto ambiental o social, no necesariamente el crecimiento tecnológico masivo.","text":"Emprendimiento social"}],"hint":"Busca negocios que 'crezcan' sin límites geográficos o de recursos proporcionales.","question":"¿Qué tipo de emprendimiento utiliza tecnologías innovadoras y modelos eficientes para lograr un crecimiento masivo y rápido?"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque aporta confianza, el valor se centra en el producto/servicio y la solución al problema del cliente.","text":"En el currículum vitae de los fundadores."},{"isCorrect":false,"rationale":"Los canales son el medio de entrega, no el valor o beneficio en sí mismo.","text":"En los canales de publicidad más económicos."},{"isCorrect":true,"rationale":"La propuesta de valor es la razón por la cual los clientes eligen una empresa sobre otra; es el núcleo del negocio.","text":"En qué beneficios únicos o soluciones ofrece a sus clientes."},{"isCorrect":false,"rationale":"Eso corresponde a la estructura de costos, no a la propuesta de valor.","text":"En el listado de todos los gastos fijos y variables."}],"hint":"Responde a la pregunta: ¿Por qué me compraría a mí y no a la competencia?","question":"Al definir la 'Propuesta de Valor' en el modelo Canvas, ¿en qué debe centrarse la empresa?"}];
+        let currentIndex = 0;
+                const originalQuizData = quizData.slice();
+                (function() {
+                  var key = 'wrong:' + window.location.pathname.split('/').pop();
+                  try {
+                    var stored = localStorage.getItem(key);
+                    if (stored) {
+                      var wrongSet = new Set(JSON.parse(stored));
+                      if (wrongSet.size > 0) {
+                        var filtered = originalQuizData.filter(function(q){ return wrongSet.has(q.question); });
+                        if (filtered.length > 0) quizData = filtered;
+                      }
+                    }
+                  } catch(e) {}
+                })();
+        let mode = 'quiz';
+        let state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+
+        function getStats() {
+            const answered = state.filter((s) => s.selectedIndex !== null).length;
+            const correct = state.filter((s, i) => s.selectedIndex !== null && quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const wrong = state.filter((s, i) => s.selectedIndex !== null && !quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const skipped = quizData.length - answered;
+            const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+            return { answered, correct, wrong, skipped, accuracy };
+        }
+
+        function shuffleAnswers() {
+            quizData.forEach((q) => {
+                for (let i = q.answerOptions.length - 1; i > 0; i -= 1) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.answerOptions[i], q.answerOptions[j]] = [q.answerOptions[j], q.answerOptions[i]];
+                }
+            });
+        }
+
+        function shuffleQuestions() {
+            for (let i = quizData.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [quizData[i], quizData[j]] = [quizData[j], quizData[i]];
+            }
+        }
+
+        function resetState() {
+            state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+        }
+
+
+        function fmt(str) {
+          if (!str) return str;
+          return str
+            .replace(/\$\$(.*?)\$\$/gs, function(_,m){return m;})
+            .replace(/\$([^$<>]+?)\$/g, function(_,m){return m;})
+            .replace(/\*\*(.*?)\*\*/g, function(_,m){return "<strong>"+m+"</strong>";})
+            .replace(/\*(.*?)\*/g, function(_,m){return "<em>"+m+"</em>";})
+            .replace(/`(.*?)`/g, function(_,m){return "<code>"+m+"</code>";})
+        }
+        function renderQuestion() {
+            const q = quizData[currentIndex];
+            const s = state[currentIndex];
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+
+            let optionsHtml = '';
+            const correctIndex = q.answerOptions.findIndex((o) => o.isCorrect);
+            const selectedCorrect = s.selectedIndex !== null && q.answerOptions[s.selectedIndex].isCorrect;
+            q.answerOptions.forEach((opt, idx) => {
+                const isSelected = s.selectedIndex === idx;
+                const statusClass = isSelected ? (opt.isCorrect ? 'correct' : 'incorrect') : '';
+                const selectedClass = isSelected ? 'selected' : '';
+                const revealCorrect = (s.selectedIndex !== null && !selectedCorrect && opt.isCorrect) || (mode === 'review' && opt.isCorrect);
+                const revealClass = revealCorrect ? 'revealed-correct' : '';
+
+                optionsHtml += `
+                    <li class="option-item ${selectedClass} ${statusClass} ${revealClass}" onclick="selectOption(${idx})">
+                        <div class="option-label">
+                            <span>${String.fromCharCode(65 + idx)}. ${fmt(opt.text)}</span>
+                        </div>
+                        <div class="feedback-state">
+                            ${opt.isCorrect ? '✓ Correcto' : '✕ Incorrecto'}
+                        </div>
+                        ${opt.rationale ? '<div class="rationale">' + fmt(opt.rationale) + '</div>' : ''}
+                    </li>
+                `;
+            });
+
+            const stats = getStats();
+
+            content.innerHTML = `
+                <div class="progress-container">
+                    <div class="progress-text">${currentIndex + 1} / ${quizData.length}</div>
+                    <div class="status-bar">
+                        <div class="status-item status-correct">
+                            <span>✓</span>
+                            <span>${stats.correct}</span>
+                        </div>
+                        <div class="status-item status-wrong">
+                            <span>✕</span>
+                            <span>${stats.wrong}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="question-text">${fmt(q.question)}</div>
+                <ul class="options-list">
+                    ${optionsHtml}
+                </ul>
+            `;
+
+            // Update Pista Box
+            const hintText = document.getElementById('hint-text');
+            hintText.innerText = fmt(q.hint) || 'No hay pista disponible para esta pregunta.';
+            if (s.hintVisible) {
+                hintBox.classList.add('active');
+            } else {
+                hintBox.classList.remove('active');
+            }
+
+            results.classList.add('hidden');
+            content.classList.remove('hidden');
+            hintBox.classList.remove('hidden');
+            nav.classList.remove('hidden');
+
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = false;
+            if (mode === 'review') {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Volver a resultados' : 'Siguiente';
+            } else {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finalizar' : 'Siguiente';
+            }
+            document.getElementById('hint-icon-arrow').innerText = s.hintVisible ? '▲' : '▼';
+        }
+
+        function selectOption(idx) {
+            if (mode !== 'quiz') return;
+            if (state[currentIndex].selectedIndex !== null) return; // Prevent re-selection
+            state[currentIndex].selectedIndex = idx;
+            renderQuestion();
+        }
+
+        function toggleHint() {
+            if (mode === 'results') return;
+            state[currentIndex].hintVisible = !state[currentIndex].hintVisible;
+            renderQuestion();
+        }
+
+
+        function saveWrongAnswers() {
+          var wrongQuestions = state
+            .map(function(s,i){return {s:s,i:i};})
+            .filter(function(x){return x.s.selectedIndex !== null && !quizData[x.i].answerOptions[x.s.selectedIndex].isCorrect;})
+            .map(function(x){return quizData[x.i].question;});
+          var key = 'wrong:' + window.location.pathname.split('/').pop();
+          if (wrongQuestions.length > 0) {
+            localStorage.setItem(key, JSON.stringify(wrongQuestions));
+          } else {
+            localStorage.removeItem(key);
+          }
+          return wrongQuestions;
+        }
+        function renderResults() {
+            const stats = getStats();
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+
+            const score = `${stats.correct} / ${quizData.length}`;
+
+            results.innerHTML = `
+                <div class="results-screen">
+                    <div>
+                        <h1 class="results-title">¡Lo lograste! Quiz completado.</h1>
+                        <p class="results-subtitle">Revisa tu puntuación o inténtalo de nuevo.</p>
+                    </div>
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-label">Puntuación</div>
+                            <div class="result-value">${score}</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Precisión</div>
+                            <div class="result-value">${stats.accuracy}%</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-metrics">
+                                <div>Correctas <strong>${stats.correct}</strong></div>
+                                <div>Incorrectas <strong>${stats.wrong}</strong></div>
+                                <div>Omitidas <strong>${stats.skipped}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="results-actions"><button id="retake-wrong-btn" class="btn btn-ghost" style="display:none">Repasar errores (<span id="wrong-count">0</span>)</button>
+                        <button id="review-btn" class="btn btn-ghost">Revisar Quiz</button>
+                        <button id="retake-btn" class="btn btn-next">Repetir Quiz</button>
+                    </div>
+                </div>
+            `;
+
+            content.classList.add('hidden');
+            results.classList.remove('hidden');
+            hintBox.classList.add('hidden');
+            nav.classList.add('hidden');
+
+
+            var wrongQuestions = saveWrongAnswers();
+            var retakeWrongBtn = document.getElementById('retake-wrong-btn');
+            if (wrongQuestions.length > 0) {
+              document.getElementById('wrong-count').textContent = wrongQuestions.length;
+              retakeWrongBtn.style.display = '';
+            }
+            (function() {
+              var fname = window.location.pathname.split('/').pop();
+              var backLink = document.querySelector('.quiz-heading a[href*="index.html"]');
+              if (backLink) {
+                var h = '#wrong=' + fname + ':' + wrongQuestions.length;
+                backLink.href = backLink.href.split('#')[0] + h;
+              }
+            })();
+            document.getElementById('retake-wrong-btn').onclick = function() {
+              if (wrongQuestions.length === 0) return;
+              mode = 'quiz';
+              currentIndex = 0;
+              var wrongSet = new Set(wrongQuestions);
+              quizData = originalQuizData.filter(function(q){return wrongSet.has(q.question);});
+              shuffleAnswers();
+              resetState();
+              renderQuestion();
+            };
+
+            var wrongQuestions = saveWrongAnswers();
+            var retakeWrongBtn = document.getElementById('retake-wrong-btn');
+            if (wrongQuestions.length > 0) {
+              document.getElementById('wrong-count').textContent = wrongQuestions.length;
+              retakeWrongBtn.style.display = '';
+            }
+            (function() {
+              var fname = window.location.pathname.split('/').pop();
+              var backLink = document.querySelector('.quiz-heading a[href*="index.html"]');
+              if (backLink) {
+                var h = '#wrong=' + fname + ':' + wrongQuestions.length;
+                backLink.href = backLink.href.split('#')[0] + h;
+              }
+            })();
+            document.getElementById('retake-wrong-btn').onclick = function() {
+              if (wrongQuestions.length === 0) return;
+              mode = 'quiz';
+              currentIndex = 0;
+              var wrongSet = new Set(wrongQuestions);
+              quizData = originalQuizData.filter(function(q){return wrongSet.has(q.question);});
+              shuffleAnswers();
+              resetState();
+              renderQuestion();
+            };
+            document.getElementById('review-btn').onclick = () => {
+                mode = 'review';
+                currentIndex = 0;
+                renderQuestion();
+            };
+
+            document.getElementById('retake-btn').onclick = () => {
+                mode = 'quiz';
+                currentIndex = 0;
+                shuffleQuestions();
+                shuffleAnswers();
+                resetState();
+                renderQuestion();
+            };
+        }
+
+        document.getElementById('prev-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        };
+
+        document.getElementById('next-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (mode === 'review') {
+                if (currentIndex < quizData.length - 1) {
+                    currentIndex++;
+                    renderQuestion();
+                } else {
+                    mode = 'results';
+                    renderResults();
+                }
+                return;
+            }
+            if (currentIndex < quizData.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                mode = 'results';
+                renderResults();
+            }
+        };
+
+        document.getElementById('hint-toggle').onclick = toggleHint;
+
+        renderQuestion();
+    </script>
+
+  <button id="theme-toggle" title="Cambiar tema" style="position:fixed;top:8px;right:8px;background:var(--card);border:1px solid var(--stroke);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:transform 0.2s ease;z-index:100;">🌙</button>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-toggle').textContent = '☀️';
+      }
+      document.getElementById('theme-toggle').addEventListener('click', function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        this.textContent = isDark ? '🌙' : '☀️';
+      });
+    })();
+  </script>
+</body>
+</html>

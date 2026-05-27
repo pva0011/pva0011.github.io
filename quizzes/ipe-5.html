@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotebookLM - Quiz Export</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+        :root {
+            --bg: #f6f1e7;
+            --bg-deep: #efe4d6;
+            --ink: #171717;
+            --muted: #5b5b5b;
+            --accent: #d3542c;
+            --accent-light: #ff8f5a;
+            --accent-dark: #b14320;
+            --teal: #1f6f78;
+            --card: #fff7ef;
+            --stroke: #e3d6c5;
+            --shadow: 0 18px 40px rgba(23, 23, 23, 0.12);
+            --radius-sm: 10px;
+            --radius-md: 12px;
+            --radius-lg: 14px;
+            --radius-xl: 18px;
+            --radius-2xl: 22px;
+            --space-1: 6px;
+            --space-2: 8px;
+            --space-3: 10px;
+            --space-4: 12px;
+            --space-5: 14px;
+            --space-6: 16px;
+            --space-7: 18px;
+            --space-8: 20px;
+            --space-9: 24px;
+            --space-10: 32px;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --error: #b54832;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background:
+                radial-gradient(240px 140px at 10% -10%, #ffd2b9 0%, transparent 70%),
+                radial-gradient(220px 160px at 90% 0%, #cfe7e6 0%, transparent 65%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+            color: var(--ink);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 800px;
+            padding: var(--space-10) var(--space-8);
+            box-sizing: border-box;
+            background: var(--card);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+        }
+
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .progress-text {
+            color: var(--muted);
+            font-size: 0.9em;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-correct { color: var(--teal); }
+        .status-wrong { color: var(--error); }
+
+        .question-text {
+            font-family: var(--font-display);
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-item:hover:not(.selected) {
+            background-color: var(--card);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .option-item.selected.correct {
+            background-color: rgba(31, 111, 120, 0.12);
+            border-color: var(--teal);
+        }
+
+        .option-item.selected.incorrect {
+            background-color: rgba(181, 72, 50, 0.12);
+            border-color: var(--error);
+        }
+
+        .option-item.revealed-correct {
+            border-color: rgba(31, 111, 120, 0.5);
+            box-shadow: inset 0 0 0 1px rgba(31, 111, 120, 0.16);
+        }
+
+        .option-label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feedback-state {
+            font-weight: bold;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .selected .feedback-state {
+            display: block;
+        }
+
+        .revealed-correct .feedback-state {
+            display: block;
+        }
+
+        .correct .feedback-state { color: var(--teal); }
+        .incorrect .feedback-state { color: var(--error); }
+        .revealed-correct .feedback-state { color: var(--teal); }
+
+        .rationale {
+            font-size: 0.95em;
+            color: var(--muted);
+            margin-top: 4px;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .selected .rationale {
+            display: block;
+        }
+
+        .revealed-correct .rationale {
+            display: block;
+        }
+        .hint-toggle {
+            border: 1px solid var(--stroke);
+            color: var(--muted);
+            cursor: pointer;
+            padding: var(--space-2) var(--space-6);
+            border-radius: var(--radius-md);
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hint-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .hint-content {
+            margin-top: 32px;
+            padding: var(--space-6);
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-lg);
+            font-size: 0.95em;
+            color: var(--muted);
+            display: none;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .hint-content.active {
+            display: flex;
+        }
+
+        .hint-icon-box {
+            color: var(--accent-dark);
+            font-size: 1.2em;
+            margin-top: -2px;
+        }
+
+        .navigation {
+            margin-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-7);
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-prev {
+            background-color: #fff;
+            color: var(--ink);
+            border-color: var(--stroke);
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn-next {
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            color: #fff;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .results-screen {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+        }
+
+        .results-title {
+            font-family: var(--font-display);
+            font-size: 2.1em;
+            margin: 0;
+        }
+
+        .results-subtitle {
+            color: var(--muted);
+            margin: 0;
+            font-size: 1em;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .result-card {
+            padding: var(--space-6);
+            border-radius: var(--radius-xl);
+            background: #fff;
+            border: 1px solid var(--stroke);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .result-label {
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-family: var(--font-display);
+        }
+
+        .result-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            border: 1px solid var(--stroke);
+            color: var(--ink);
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 900px) {
+            .quiz-container {
+                margin: var(--space-8);
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .quiz-container {
+                padding: var(--space-8) var(--space-6);
+            }
+
+            .question-text {
+                font-size: 1.3em;
+            }
+
+            .option-item {
+                padding: var(--space-4);
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .quiz-container {
+                margin: var(--space-6);
+                padding: var(--space-7) var(--space-5);
+            }
+
+            .progress-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+
+            .navigation {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-4);
+            }
+
+            .nav-buttons {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .hint-toggle {
+                justify-content: space-between;
+            }
+
+            .results-actions {
+                flex-direction: column;
+            }
+        }
+    
+    [data-theme="dark"] {
+      --bg: #1a1612;
+      --bg-deep: #141210;
+      --ink: #f0ebe0;
+      --muted: #9a9080;
+      --accent: #e8673a;
+      --accent-light: #ff9a6a;
+      --accent-dark: #c45528;
+      --teal: #2a9aa8;
+      --card: #221e18;
+      --stroke: #3a3028;
+      --shadow: 0 18px 40px rgba(0,0,0,0.4);
+      --error: #e06050;
+    }
+    [data-theme="dark"] body {
+      background:
+        radial-gradient(240px 140px at 10% -10%, #3a1a08 0%, transparent 70%),
+        radial-gradient(220px 160px at 90% 0%, #0a2a2e 0%, transparent 65%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    }
+    [data-theme="dark"] .option-item { background-color: var(--card); }
+    [data-theme="dark"] .hint-toggle,
+    [data-theme="dark"] .hint-content,
+    [data-theme="dark"] .btn-prev { background-color: var(--card); color: var(--ink); }
+    [data-theme="dark"] .result-card { background: var(--card); }
+    [data-theme="dark"] .btn-next {
+      background: linear-gradient(90deg, #e8673a, #f28c5e);
+      box-shadow: 0 4px 20px rgba(232, 103, 58, 0.35);
+      color: #fff;
+    }
+    [data-theme="dark"] .btn-next:hover:not(:disabled) {
+      box-shadow: 0 6px 24px rgba(232, 103, 58, 0.5);
+    }
+    
+    /* quiz-mobile-v3 */
+    @media (max-width: 640px) {
+      body {
+        height: 100dvh;
+        overflow: hidden;
+        align-items: flex-start;
+        padding: 0;
+      }
+      .quiz-container {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        margin: 0;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+        padding-bottom: 0;
+      }
+      #quiz-content,
+      #results-content {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        min-height: 0;
+        padding-bottom: 8px;
+      }
+      #hint-box { flex-shrink: 0; }
+      .navigation {
+        flex-shrink: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        margin-top: 0;
+        background: var(--card);
+        border-top: 1px solid var(--stroke);
+      }
+    }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+
+    <div class="quiz-heading" style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
+      <a href="../index.html" style="font-size:0.82em;color:var(--muted);text-decoration:none;font-family:var(--font-body)">← Índice</a>
+      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">Itinerario Personal para la Empleabilidad · Quiz 5</h1>
+    </div>
+        <div id="quiz-content">
+            <!-- Dynamic Content -->
+        </div>
+        <div id="results-content" class="hidden"></div>
+
+        <div id="hint-box" class="hint-content">
+            <div class="hint-icon-box">💡</div>
+            <div id="hint-text"></div>
+        </div>
+
+        <div class="navigation">
+            <button id="hint-toggle" class="hint-toggle">
+                <span>Pista</span>
+                <span id="hint-icon-arrow">▼</span>
+            </button>
+            <div class="nav-buttons">
+                <button id="prev-btn" class="btn btn-prev">Anterior</button>
+                <button id="next-btn" class="btn btn-next">Siguiente</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let quizData = [{"answerOptions":[{"isCorrect":false,"rationale":"La clasificación contable se basa en el horizonte temporal de permanencia y no en la cuantía absoluta de la inversión.","text":"El valor monetario de mercado, siendo el activo no corriente siempre más costoso."},{"isCorrect":false,"rationale":"Ambas categorías de activos pueden contener elementos tangibles e intangibles según la normativa contable.","text":"La naturaleza tangible o intangible de los bienes que componen el recurso."},{"isCorrect":true,"rationale":"El activo corriente se vincula al ciclo de explotación anual, mientras que el no corriente representa inversiones estructurales permanentes.","text":"El tiempo estimado para su conversión en efectivo o su consumo operativo."},{"isCorrect":false,"rationale":"Aunque es recomendable financiar activos fijos con recursos a largo plazo, la clasificación del activo depende de su liquidez, no de su origen de fondos.","text":"La fuente de financiación utilizada obligatoriamente para su adquisición inicial."}],"hint":"Considera el horizonte temporal de un año como criterio divisorio estándar.","question":"¿Cuál es la principal diferencia conceptual entre el activo corriente y el activo no corriente en el balance de situación?"},{"answerOptions":[{"isCorrect":true,"rationale":"Un valor inferior a $1$ indica que el activo corriente no alcanza para cubrir las deudas exigibles en el mismo periodo.","text":"Existe un riesgo elevado de suspensión de pagos por falta de recursos líquidos a corto plazo."},{"isCorrect":false,"rationale":"El ratio de liquidez relaciona activos y pasivos corrientes, no describe la composición del patrimonio neto.","text":"La empresa depende exclusivamente de su patrimonio neto para financiar sus operaciones."},{"isCorrect":false,"rationale":"El exceso de liquidez se daría con valores superiores a $2$, no inferiores a $1$.","text":"La empresa tiene un exceso de capital ocioso que debería ser invertido para mejorar la rentabilidad."},{"isCorrect":false,"rationale":"El rango óptimo para la liquidez general se sitúa entre $1,5$ y $2$.","text":"La situación financiera es óptima y equilibrada para afrontar deudas inmediatas."}],"hint":"Compara el valor con el rango de referencia de $1,5$ a $2$.","question":"Si una empresa presenta un ratio de liquidez de $0,8$, ¿cuál es la interpretación técnica más precisa según los valores óptimos establecidos?"},{"answerOptions":[{"isCorrect":true,"rationale":"Son recursos que no tienen apariencia física pero generan beneficios económicos futuros a largo plazo.","text":"Activo no corriente intangible."},{"isCorrect":false,"rationale":"Representan una inversión (activo), no una fuente de financiación propia aportada por socios.","text":"Patrimonio neto o fondos propios."},{"isCorrect":false,"rationale":"Los activos representan derechos y bienes, mientras que los pasivos representan obligaciones y deudas.","text":"Pasivo fijo o a largo plazo."},{"isCorrect":false,"rationale":"Las patentes no se destinan a la venta inmediata dentro del ciclo operativo normal de un año.","text":"Activo corriente realizable."}],"hint":"Se trata de bienes inmateriales destinados a permanecer en la empresa más de un año.","question":"¿En qué categoría del balance deben clasificarse las 'patentes y marcas comerciales'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Las cuentas por cobrar forman parte del 'Realizable' y sí se incluyen en el ratio de tesorería.","text":"Las cuentas por cobrar, ya que el cobro no está garantizado al 100%."},{"isCorrect":true,"rationale":"El inventario requiere ser vendido y cobrado antes de convertirse en efectivo, lo que lo hace menos líquido que el disponible y el realizable.","text":"Las existencias o inventarios, debido a su menor grado de liquidez inmediata."},{"isCorrect":false,"rationale":"Los préstamos bancarios a corto plazo figuran en el denominador (pasivo corriente), no en el numerador.","text":"Los préstamos bancarios, por ser una obligación y no un recurso."},{"isCorrect":false,"rationale":"El patrimonio neto no forma parte del activo corriente, por lo que su exclusión no define este ratio.","text":"El patrimonio neto, para evitar duplicidades en la estructura financiera."}],"hint":"Piensa en qué elemento del activo corriente requiere un proceso de venta previo para ser dinero.","question":"El ratio de tesorería se calcula mediante la fórmula $\\frac{Realizable + Disponible}{Pasivo\\ corriente}$. ¿Qué componente se excluye del activo corriente para este cálculo y por qué?"},{"answerOptions":[{"isCorrect":false,"rationale":"El ratio de endeudamiento total no distingue entre plazos de deuda, solo mide el volumen total frente al patrimonio.","text":"La calidad de la deuda es excelente porque casi todo es a largo plazo."},{"isCorrect":false,"rationale":"La liquidez mide la capacidad de pago a corto plazo, mientras que el endeudamiento mide la solvencia estructural.","text":"La empresa está en una situación de liquidez técnica perfecta."},{"isCorrect":true,"rationale":"Un valor superior al rango $0,4$ - $0,6$ indica una descapitalización o excesivo peso de las deudas en la estructura financiera.","text":"La empresa tiene una dependencia excesiva de la financiación ajena frente a sus recursos propios."},{"isCorrect":false,"rationale":"Si el ratio es $0,9$, el pasivo representa el $90\\%$ de la estructura de capital, por lo que el patrimonio es muy inferior.","text":"El patrimonio neto es superior al total de las deudas con terceros."}],"hint":"Considera que el rango óptimo es $0,4$ a $0,6$.","question":"Un ratio de endeudamiento situado en $0,9$ sugiere que:"},{"answerOptions":[{"isCorrect":false,"rationale":"La maquinaria es un activo no corriente, no una obligación de pago (pasivo).","text":"Maquinaria de alta precisión utilizada en la cadena de montaje."},{"isCorrect":false,"rationale":"Las reservas forman parte del patrimonio neto o fondos propios, no de las deudas con terceros.","text":"Reserva legal constituida con los beneficios del ejercicio anterior."},{"isCorrect":true,"rationale":"Representa una obligación de pago con un vencimiento inferior a un año.","text":"Deudas con proveedores por compra de materias primas a pagar en 90 días."},{"isCorrect":false,"rationale":"Al superar el año de vencimiento, se clasifica como pasivo no corriente o pasivo fijo.","text":"Préstamo hipotecario para la adquisición de un local a devolver en 15 años."}],"hint":"Busca una obligación de pago con terceros cuyo vencimiento sea a corto plazo.","question":"¿Cuál de las siguientes partidas constituye un 'Pasivo Circulante'?"},{"answerOptions":[{"isCorrect":true,"rationale":"Refleja la parte de los activos de la empresa que pertenece realmente a los propietarios tras deducir todas las deudas.","text":"La diferencia entre el valor total de los activos y el total de las obligaciones con terceros."},{"isCorrect":false,"rationale":"Eso define el 'Disponible' dentro del activo corriente.","text":"La suma de todo el dinero en caja y cuentas bancarias disponible hoy mismo."},{"isCorrect":false,"rationale":"Las deudas con entidades financieras forman parte del pasivo exigible.","text":"El conjunto de deudas que la empresa ha contraído con entidades financieras."},{"isCorrect":false,"rationale":"Esto constituye el 'Realizable' dentro del activo corriente.","text":"El total de facturas pendientes de cobro por parte de los clientes."}],"hint":"Se le conoce también como capital contable o fondos propios.","question":"¿Qué representa el concepto de 'Patrimonio Neto' en la estructura económico-financiera?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los gastos operativos forman parte del capital de trabajo o circulante, no del activo fijo.","text":"Gastos operativos diarios como salarios y suministros de oficina."},{"isCorrect":false,"rationale":"Las aportaciones de los socios son fuentes de financiación propia, no inversiones en activos específicos.","text":"Aportaciones iniciales de los socios que no requieren devolución."},{"isCorrect":false,"rationale":"Los recursos de rápida conversión a efectivo son activos circulantes o corrientes.","text":"Recursos que se convierten en efectivo en un periodo inferior a los seis meses."},{"isCorrect":true,"rationale":"Son elementos estructurales que no están destinados a la venta y permanecen largo tiempo en la organización.","text":"Bienes con una vida útil prolongada necesarios para la producción de bienes o servicios."}],"hint":"Tienen una permanencia en la empresa superior al año fiscal.","question":"Dentro del plan de inversión, ¿cómo se definen los 'activos fijos'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este rango corresponde al ratio de tesorería y la definición es incorrecta.","text":"$0,8$ - $1,2$; mide la relación entre activos tangibles y activos intangibles."},{"isCorrect":false,"rationale":"Ese rango corresponde al ratio de endeudamiento.","text":"$0,4$ - $0,6$; mide el porcentaje de beneficios reinvertidos en la empresa."},{"isCorrect":false,"rationale":"Este rango y definición corresponden al ratio de liquidez general.","text":"$1,5$ - $2,0$; mide la solvencia total de la empresa frente a todos sus acreedores."},{"isCorrect":true,"rationale":"Evalúa si la empresa puede afrontar sus deudas más urgentes sin depender de cobros o ventas futuras.","text":"$0,2$ - $0,3$; mide la capacidad de pago inmediata con el dinero efectivo en caja y bancos."}],"hint":"Es el ratio de liquidez más restrictivo, pues solo considera el dinero 'contante y sonante'.","question":"El ratio de disponibilidad relaciona el 'Disponible' con el pasivo corriente. ¿Cuál es su valor óptimo y qué mide?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esa operación define el patrimonio neto en el balance de situación.","text":"Calcular la diferencia entre los activos totales y los pasivos totales a una fecha fija."},{"isCorrect":false,"rationale":"Esa es la función del plan de tesorería o presupuesto de caja.","text":"Prever las necesidades de efectivo para los próximos tres meses mediante flujos de caja."},{"isCorrect":true,"rationale":"A diferencia del balance, que es una foto estática, la cuenta de resultados mide el flujo económico de un ejercicio.","text":"Mostrar los ingresos, gastos y el beneficio o pérdida neto durante un periodo específico."},{"isCorrect":false,"rationale":"La relación de bienes estructurales aparece en el activo no corriente del balance de situación.","text":"Enumerar detalladamente todos los bienes inmuebles y maquinaria que posee la entidad."}],"hint":"Se centra en la rentabilidad de la actividad económica en un tiempo determinado.","question":"¿Cuál es la función principal de la 'Cuenta de Resultados' o de Pérdidas y Ganancias?"},{"answerOptions":[{"isCorrect":true,"rationale":"El arrendamiento financiero (leasing) se orienta a la propiedad final del bien, mientras que el renting es un alquiler operativo puro.","text":"El Leasing incluye una opción de compra final predeterminada, mientras que el Renting no la contempla habitualmente."},{"isCorrect":false,"rationale":"Ambos sistemas funcionan mediante el pago de cuotas periódicas por el uso del activo.","text":"El Leasing no requiere pagos periódicos y el Renting sí."},{"isCorrect":false,"rationale":"Ambos instrumentos pueden utilizarse para diversos tipos de activos fijos como equipos informáticos o maquinaria.","text":"El Renting solo se puede aplicar a vehículos y el Leasing a maquinaria pesada."},{"isCorrect":false,"rationale":"Ambas son formas de financiación ajena puesto que los fondos o bienes provienen de terceros.","text":"El Leasing es una fuente de financiación propia y el Renting es ajena."}],"hint":"La clave está en la posibilidad de adquirir el bien al finalizar el contrato.","question":"En el contexto de la financiación ajena, ¿qué diferencia al 'Leasing' del 'Renting' según el material?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este ratio no relaciona el patrimonio neto, sino que compara deudas a corto plazo frente al total de deudas.","text":"El patrimonio neto es insuficiente para cubrir las deudas a largo plazo."},{"isCorrect":true,"rationale":"El ratio $\\frac{Pasivo\\ Corriente}{Pasivo\\ Total}$ indica qué porcentaje de la deuda debe devolverse en menos de un año.","text":"La mayor parte de su exigible vence a corto plazo, lo que aumenta la presión sobre la liquidez."},{"isCorrect":false,"rationale":"Un valor de $0,8$ indica lo contrario: que solo el $20\\%$ de la deuda es a largo plazo.","text":"La empresa ha logrado refinanciar su deuda para pagarla en periodos muy prolongados."},{"isCorrect":false,"rationale":"En este ratio, valores altos indican mayor riesgo de liquidez inmediata, no mayor calidad crediticia.","text":"La deuda es de muy alta calidad porque el ratio es superior a $0,5$."}],"hint":"Relaciona el pasivo corriente con el pasivo total. El óptimo es de $0,2$ a $0,5$.","question":"Si una empresa tiene un ratio de 'Calidad de la Deuda' de $0,8$, se concluye que:"},{"answerOptions":[{"isCorrect":false,"rationale":"Esa definición corresponde al Retorno de la Inversión (ROI).","text":"El tiempo total que se tarda en recuperar la inversión inicial realizada."},{"isCorrect":true,"rationale":"Es el umbral a partir del cual la empresa deja de tener pérdidas y empieza a generar beneficios.","text":"El volumen de ventas necesario para que los ingresos igualen a los costes totales."},{"isCorrect":false,"rationale":"Esa situación describe un ratio de liquidez igual a $1$, no el punto muerto operativo.","text":"El momento en que el activo corriente iguala exactamente al pasivo corriente."},{"isCorrect":false,"rationale":"La aportación de socios es una medida de capitalización, no un indicador de eficiencia operativa de ventas.","text":"La cantidad de dinero que los socios deben aportar para evitar la quiebra."}],"hint":"Es el nivel de actividad donde el beneficio neto es exactamente cero.","question":"¿Qué representa el 'Punto de Equilibrio' o Punto Muerto en un análisis de viabilidad?"},{"answerOptions":[{"isCorrect":false,"rationale":"Generalmente estos gastos se consumen dentro del ciclo operativo de un año.","text":"Activo no corriente."},{"isCorrect":false,"rationale":"Son desembolsos (gastos), no entradas de dinero (ingresos).","text":"Ingresos no operativos."},{"isCorrect":false,"rationale":"No es una deuda, ya que el dinero ya ha salido de la empresa para cubrir el compromiso.","text":"Pasivo corriente."},{"isCorrect":true,"rationale":"Aunque es un gasto, al estar pagado por adelantado representa un derecho a recibir un servicio durante el ejercicio actual.","text":"Activo corriente."}],"hint":"Representan un recurso o derecho que se consumirá en el corto plazo.","question":"¿Cómo se clasifican los 'Gastos pagados por anticipado' (como un seguro anual pagado en enero)?"},{"answerOptions":[{"isCorrect":true,"rationale":"Permite cuantificar la rentabilidad obtenida por cada unidad monetaria invertida en el proyecto.","text":"$\\frac{Beneficio - Inversión}{Inversión} \\times 100$."},{"isCorrect":false,"rationale":"Esto calcula el beneficio neto absoluto, no la rentabilidad porcentual de la inversión.","text":"$Ingresos\\ Totales - Gastos\\ Totales$."},{"isCorrect":false,"rationale":"Esta es una variante del ratio de endeudamiento que mide el apalancamiento.","text":"$\\frac{Pasivo}{Patrimonio\\ Neto}$."},{"isCorrect":false,"rationale":"Esta fórmula se utiliza para calcular el fondo de maniobra o capital de trabajo.","text":"$Activo\\ Corriente - Pasivo\\ Corriente$."}],"hint":"Relaciona el beneficio obtenido con el capital inicialmente desembolsado.","question":"¿Cuál es la fórmula correcta para calcular el Retorno de la Inversión (ROI)?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este valor solo contempla las existencias, ignorando la tesorería disponible.","text":"$60.000 €$."},{"isCorrect":false,"rationale":"Este valor solo suma el efectivo y el banco, ignorando las existencias (mercaderías).","text":"$4.300 €$."},{"isCorrect":true,"rationale":"Se obtiene sumando todas las partidas de liquidez inmediata (efectivo y bancos) y de ciclo corto (mercaderías).","text":"$64.300 €$."},{"isCorrect":false,"rationale":"No hay base en los datos proporcionados para duplicar el valor de las partidas.","text":"$128.600 €$."}],"hint":"Suma los tres conceptos mencionados, ya que todos vencen o se consumen en menos de un año.","question":"En el balance de situación, si el 'Efectivo' es $800$, las 'Mercaderías' son $60.000$ y el 'Banco' es $3.500$, ¿cuál es el total del Activo Corriente?"},{"answerOptions":[{"isCorrect":false,"rationale":"El confirming es un servicio de gestión de pagos a proveedores, no de cobro de clientes.","text":"Confirming."},{"isCorrect":true,"rationale":"Es una herramienta de gestión de cobros que permite adelantar el importe de las ventas a crédito.","text":"Factoring."},{"isCorrect":false,"rationale":"Es una disponibilidad de fondos bancarios hasta un límite, no depende de las facturas de los clientes.","text":"Línea de crédito."},{"isCorrect":false,"rationale":"Es una financiación colectiva basada en aportaciones de múltiples personas, no en la cesión de facturas.","text":"Crowdfunding."}],"hint":"Se trata de vender los derechos de cobro de los clientes a un tercero.","question":"¿Qué instrumento de financiación consiste en ceder las facturas pendientes de cobro a una entidad financiera para obtener liquidez inmediata?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los préstamos recibidos son obligaciones (pasivos), no recursos propiedad de la empresa (activos).","text":"Activo no corriente."},{"isCorrect":false,"rationale":"El patrimonio neto recoge fondos propios, no deudas exigibles por entidades financieras.","text":"Patrimonio neto."},{"isCorrect":false,"rationale":"Solo sería corriente si el plazo de devolución fuera inferior a 12 meses.","text":"Pasivo corriente o circulante."},{"isCorrect":true,"rationale":"Al tener un vencimiento superior al año fiscal, se considera una obligación a largo plazo.","text":"Pasivo no corriente o Pasivo fijo."}],"hint":"Fíjate en el plazo de vencimiento de la obligación.","question":"¿Cuál es la clasificación adecuada para un 'Préstamo bancario a devolver en 5 años'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Es erróneo; el patrimonio neto se suma a las deudas para explicar el origen del activo.","text":"$Activo = Pasivo - Patrimonio\\ Neto$."},{"isCorrect":false,"rationale":"Esta fórmula es contablemente incorrecta; implicaría que las deudas aumentan el patrimonio.","text":"$Activo + Pasivo = Patrimonio\\ Neto$."},{"isCorrect":false,"rationale":"La diferencia entre ingresos y gastos determina el resultado del ejercicio, no el valor total de los activos.","text":"$Ingresos - Gastos = Activo$."},{"isCorrect":true,"rationale":"Establece que todos los recursos de la empresa (activos) deben estar financiados por fondos propios o deudas.","text":"$Activo = Patrimonio\\ Neto + Pasivo$."}],"hint":"Los recursos (lo que tengo) deben igualar a las fuentes de financiación (de dónde salió).","question":"Un balance de situación siempre debe cumplir la siguiente igualdad fundamental:"},{"answerOptions":[{"isCorrect":true,"rationale":"Son activos que se convertirán en dinero en efectivo en un periodo breve tras completar el proceso de cobro.","text":"Derechos de cobro frente a clientes y deudores."},{"isCorrect":false,"rationale":"Estos son activos no corrientes por su carácter permanente y estructural.","text":"Maquinaria e instalaciones industriales de la fábrica."},{"isCorrect":false,"rationale":"Las materias primas forman parte de las 'Existencias' o inventario.","text":"Materias primas almacenadas para la producción."},{"isCorrect":false,"rationale":"El efectivo físico se clasifica como 'Disponible'.","text":"Dinero en efectivo guardado en la caja fuerte de la oficina."}],"hint":"Son elementos que están a un paso (el cobro) de convertirse en dinero líquido.","question":"¿Qué incluye la categoría de 'Realizable' dentro del Activo Corriente?"},{"answerOptions":[{"isCorrect":false,"rationale":"La determinación de impuestos es parte de la gestión fiscal y la cuenta de resultados.","text":"Determinar el importe exacto de los impuestos directos a pagar al final del año."},{"isCorrect":false,"rationale":"Este cálculo pertenece a la gestión de recursos humanos y provisiones legales.","text":"Calcular la indemnización por despido de los trabajadores en caso de cierre."},{"isCorrect":false,"rationale":"Esa es una tarea de clasificación contable, no de análisis prospectivo de riesgos.","text":"Clasificar los activos en función de si son tangibles o intangibles."},{"isCorrect":true,"rationale":"Permite prever diferentes escenarios y la resistencia del modelo de negocio ante fluctuaciones del mercado.","text":"Evaluar cómo afectan cambios en variables (precios, demanda) a la viabilidad del negocio."}],"hint":"Se trata de un estudio de 'qué pasaría si...' ciertos datos clave varían.","question":"En el análisis de viabilidad financiera, el 'análisis de sensibilidad' sirve para:"},{"answerOptions":[{"isCorrect":false,"rationale":"Eso es una fuente de financiación (capital social), no una aplicación de la inversión en activos operativos.","text":"El dinero aportado por inversores externos a cambio de acciones."},{"isCorrect":false,"rationale":"Eso se considera inversión en activo fijo o no corriente.","text":"La compra de edificios y terrenos para expandir la capacidad productiva."},{"isCorrect":false,"rationale":"El I+D es un tipo específico de inversión, generalmente de largo plazo y a menudo intangible.","text":"La inversión realizada exclusivamente en investigación y desarrollo de nuevos software."},{"isCorrect":true,"rationale":"Es la inversión necesaria para mantener el ciclo operativo de la empresa antes de recibir cobros de clientes.","text":"Recursos destinados a las operaciones diarias, como compra de materiales y pago de salarios."}],"hint":"Está directamente relacionado con el activo circulante y el funcionamiento cotidiano.","question":"La 'Inversión en Capital de Trabajo' se refiere específicamente a:"},{"answerOptions":[{"isCorrect":false,"rationale":"Aunque $2$ es el límite superior deseable, $1,5$ ya se considera una situación de equilibrio aceptable.","text":"Deficitaria, porque debería tener al menos el doble de activos que de pasivos."},{"isCorrect":false,"rationale":"Se consideraría excesiva si el ratio fuera significativamente superior a $2$.","text":"Innecesariamente alta, lo que indica recursos infrautilizados."},{"isCorrect":false,"rationale":"La quiebra técnica o insolvencia se daría con ratios por debajo de $1$.","text":"Crítica, con riesgo inminente de quiebra técnica."},{"isCorrect":true,"rationale":"Indica que la empresa tiene $1,5$ euros de activos líquidos por cada euro de deuda a corto plazo.","text":"Adecuada, ya que se encuentra dentro del límite inferior del rango óptimo ($1,5$ - $2$)."}],"hint":"Recuerda que el rango de salud financiera para este ratio empieza en $1,5$.","question":"Si una empresa tiene un Activo Corriente de $1.500.000$ y un Pasivo Corriente de $1.000.000$, su Ratio de Liquidez es $1,5$. ¿Cómo se califica esta situación?"},{"answerOptions":[{"isCorrect":true,"rationale":"Representan valores económicos para la empresa que carecen de soporte físico tangible.","text":"Adquisición de licencias de software y desarrollo de una plataforma propia."},{"isCorrect":false,"rationale":"Contablemente, el marketing suele tratarse como un gasto del ejercicio, no como un activo intangible capitalizable.","text":"Inversión en una campaña de marketing en redes sociales."},{"isCorrect":false,"rationale":"Los vehículos son activos fijos tangibles o materiales.","text":"Compra de una furgoneta para el reparto de mercancías."},{"isCorrect":false,"rationale":"Esto es una inversión financiera temporal, clasificada como activo corriente.","text":"Suscripción a un fondo de inversión a corto plazo."}],"hint":"Busca algo que tenga valor legal o económico pero que no se pueda tocar.","question":"¿Cuál de los siguientes es un ejemplo de 'Inversión en Activos Intangibles'?"},{"answerOptions":[{"isCorrect":false,"rationale":"También incluyen las aportaciones iniciales de capital realizadas por los socios.","text":"Solo pueden provenir de beneficios retenidos de años anteriores."},{"isCorrect":false,"rationale":"Los recursos propios no devengan intereses fijos, sino que suelen participar en los beneficios (dividendos).","text":"Devengan obligatoriamente un interés fijo anual."},{"isCorrect":false,"rationale":"La proporción depende del modelo de negocio, pero lo ideal es mantener un equilibrio (endeudamiento entre $0,4$ y $0,6$).","text":"Son siempre de cuantía inferior a las deudas con bancos."},{"isCorrect":true,"rationale":"Aportan estabilidad al balance ya que no están sujetos a vencimientos exigibles por terceros.","text":"No existe una obligación legal de devolverlos, pues nacen con vocación de permanencia."}],"hint":"Piensa en el compromiso de reembolso y quién aporta los fondos.","question":"En la estructura financiera, los 'Recursos Propios' se diferencian de los ajenos en que:"},{"answerOptions":[{"isCorrect":false,"rationale":"El capital social no es exigible a corto plazo, ya que forma parte de los fondos permanentes de la empresa.","text":"Al capital social que los socios pueden reclamar en cualquier momento."},{"isCorrect":false,"rationale":"Aunque los impuestos pendientes son exigibles, el término abarca cualquier deuda a corto plazo (proveedores, bancos, etc.).","text":"A los impuestos directos que se pagan exclusivamente sobre los beneficios."},{"isCorrect":true,"rationale":"Es sinónimo contable de pasivo corriente o pasivo circulante.","text":"Al conjunto de deudas cuyo vencimiento es igual o inferior a un año."},{"isCorrect":false,"rationale":"La amortización es un proceso de valoración de activos, no una deuda exigible.","text":"A la maquinaria que debe ser amortizada en el presente ejercicio."}],"hint":"Es otro nombre para el pasivo corriente.","question":"¿A qué se refiere el término 'Exigible a corto plazo'?"},{"answerOptions":[{"isCorrect":false,"rationale":"La forma jurídica se elige en base a criterios de responsabilidad, capital y número de socios, no por el flujo de efectivo.","text":"Determinar la estructura legal (S.L. o S.A.) más conveniente para el negocio."},{"isCorrect":false,"rationale":"Los activos intangibles se identifican en el balance, no mediante el flujo de movimientos de tesorería.","text":"Identificar todos los activos intangibles que posee la organización."},{"isCorrect":true,"rationale":"Permite monitorizar las entradas y salidas reales de dinero para evitar la insolvencia técnica.","text":"Garantizar que existe liquidez suficiente para cubrir los gastos operativos iniciales antes de generar ingresos."},{"isCorrect":false,"rationale":"El valor de mercado depende de factores externos y expectativas de beneficio futuro, no solo del flujo de caja actual.","text":"Calcular el valor de mercado de las acciones de la empresa en la bolsa."}],"hint":"Se centra en la supervivencia financiera inmediata y la gestión de pagos.","question":"El 'análisis del flujo de efectivo' es fundamental para:"},{"answerOptions":[{"isCorrect":true,"rationale":"Son sucesos que deben ser registrados porque alteran la composición de activos, pasivos o patrimonio.","text":"Que produce un efecto sobre la estructura o el valor patrimonial de la empresa."},{"isCorrect":false,"rationale":"Cualquier transacción valorable en moneda nacional es un hecho económico.","text":"Que se refiere exclusivamente a transacciones realizadas en moneda extranjera."},{"isCorrect":false,"rationale":"Muchos hechos económicos (como una venta diaria) no requieren aprobación de la junta para ser registrados.","text":"Que ha sido aprobado previamente por todos los socios en junta general."},{"isCorrect":false,"rationale":"Un hecho económico puede ser tanto un gasto como un ingreso; no implica necesariamente 'ahorro'.","text":"Que supone un ahorro significativo de costes para la organización."}],"hint":"Tiene que ver con la alteración del balance o los resultados.","question":"Según el material, ¿qué significa que un hecho sea 'económico' en contabilidad?"},{"answerOptions":[{"isCorrect":false,"rationale":"El rango óptimo para la tesorería es de $0,8$ a $1,2$.","text":"La empresa se encuentra en el rango óptimo de tesorería."},{"isCorrect":false,"rationale":"Este ratio no analiza el endeudamiento a largo plazo, sino la liquidez de corto plazo.","text":"El endeudamiento a largo plazo es demasiado bajo."},{"isCorrect":true,"rationale":"Al superar el límite superior de $1,2$, se entiende que hay recursos ociosos en caja o cuentas por cobrar.","text":"La empresa tiene un exceso de liquidez inmediata que podría estar restando rentabilidad."},{"isCorrect":false,"rationale":"Al ser mayor que $1$, la empresa tiene más que suficiente para pagar sus deudas corrientes.","text":"Existe un grave peligro de no poder pagar a los proveedores este mes."}],"hint":"Compara el resultado con el rango de referencia $0,8$ - $1,2$.","question":"Si el ratio de tesorería es de $1,5$, ¿cuál sería la conclusión más lógica?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los sueldos son gastos operativos, mientras que la inversión se centra en activos y gastos de constitución.","text":"Calcular exclusivamente el sueldo de los directivos durante el primer año."},{"isCorrect":false,"rationale":"La política de precios es parte de la estrategia de marketing (Precio), no de la inversión inicial.","text":"Definir los precios de venta al público de los productos terminados."},{"isCorrect":true,"rationale":"Incluye activos fijos, gastos legales, administrativos y de instalación necesarios para comenzar a operar.","text":"Desglosar todos los costes asociados con la puesta en marcha inicial del proyecto."},{"isCorrect":false,"rationale":"Eso forma parte de la gestión comercial o de operaciones, no del presupuesto de inversión monetaria.","text":"Listar los nombres de todos los proveedores con los que la empresa trabajará."}],"hint":"Se elabora antes de empezar la actividad para saber cuánto capital se necesita.","question":"¿Cuál es la función del 'Presupuesto de Inversión'?"}];
+        let currentIndex = 0;
+                const originalQuizData = quizData.slice();
+                (function() {
+                  var key = 'wrong:' + window.location.pathname.split('/').pop();
+                  try {
+                    var stored = localStorage.getItem(key);
+                    if (stored) {
+                      var wrongSet = new Set(JSON.parse(stored));
+                      if (wrongSet.size > 0) {
+                        var filtered = originalQuizData.filter(function(q){ return wrongSet.has(q.question); });
+                        if (filtered.length > 0) quizData = filtered;
+                      }
+                    }
+                  } catch(e) {}
+                })();
+        let mode = 'quiz';
+        let state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+
+        function getStats() {
+            const answered = state.filter((s) => s.selectedIndex !== null).length;
+            const correct = state.filter((s, i) => s.selectedIndex !== null && quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const wrong = state.filter((s, i) => s.selectedIndex !== null && !quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const skipped = quizData.length - answered;
+            const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+            return { answered, correct, wrong, skipped, accuracy };
+        }
+
+        function shuffleAnswers() {
+            quizData.forEach((q) => {
+                for (let i = q.answerOptions.length - 1; i > 0; i -= 1) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.answerOptions[i], q.answerOptions[j]] = [q.answerOptions[j], q.answerOptions[i]];
+                }
+            });
+        }
+
+        function shuffleQuestions() {
+            for (let i = quizData.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [quizData[i], quizData[j]] = [quizData[j], quizData[i]];
+            }
+        }
+
+        function resetState() {
+            state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+        }
+
+
+        function fmt(str) {
+          if (!str) return str;
+          return str
+            .replace(/\$\$(.*?)\$\$/gs, function(_,m){return m;})
+            .replace(/\$([^$<>]+?)\$/g, function(_,m){return m;})
+            .replace(/\*\*(.*?)\*\*/g, function(_,m){return "<strong>"+m+"</strong>";})
+            .replace(/\*(.*?)\*/g, function(_,m){return "<em>"+m+"</em>";})
+            .replace(/`(.*?)`/g, function(_,m){return "<code>"+m+"</code>";})
+        }
+        function renderQuestion() {
+            const q = quizData[currentIndex];
+            const s = state[currentIndex];
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+
+            let optionsHtml = '';
+            const correctIndex = q.answerOptions.findIndex((o) => o.isCorrect);
+            const selectedCorrect = s.selectedIndex !== null && q.answerOptions[s.selectedIndex].isCorrect;
+            q.answerOptions.forEach((opt, idx) => {
+                const isSelected = s.selectedIndex === idx;
+                const statusClass = isSelected ? (opt.isCorrect ? 'correct' : 'incorrect') : '';
+                const selectedClass = isSelected ? 'selected' : '';
+                const revealCorrect = (s.selectedIndex !== null && !selectedCorrect && opt.isCorrect) || (mode === 'review' && opt.isCorrect);
+                const revealClass = revealCorrect ? 'revealed-correct' : '';
+
+                optionsHtml += `
+                    <li class="option-item ${selectedClass} ${statusClass} ${revealClass}" onclick="selectOption(${idx})">
+                        <div class="option-label">
+                            <span>${String.fromCharCode(65 + idx)}. ${fmt(opt.text)}</span>
+                        </div>
+                        <div class="feedback-state">
+                            ${opt.isCorrect ? '✓ Correcto' : '✕ Incorrecto'}
+                        </div>
+                        ${opt.rationale ? '<div class="rationale">' + fmt(opt.rationale) + '</div>' : ''}
+                    </li>
+                `;
+            });
+
+            const stats = getStats();
+
+            content.innerHTML = `
+                <div class="progress-container">
+                    <div class="progress-text">${currentIndex + 1} / ${quizData.length}</div>
+                    <div class="status-bar">
+                        <div class="status-item status-correct">
+                            <span>✓</span>
+                            <span>${stats.correct}</span>
+                        </div>
+                        <div class="status-item status-wrong">
+                            <span>✕</span>
+                            <span>${stats.wrong}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="question-text">${fmt(q.question)}</div>
+                <ul class="options-list">
+                    ${optionsHtml}
+                </ul>
+            `;
+
+            // Update Pista Box
+            const hintText = document.getElementById('hint-text');
+            hintText.innerText = fmt(q.hint) || 'No hay pista disponible para esta pregunta.';
+            if (s.hintVisible) {
+                hintBox.classList.add('active');
+            } else {
+                hintBox.classList.remove('active');
+            }
+
+            results.classList.add('hidden');
+            content.classList.remove('hidden');
+            hintBox.classList.remove('hidden');
+            nav.classList.remove('hidden');
+
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = false;
+            if (mode === 'review') {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Volver a resultados' : 'Siguiente';
+            } else {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finalizar' : 'Siguiente';
+            }
+            document.getElementById('hint-icon-arrow').innerText = s.hintVisible ? '▲' : '▼';
+        }
+
+        function selectOption(idx) {
+            if (mode !== 'quiz') return;
+            if (state[currentIndex].selectedIndex !== null) return; // Prevent re-selection
+            state[currentIndex].selectedIndex = idx;
+            renderQuestion();
+        }
+
+        function toggleHint() {
+            if (mode === 'results') return;
+            state[currentIndex].hintVisible = !state[currentIndex].hintVisible;
+            renderQuestion();
+        }
+
+
+        function saveWrongAnswers() {
+          var wrongQuestions = state
+            .map(function(s,i){return {s:s,i:i};})
+            .filter(function(x){return x.s.selectedIndex !== null && !quizData[x.i].answerOptions[x.s.selectedIndex].isCorrect;})
+            .map(function(x){return quizData[x.i].question;});
+          var key = 'wrong:' + window.location.pathname.split('/').pop();
+          if (wrongQuestions.length > 0) {
+            localStorage.setItem(key, JSON.stringify(wrongQuestions));
+          } else {
+            localStorage.removeItem(key);
+          }
+          return wrongQuestions;
+        }
+        function renderResults() {
+            const stats = getStats();
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+
+            const score = `${stats.correct} / ${quizData.length}`;
+
+            results.innerHTML = `
+                <div class="results-screen">
+                    <div>
+                        <h1 class="results-title">¡Lo lograste! Quiz completado.</h1>
+                        <p class="results-subtitle">Revisa tu puntuación o inténtalo de nuevo.</p>
+                    </div>
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-label">Puntuación</div>
+                            <div class="result-value">${score}</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Precisión</div>
+                            <div class="result-value">${stats.accuracy}%</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-metrics">
+                                <div>Correctas <strong>${stats.correct}</strong></div>
+                                <div>Incorrectas <strong>${stats.wrong}</strong></div>
+                                <div>Omitidas <strong>${stats.skipped}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="results-actions"><button id="retake-wrong-btn" class="btn btn-ghost" style="display:none">Repasar errores (<span id="wrong-count">0</span>)</button>
+                        <button id="review-btn" class="btn btn-ghost">Revisar Quiz</button>
+                        <button id="retake-btn" class="btn btn-next">Repetir Quiz</button>
+                    </div>
+                </div>
+            `;
+
+            content.classList.add('hidden');
+            results.classList.remove('hidden');
+            hintBox.classList.add('hidden');
+            nav.classList.add('hidden');
+
+
+            var wrongQuestions = saveWrongAnswers();
+            var retakeWrongBtn = document.getElementById('retake-wrong-btn');
+            if (wrongQuestions.length > 0) {
+              document.getElementById('wrong-count').textContent = wrongQuestions.length;
+              retakeWrongBtn.style.display = '';
+            }
+            (function() {
+              var fname = window.location.pathname.split('/').pop();
+              var backLink = document.querySelector('.quiz-heading a[href*="index.html"]');
+              if (backLink) {
+                var h = '#wrong=' + fname + ':' + wrongQuestions.length;
+                backLink.href = backLink.href.split('#')[0] + h;
+              }
+            })();
+            document.getElementById('retake-wrong-btn').onclick = function() {
+              if (wrongQuestions.length === 0) return;
+              mode = 'quiz';
+              currentIndex = 0;
+              var wrongSet = new Set(wrongQuestions);
+              quizData = originalQuizData.filter(function(q){return wrongSet.has(q.question);});
+              shuffleAnswers();
+              resetState();
+              renderQuestion();
+            };
+
+            var wrongQuestions = saveWrongAnswers();
+            var retakeWrongBtn = document.getElementById('retake-wrong-btn');
+            if (wrongQuestions.length > 0) {
+              document.getElementById('wrong-count').textContent = wrongQuestions.length;
+              retakeWrongBtn.style.display = '';
+            }
+            (function() {
+              var fname = window.location.pathname.split('/').pop();
+              var backLink = document.querySelector('.quiz-heading a[href*="index.html"]');
+              if (backLink) {
+                var h = '#wrong=' + fname + ':' + wrongQuestions.length;
+                backLink.href = backLink.href.split('#')[0] + h;
+              }
+            })();
+            document.getElementById('retake-wrong-btn').onclick = function() {
+              if (wrongQuestions.length === 0) return;
+              mode = 'quiz';
+              currentIndex = 0;
+              var wrongSet = new Set(wrongQuestions);
+              quizData = originalQuizData.filter(function(q){return wrongSet.has(q.question);});
+              shuffleAnswers();
+              resetState();
+              renderQuestion();
+            };
+            document.getElementById('review-btn').onclick = () => {
+                mode = 'review';
+                currentIndex = 0;
+                renderQuestion();
+            };
+
+            document.getElementById('retake-btn').onclick = () => {
+                mode = 'quiz';
+                currentIndex = 0;
+                shuffleQuestions();
+                shuffleAnswers();
+                resetState();
+                renderQuestion();
+            };
+        }
+
+        document.getElementById('prev-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        };
+
+        document.getElementById('next-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (mode === 'review') {
+                if (currentIndex < quizData.length - 1) {
+                    currentIndex++;
+                    renderQuestion();
+                } else {
+                    mode = 'results';
+                    renderResults();
+                }
+                return;
+            }
+            if (currentIndex < quizData.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                mode = 'results';
+                renderResults();
+            }
+        };
+
+        document.getElementById('hint-toggle').onclick = toggleHint;
+
+        renderQuestion();
+    </script>
+
+  <button id="theme-toggle" title="Cambiar tema" style="position:fixed;top:8px;right:8px;background:var(--card);border:1px solid var(--stroke);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:transform 0.2s ease;z-index:100;">🌙</button>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-toggle').textContent = '☀️';
+      }
+      document.getElementById('theme-toggle').addEventListener('click', function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        this.textContent = isDark ? '🌙' : '☀️';
+      });
+    })();
+  </script>
+</body>
+</html>

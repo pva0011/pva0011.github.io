@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotebookLM - Quiz Export</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+        :root {
+            --bg: #f6f1e7;
+            --bg-deep: #efe4d6;
+            --ink: #171717;
+            --muted: #5b5b5b;
+            --accent: #d3542c;
+            --accent-light: #ff8f5a;
+            --accent-dark: #b14320;
+            --teal: #1f6f78;
+            --card: #fff7ef;
+            --stroke: #e3d6c5;
+            --shadow: 0 18px 40px rgba(23, 23, 23, 0.12);
+            --radius-sm: 10px;
+            --radius-md: 12px;
+            --radius-lg: 14px;
+            --radius-xl: 18px;
+            --radius-2xl: 22px;
+            --space-1: 6px;
+            --space-2: 8px;
+            --space-3: 10px;
+            --space-4: 12px;
+            --space-5: 14px;
+            --space-6: 16px;
+            --space-7: 18px;
+            --space-8: 20px;
+            --space-9: 24px;
+            --space-10: 32px;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'IBM Plex Sans', sans-serif;
+            --error: #b54832;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background:
+                radial-gradient(240px 140px at 10% -10%, #ffd2b9 0%, transparent 70%),
+                radial-gradient(220px 160px at 90% 0%, #cfe7e6 0%, transparent 65%),
+                linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+            color: var(--ink);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 800px;
+            padding: var(--space-10) var(--space-8);
+            box-sizing: border-box;
+            background: var(--card);
+            border-radius: var(--radius-2xl);
+            border: 1px solid var(--stroke);
+            box-shadow: var(--shadow);
+        }
+
+        .progress-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .progress-text {
+            color: var(--muted);
+            font-size: 0.9em;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 16px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-correct { color: var(--teal); }
+        .status-wrong { color: var(--error); }
+
+        .question-text {
+            font-family: var(--font-display);
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-item {
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            padding: var(--space-4) var(--space-6);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option-item:hover:not(.selected) {
+            background-color: var(--card);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .option-item.selected.correct {
+            background-color: rgba(31, 111, 120, 0.12);
+            border-color: var(--teal);
+        }
+
+        .option-item.selected.incorrect {
+            background-color: rgba(181, 72, 50, 0.12);
+            border-color: var(--error);
+        }
+
+        .option-item.revealed-correct {
+            border-color: rgba(31, 111, 120, 0.5);
+            box-shadow: inset 0 0 0 1px rgba(31, 111, 120, 0.16);
+        }
+
+        .option-label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feedback-state {
+            font-weight: bold;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .selected .feedback-state {
+            display: block;
+        }
+
+        .revealed-correct .feedback-state {
+            display: block;
+        }
+
+        .correct .feedback-state { color: var(--teal); }
+        .incorrect .feedback-state { color: var(--error); }
+        .revealed-correct .feedback-state { color: var(--teal); }
+
+        .rationale {
+            font-size: 0.95em;
+            color: var(--muted);
+            margin-top: 4px;
+            line-height: 1.5;
+            display: none;
+        }
+
+        .selected .rationale {
+            display: block;
+        }
+
+        .revealed-correct .rationale {
+            display: block;
+        }
+        .hint-toggle {
+            border: 1px solid var(--stroke);
+            color: var(--muted);
+            cursor: pointer;
+            padding: var(--space-2) var(--space-6);
+            border-radius: var(--radius-md);
+            background-color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .hint-toggle:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .hint-content {
+            margin-top: 32px;
+            padding: var(--space-6);
+            background-color: #fff;
+            border: 1px solid var(--stroke);
+            border-radius: var(--radius-lg);
+            font-size: 0.95em;
+            color: var(--muted);
+            display: none;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .hint-content.active {
+            display: flex;
+        }
+
+        .hint-icon-box {
+            color: var(--accent-dark);
+            font-size: 1.2em;
+            margin-top: -2px;
+        }
+
+        .navigation {
+            margin-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            border-radius: var(--radius-md);
+            padding: var(--space-2) var(--space-7);
+            font-size: 0.95em;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-prev {
+            background-color: #fff;
+            color: var(--ink);
+            border-color: var(--stroke);
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn-next {
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            color: #fff;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 18px rgba(23, 23, 23, 0.12);
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .results-screen {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+        }
+
+        .results-title {
+            font-family: var(--font-display);
+            font-size: 2.1em;
+            margin: 0;
+        }
+
+        .results-subtitle {
+            color: var(--muted);
+            margin: 0;
+            font-size: 1em;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-6);
+        }
+
+        .result-card {
+            padding: var(--space-6);
+            border-radius: var(--radius-xl);
+            background: #fff;
+            border: 1px solid var(--stroke);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .result-label {
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-family: var(--font-display);
+        }
+
+        .result-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            color: var(--muted);
+            font-size: 0.95em;
+        }
+
+        .results-actions {
+            display: flex;
+            gap: var(--space-4);
+            flex-wrap: wrap;
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            border: 1px solid var(--stroke);
+            color: var(--ink);
+        }
+
+        .hidden { display: none; }
+
+        @media (max-width: 900px) {
+            .quiz-container {
+                margin: var(--space-8);
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 720px) {
+            .quiz-container {
+                padding: var(--space-8) var(--space-6);
+            }
+
+            .question-text {
+                font-size: 1.3em;
+            }
+
+            .option-item {
+                padding: var(--space-4);
+            }
+        }
+
+        @media (max-width: 520px) {
+            body {
+                align-items: flex-start;
+            }
+
+            .quiz-container {
+                margin: var(--space-6);
+                padding: var(--space-7) var(--space-5);
+            }
+
+            .progress-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--space-3);
+            }
+
+            .navigation {
+                flex-direction: column;
+                align-items: stretch;
+                gap: var(--space-4);
+            }
+
+            .nav-buttons {
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .hint-toggle {
+                justify-content: space-between;
+            }
+
+            .results-actions {
+                flex-direction: column;
+            }
+        }
+    
+    [data-theme="dark"] {
+      --bg: #1a1612;
+      --bg-deep: #141210;
+      --ink: #f0ebe0;
+      --muted: #9a9080;
+      --accent: #e8673a;
+      --accent-light: #ff9a6a;
+      --accent-dark: #c45528;
+      --teal: #2a9aa8;
+      --card: #221e18;
+      --stroke: #3a3028;
+      --shadow: 0 18px 40px rgba(0,0,0,0.4);
+      --error: #e06050;
+    }
+    [data-theme="dark"] body {
+      background:
+        radial-gradient(240px 140px at 10% -10%, #3a1a08 0%, transparent 70%),
+        radial-gradient(220px 160px at 90% 0%, #0a2a2e 0%, transparent 65%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+    }
+    [data-theme="dark"] .option-item { background-color: var(--card); }
+    [data-theme="dark"] .hint-toggle,
+    [data-theme="dark"] .hint-content,
+    [data-theme="dark"] .btn-prev { background-color: var(--card); color: var(--ink); }
+    [data-theme="dark"] .result-card { background: var(--card); }
+    [data-theme="dark"] .btn-next {
+      background: linear-gradient(90deg, #e8673a, #f28c5e);
+      box-shadow: 0 4px 20px rgba(232, 103, 58, 0.35);
+      color: #fff;
+    }
+    [data-theme="dark"] .btn-next:hover:not(:disabled) {
+      box-shadow: 0 6px 24px rgba(232, 103, 58, 0.5);
+    }
+    
+    /* quiz-mobile-v3 */
+    @media (max-width: 640px) {
+      body {
+        height: 100dvh;
+        overflow: hidden;
+        align-items: flex-start;
+        padding: 0;
+      }
+      .quiz-container {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        margin: 0;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-top: none;
+        padding-bottom: 0;
+      }
+      #quiz-content,
+      #results-content {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        min-height: 0;
+        padding-bottom: 8px;
+      }
+      #hint-box { flex-shrink: 0; }
+      .navigation {
+        flex-shrink: 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        margin-top: 0;
+        background: var(--card);
+        border-top: 1px solid var(--stroke);
+      }
+    }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+
+    <div class="quiz-heading" style="margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--stroke)">
+      <a href="../index.html" style="font-size:0.82em;color:var(--muted);text-decoration:none;font-family:var(--font-body)">← Índice</a>
+      <h1 style="font-family:var(--font-display);font-size:1.1em;font-weight:700;color:var(--ink);margin-top:8px;padding-right:44px">Itinerario Personal para la Empleabilidad · Quiz 4</h1>
+    </div>
+        <div id="quiz-content">
+            <!-- Dynamic Content -->
+        </div>
+        <div id="results-content" class="hidden"></div>
+
+        <div id="hint-box" class="hint-content">
+            <div class="hint-icon-box">💡</div>
+            <div id="hint-text"></div>
+        </div>
+
+        <div class="navigation">
+            <button id="hint-toggle" class="hint-toggle">
+                <span>Pista</span>
+                <span id="hint-icon-arrow">▼</span>
+            </button>
+            <div class="nav-buttons">
+                <button id="prev-btn" class="btn btn-prev">Anterior</button>
+                <button id="next-btn" class="btn btn-next">Siguiente</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let quizData = [{"answerOptions":[{"isCorrect":false,"rationale":"El error radica en que la Sociedad Civil sí permite explícitamente la aportación de trabajo o servicios por parte de los socios.","text":"La Sociedad Civil no permite la aportación de trabajo, solo de bienes, lo que modifica su régimen de responsabilidad."},{"isCorrect":true,"rationale":"Las sociedades sin personalidad jurídica o personalistas suelen acarrear responsabilidad patrimonial personal, a diferencia de las sociedades de capital donde el patrimonio personal está protegido.","text":"En la Sociedad Civil la responsabilidad es ilimitada y personal, mientras que en la S.L. se limita al capital aportado."},{"isCorrect":false,"rationale":"El límite de $60.000$ € corresponde a la Sociedad Anónima, y la característica definitoria de la S.L. es precisamente la limitación de responsabilidad desde su constitución.","text":"En la S.L. la responsabilidad es solidaria e ilimitada si el capital social es inferior a $60.000$ €."},{"isCorrect":false,"rationale":"Esta opción ignora que la Sociedad Civil, por su naturaleza, vincula el patrimonio personal de los socios ante las deudas sociales.","text":"Ambas formas limitan la responsabilidad al capital social mínimo legalmente exigido."}],"hint":"Considere cómo afecta la distinción entre empresa con o sin personalidad jurídica a los bienes personales de los socios.","question":"En el marco de las formas jurídicas en España, ¿cuál es la principal diferencia de responsabilidad entre un socio de una Sociedad Civil y uno de una Sociedad de Responsabilidad Limitada?"},{"answerOptions":[{"isCorrect":false,"rationale":"El ratio de liquidez mide la capacidad de pago a corto plazo, no la solvencia estructural a largo plazo.","text":"La empresa goza de una solvencia a largo plazo excepcional."},{"isCorrect":true,"rationale":"Al ser el activo corriente menor que el pasivo corriente, la empresa no dispone de suficientes bienes líquidos para cubrir sus obligaciones inmediatas.","text":"La empresa podría tener dificultades para afrontar sus deudas a corto plazo ya que el valor es inferior a $1$."},{"isCorrect":false,"rationale":"Este valor es muy inferior al rango recomendado de $1,5$ a $2$ para la liquidez general.","text":"La situación es óptima porque se encuentra en el rango de disponibilidad inmediata."},{"isCorrect":false,"rationale":"Un ratio de $0,8$ está por debajo del rango óptimo ($1,5$ - $2$), lo que indica escasez de recursos líquidos, no exceso.","text":"La empresa tiene un exceso de activos improductivos que debería reinvertir."}],"hint":"Compare el valor dado con el rango estándar de $1,5$ - $2$ mencionado en las tablas de análisis financiero.","question":"Si una empresa presenta un Ratio de Liquidez de $0,8$, ¿qué interpretación financiera es la más precisa según los valores óptimos establecidos?"},{"answerOptions":[{"isCorrect":true,"rationale":"Esta acción consiste en identificar nuevas aplicaciones o mercados para un producto o componente ya existente.","text":"Proponer otros usos"},{"isCorrect":false,"rationale":"Reorganizar se refiere al cambio en la secuencia o estructura interna de un proceso.","text":"Reorganizar"},{"isCorrect":false,"rationale":"Sustituir implicaría cambiar una pieza por otra dentro del mismo contexto de uso.","text":"Sustituir"},{"isCorrect":false,"rationale":"Eliminar se centra en quitar funciones innecesarias para simplificar el producto.","text":"Eliminar"}],"hint":"Piense en la letra 'P' del acrónimo y su enfoque en la versatilidad del producto.","question":"Dentro de la técnica creativa SCAMPER, ¿qué acción se está realizando si un emprendedor decide utilizar el motor de una aspiradora para crear un sistema de soplado en un taller?"},{"answerOptions":[{"isCorrect":false,"rationale":"Las patentes son recursos propiedad de la empresa (activos), no obligaciones de pago (pasivos).","text":"Pasivo fijo - Recursos ajenos"},{"isCorrect":false,"rationale":"Las existencias son bienes destinados a la venta o transformación inmediata, no activos de uso prolongado.","text":"Activo corriente - Existencias"},{"isCorrect":true,"rationale":"Los activos que no tienen presencia física pero aportan valor y permanecen más de un año en la empresa se consideran activos fijos intangibles.","text":"Activo no corriente - Intangible"},{"isCorrect":false,"rationale":"El patrimonio neto refleja la financiación propia, mientras que la patente es la aplicación o destino de esos fondos.","text":"Patrimonio neto - Reservas"}],"hint":"Recuerde la distinción entre bienes físicos y derechos de propiedad que duran más de un ejercicio económico.","question":"En el balance de situación, ¿en qué categoría deben clasificarse las patentes y las aplicaciones informáticas adquiridas para uso plurianual?"},{"answerOptions":[{"isCorrect":false,"rationale":"El prototipado es una de las últimas fases del proceso, no la inicial de comprensión.","text":"Diseñar un Prototipo Mínimo Viable (MVP) para lanzarlo al mercado rápidamente."},{"isCorrect":false,"rationale":"La viabilidad económica se analiza en etapas posteriores; el enfoque inicial es puramente humano.","text":"Seleccionar la idea más rentable mediante un análisis de viabilidad económica."},{"isCorrect":true,"rationale":"Esta fase busca generar una conexión real con el usuario para detectar problemas que no son evidentes a simple vista.","text":"Comprender profundamente las necesidades, deseos y comportamientos del usuario final."},{"isCorrect":false,"rationale":"La definición del problema es el paso siguiente a la empatía, una vez recogida toda la información del entorno.","text":"Definir el problema técnico para establecer las especificaciones de producción."}],"hint":"Esta etapa se centra en la observación y la inmersión en la realidad de la persona para la que se diseña.","question":"Durante la fase de 'Empatizar' en un proceso de Design Thinking, ¿cuál es el objetivo primordial del equipo de innovación?"},{"answerOptions":[{"isCorrect":true,"rationale":"Es el umbral a partir del cual la empresa deja de tener pérdidas y comienza a generar beneficios netos.","text":"El nivel de ventas necesario para que los ingresos igualen a los costes totales y el beneficio sea cero."},{"isCorrect":false,"rationale":"Este dato se obtiene del análisis de mercado, no de la estructura interna de costes de la empresa.","text":"La cuota de mercado que poseen los competidores directos."},{"isCorrect":false,"rationale":"Esa descripción corresponde al fondo de maniobra, no al análisis de ventas y costes.","text":"La diferencia entre el activo corriente y el pasivo corriente."},{"isCorrect":false,"rationale":"El ROI mide la rentabilidad porcentual del capital, mientras que el punto muerto mide volumen de ventas.","text":"El momento exacto en que se recupera la inversión inicial (ROI)."}],"hint":"Piense en el volumen de actividad mínimo para que la empresa no pierda dinero.","question":"El concepto de 'Punto de equilibrio' o 'Punto muerto' es vital para la viabilidad de un negocio porque permite identificar:"},{"answerOptions":[{"isCorrect":true,"rationale":"Esta capa específica busca estructurar la propuesta de valor social y cómo se materializa el impacto positivo pretendido.","text":"Mapea cómo las actividades y recursos de la empresa generan beneficios sociales o ambientales."},{"isCorrect":false,"rationale":"El modelo de triple capa suma dimensiones (social y ambiental) al modelo económico, no lo elimina.","text":"Sustituye por completo el análisis de ingresos para centrarse solo en donaciones."},{"isCorrect":false,"rationale":"Es una herramienta de diseño estratégico, no un registro contable de sanciones.","text":"Es una herramienta de contabilidad financiera para registrar multas ecológicas."},{"isCorrect":false,"rationale":"Aunque puede incluir eficiencia, su objetivo principal es el impacto extra-económico.","text":"Se enfoca exclusivamente en la reducción de costes operativos mediante tecnología."}],"hint":"Analice cómo una empresa que busca ser 'verde' o 'social' describiría sus acciones diarias.","question":"La 'Capa de Lógica de Impacto' en el Modelo Canvas de Triple Capa se diferencia de la capa de modelo de negocio tradicional en que:"},{"answerOptions":[{"isCorrect":false,"rationale":"La transmisión de participaciones suele requerir el consentimiento de la junta general de socios.","text":"La decisión depende exclusivamente del socio administrador único, sin consultar a la junta."},{"isCorrect":false,"rationale":"Esa cifra es el capital mínimo para constituir una Sociedad Anónima, no un requisito de entrada para una S.L.","text":"Solo se requiere que el nuevo socio aporte un capital mínimo de $60.000$ €."},{"isCorrect":true,"rationale":"La S.L. se caracteriza por ser una estructura más cerrada donde la cohesión de los socios originales es protegida legalmente.","text":"Se necesita el permiso de todos los socios actuales para la entrada de un nuevo miembro."},{"isCorrect":false,"rationale":"Las S.L. son sociedades más cerradas que las S.A., y la transmisión de propiedad está regulada.","text":"No requiere ningún permiso, ya que las participaciones son de libre venta como las acciones de una S.A."}],"hint":"Compare la flexibilidad de venta de participaciones en una S.L. frente a la 'libre venta' de las acciones en una S.A.","question":"Si una Sociedad de Responsabilidad Limitada (S.L.) desea permitir la entrada de un nuevo socio que quiere comprar participaciones, ¿cuál es el requisito legal general según el material estudiado?"},{"answerOptions":[{"isCorrect":false,"rationale":"El capital social es una cuestión de forma jurídica, no de la relación laboral del trabajador.","text":"Emprendedores que no tienen capital social pero operan como una S.A."},{"isCorrect":false,"rationale":"La tributación del empresario individual está fijada por ley en el IRPF.","text":"Empresarios individuales que tributan por Impuesto de Sociedades en lugar de IRPF."},{"isCorrect":false,"rationale":"En una cooperativa de trabajo asociado, los socios son precisamente los trabajadores.","text":"Socios de una cooperativa que no trabajan directamente en la actividad principal."},{"isCorrect":true,"rationale":"Es un uso fraudulento de la figura del autónomo para evitar costes sociales mientras se mantiene una estructura de empleado tradicional.","text":"Trabajadores que, bajo la apariencia de trabajadores por cuenta propia, mantienen una relación de dependencia real con una empresa."}],"hint":"Piense en la relación de subordinación y dependencia que caracteriza a un empleado frente a un verdadero emprendedor independiente.","question":"Un 'Falso Autónomo' es una figura que se menciona en el material para advertir sobre:"},{"answerOptions":[{"isCorrect":false,"rationale":"Solicitar más deuda empeoraría un ratio que ya es excesivamente alto.","text":"La empresa debería solicitar más préstamos para alcanzar el nivel óptimo."},{"isCorrect":true,"rationale":"Un valor de $0,85$ indica que el $85\\%$ de la financiación proviene de fuentes ajenas, superando ampliamente el límite recomendado de $0,6$.","text":"Existe un exceso de deuda que compromete la autonomía financiera de la empresa."},{"isCorrect":false,"rationale":"El rango óptimo para este ratio se sitúa entre $0,4$ y $0,6$.","text":"La empresa tiene una estructura financiera muy equilibrada."},{"isCorrect":false,"rationale":"El ratio de endeudamiento mide el volumen total de deuda, no su vencimiento o 'calidad'.","text":"La calidad de la deuda es excelente porque la mayoría es a largo plazo."}],"hint":"Considere qué porcentaje de la empresa pertenece a los dueños frente a lo que se debe a terceros, usando el rango $0,4$ - $0,6$ como guía.","question":"El Ratio de Endeudamiento se calcula mediante la fórmula $\\text{Pasivo} / (\\text{Patrimonio Neto} + \\text{Pasivo})$. Si el resultado es $0,85$, ¿cuál es el diagnóstico financiero?"},{"answerOptions":[{"isCorrect":false,"rationale":"El producto se centra en las características físicas, diseño y funciones del bien o servicio.","text":"Producto (Product)"},{"isCorrect":true,"rationale":"Esta variable, también llamada 'Plaza', gestiona cómo el producto llega físicamente desde el productor hasta el consumidor final.","text":"Distribución (Place)"},{"isCorrect":false,"rationale":"La promoción se ocupa de la comunicación, publicidad y captación de atención.","text":"Promoción (Promotion)"},{"isCorrect":false,"rationale":"El precio define el valor monetario y las estrategias de cobro.","text":"Precio (Price)"}],"hint":"Piense en el término en inglés 'Place' y cómo se traduce al contexto de llevar el producto al mercado.","question":"¿Qué elemento del Marketing Mix se encarga de definir la logística, los canales de distribución y la ubicación de los puntos de venta?"},{"answerOptions":[{"isCorrect":false,"rationale":"El MVP es una herramienta de validación, no un documento estratégico de gestión a largo plazo.","text":"Sustituir al plan de empresa definitivo de forma permanente."},{"isCorrect":false,"rationale":"Al contrario, el MVP a menudo presenta fallos o carencias que sirven para iterar y mejorar.","text":"Demostrar a los socios que el producto no tiene ningún fallo técnico."},{"isCorrect":false,"rationale":"El objetivo del MVP no es financiero inmediato, sino estratégico y de aprendizaje.","text":"Maximizar los beneficios en el primer mes de lanzamiento."},{"isCorrect":true,"rationale":"Permite aprender rápidamente de la respuesta real del usuario antes de invertir grandes sumas en el desarrollo final.","text":"Validar hipótesis sobre el mercado y el cliente con el menor esfuerzo posible."}],"hint":"Considere el ciclo 'Construir-Medir-Aprender' y qué herramienta se necesita para iniciar la medición.","question":"En el modelo Lean Startup, ¿cuál es la función principal de un Producto Mínimo Viable (MVP)?"},{"answerOptions":[{"isCorrect":false,"rationale":"El vehículo es un recurso (activo), no una deuda u obligación (pasivo).","text":"Pasivo Circulante por obligación de transporte."},{"isCorrect":false,"rationale":"La compra es un intercambio de activos (dinero por camión) o una deuda, no necesariamente una aportación de capital.","text":"Aumento del Patrimonio Neto por aportación de socios."},{"isCorrect":false,"rationale":"Un camión es una inversión duradera, no un consumo que se agota en el momento como el combustible.","text":"Gasto operativo de explotación inmediata."},{"isCorrect":true,"rationale":"Es un bien físico (tangible) destinado a ser utilizado por más de un año en la actividad productiva.","text":"Inversión en Activo No Corriente Tangible."}],"hint":"Es un bien físico, duradero y necesario para la actividad de la empresa.","question":"Si una empresa compra un camión para repartir sus mercancías, ¿cómo se clasifica este hecho en su contabilidad?"},{"answerOptions":[{"isCorrect":true,"rationale":"El benchmarking es un proceso comparativo con el mercado, mientras que el brainstorming es un proceso divergente de pensamiento puro.","text":"El Brainstorming busca la cantidad de ideas creativas, mientras que el Benchmarking analiza las mejores prácticas de la competencia."},{"isCorrect":false,"rationale":"Son herramientas metodológicamente opuestas: una mira hacia adentro (creatividad) y otra hacia afuera (referentes).","text":"No existe diferencia, son sinónimos utilizados en distintos sectores."},{"isCorrect":false,"rationale":"Ambas técnicas pueden aplicarse a cualquier aspecto del negocio, desde procesos hasta modelos de marketing.","text":"El Benchmarking solo se aplica a los costes y el Brainstorming a los productos."},{"isCorrect":false,"rationale":"El brainstorming es típicamente una actividad grupal para generar ideas sin juicio.","text":"El primero es individual y el segundo es grupal."}],"hint":"Piense en 'lluvia de ideas' frente a 'punto de referencia' o comparación con los mejores.","question":"En el contexto de la generación de ideas, ¿cuál es la principal diferencia entre el 'Brainstorming' y el 'Benchmarking'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esta cantidad corresponde exclusivamente a la Sociedad Anónima.","text":"$60.000$ €"},{"isCorrect":false,"rationale":"Este es el mínimo actual para la Sociedad de Responsabilidad Limitada.","text":"$1$ €"},{"isCorrect":false,"rationale":"Este era el mínimo histórico para las S.L., pero no es el de las cooperativas.","text":"$3.000$ €"},{"isCorrect":true,"rationale":"Según la normativa reflejada en el material, las cooperativas requieren este capital base inicial.","text":"$2.000$ €"}],"hint":"Consulte la tabla de formas jurídicas de la Cámara de Comercio de Alicante incluida en los apuntes.","question":"¿Cuál es el capital social mínimo legalmente exigido para constituir una Sociedad Cooperativa en España según la tabla resumen del tema?"},{"answerOptions":[{"isCorrect":false,"rationale":"Eso encajaría mejor en '¿Qué ve?' o en el análisis del entorno.","text":"Las marcas de la competencia que el usuario compra habitualmente."},{"isCorrect":false,"rationale":"Aunque es una preocupación, el mapa de empatía busca entender la experiencia humana general, no solo el precio.","text":"El presupuesto máximo que el cliente está dispuesto a pagar."},{"isCorrect":false,"rationale":"Esos son datos estadísticos, no emocionales o psicológicos.","text":"Datos demográficos como edad, sexo y nivel de ingresos."},{"isCorrect":true,"rationale":"Este cuadrante profundiza en la psicología del cliente para entender qué es lo que realmente le importa.","text":"Las preocupaciones, aspiraciones y motivaciones más profundas que no siempre se expresan en público."}],"hint":"Se trata de explorar la parte 'invisible' o privada de la experiencia del cliente.","question":"Dentro de un Mapa de Empatía, la sección '¿Qué piensa y siente el usuario?' busca recolectar:"},{"answerOptions":[{"isCorrect":false,"rationale":"Ambos impuestos afectan a diferentes partidas y estados de forma compleja; no es una distinción de base.","text":"El balance registra el IVA y la cuenta de resultados registra el IRPF."},{"isCorrect":false,"rationale":"Ambos estados financieros son herramientas fundamentales y obligatorias en la contabilidad general.","text":"Solo el balance de situación es obligatorio para las pequeñas empresas."},{"isCorrect":false,"rationale":"Esa es la definición del Balance de Situación.","text":"La cuenta de resultados muestra la situación de la empresa en un día concreto, como una 'foto'."},{"isCorrect":true,"rationale":"Mide el desempeño económico dinámico durante un tiempo determinado, no la riqueza estática en un momento dado.","text":"La cuenta de resultados resume los ingresos y gastos a lo largo de un periodo (un año, por ejemplo) para determinar el beneficio o pérdida."}],"hint":"Piense en la diferencia entre cuánto dinero 'tengo' hoy frente a cuánto dinero 'he ganado' este año.","question":"La 'Cuenta de Resultados' o de 'Pérdidas y Ganancias' se distingue del 'Balance de Situación' principalmente porque:"},{"answerOptions":[{"isCorrect":false,"rationale":"Esa figura se acerca más a la de la 'Sociedad Laboral'.","text":"La compra de acciones de una empresa por parte de sus propios trabajadores."},{"isCorrect":false,"rationale":"Es una actitud o proceso de innovación, no una forma jurídica.","text":"Un tipo de sociedad mercantil con menos de tres socios."},{"isCorrect":false,"rationale":"Eso sería simplemente trabajo en remoto o autoempleo doméstico.","text":"La creación de una empresa dentro de la casa del propio emprendedor."},{"isCorrect":true,"rationale":"Consiste en que los empleados actúen como emprendedores utilizando los recursos de la organización para la que trabajan.","text":"Desarrollar actividades y proyectos emprendedores e innovadores dentro de una empresa que ya existe."}],"hint":"Es la innovación que surge 'desde dentro' de las estructuras corporativas existentes.","question":"El término 'Intraemprendimiento' se refiere a:"},{"answerOptions":[{"isCorrect":true,"rationale":"Incluyen facturas de proveedores, préstamos a corto plazo y otras obligaciones inmediatas.","text":"Recursos ajenos cuyo vencimiento tiene lugar en un periodo corto, generalmente menos de un año."},{"isCorrect":false,"rationale":"Eso forma parte de los Fondos Propios o Patrimonio Neto.","text":"El capital que los socios han aportado definitivamente a la empresa."},{"isCorrect":false,"rationale":"Las deudas a largo plazo se clasifican como Pasivo Fijo o No Corriente.","text":"Deudas con bancos que deben devolverse en un plazo superior a cinco años."},{"isCorrect":false,"rationale":"El efectivo es un Activo Corriente, no un Pasivo.","text":"El dinero en efectivo que la empresa tiene disponible en su caja."}],"hint":"Son obligaciones de pago que 'circulan' o vencen pronto.","question":"En la estructura financiera, ¿qué representan los 'Pasivos Circulantes'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Adaptar busca ajustar el producto a una nueva situación o público.","text":"A (Adaptar)"},{"isCorrect":true,"rationale":"Esta acción busca simplificar el producto eliminando lo superfluo para mejorar el valor percibido.","text":"E (Eliminar)"},{"isCorrect":false,"rationale":"Modificar altera propiedades (tamaño, color), pero no se centra específicamente en la supresión.","text":"M (Modificar)"},{"isCorrect":false,"rationale":"Combinar sumaría elementos, no los quitaría.","text":"C (Combinar)"}],"hint":"Es la acción que se resume en 'menos es más'.","question":"Al aplicar SCAMPER, si decidimos quitar una funcionalidad compleja de una aplicación para que sea más fácil de usar, estamos aplicando la letra:"},{"answerOptions":[{"isCorrect":false,"rationale":"Esa descripción corresponde a la Sociedad Limitada Unipersonal o al Autónomo.","text":"Solo puede tener un socio que sea el trabajador principal."},{"isCorrect":true,"rationale":"Su objetivo es fomentar la implicación y participación de los empleados en la gestión y beneficios de la empresa.","text":"La mayoría del capital social es propiedad de los trabajadores que prestan servicios en ella de forma retribuida y personal."},{"isCorrect":false,"rationale":"Tributa por el Impuesto de Sociedades, aunque puede tener ciertos beneficios, no está exenta por defecto.","text":"Es una sociedad que no paga impuestos durante los tres primeros años."},{"isCorrect":false,"rationale":"El mínimo legal según el material es de $3$ socios.","text":"Requiere un mínimo de $10$ socios para poder constituirse legalmente."}],"hint":"Piense en quién posee el control del capital en este tipo de sociedades de interés social.","question":"¿Cuál es la principal característica que define a una 'Sociedad Laboral'?"},{"answerOptions":[{"isCorrect":false,"rationale":"Este ratio mide la composición de la deuda, no la relación entre activo y pasivo.","text":"Que la empresa está a punto de quebrar por falta de activos."},{"isCorrect":true,"rationale":"Indica que la presión de pago inmediata es menor, mejorando la estabilidad financiera.","text":"Que la mayor parte de la deuda es a largo plazo, lo que da más margen de maniobra financiero."},{"isCorrect":false,"rationale":"Un valor bajo indica que el pasivo corriente es una pequeña parte del total, lo cual es positivo.","text":"Que la empresa tiene demasiadas deudas a corto plazo."},{"isCorrect":false,"rationale":"Aunque podría ser una causa, el ratio por sí mismo solo informa de la estructura temporal de la deuda existente.","text":"Que los proveedores no confían en la empresa y no le dan crédito."}],"hint":"Piense en si es preferible deber dinero hoy o dentro de tres años para la salud de la caja.","question":"El ratio de 'Calidad de la Deuda' se expresa como $\\text{Pasivo Corriente} / \\text{Pasivo Total}$. ¿Qué indica un valor muy bajo en este ratio?"},{"answerOptions":[{"isCorrect":false,"rationale":"Es un requisito específico del sector turístico citado en el texto.","text":"Solicitud de título de licencia para una agencia de viajes."},{"isCorrect":false,"rationale":"Es un ejemplo de regulación sectorial necesaria antes de operar.","text":"Inclusión en un registro para una empresa de seguridad."},{"isCorrect":true,"rationale":"Este es un trámite de *constitución* general para cualquier sociedad, no un trámite de *puesta en marcha* específico según la actividad.","text":"Certificación negativa del nombre en el Registro Mercantil Central."},{"isCorrect":false,"rationale":"Este trámite es obligatorio y explícitamente mencionado para negocios de hostelería.","text":"Licencia de actividad o apertura para un bar."}],"hint":"Diferencie entre los pasos para 'crear la entidad legal' y los permisos para 'abrir la puerta al público'.","question":"¿Cuál de los siguientes no es un trámite de puesta en marcha mencionado para actividades específicas?"},{"answerOptions":[{"isCorrect":false,"rationale":"Esa es una cuestión legal y de gestión fiscal, no de capacidad técnica.","text":"¿Cuál es el tipo impositivo del Impuesto de Sociedades este año?"},{"isCorrect":false,"rationale":"Esa pregunta aborda la viabilidad económica, no la técnica.","text":"¿Es rentable el negocio a un plazo de diez años?"},{"isCorrect":true,"rationale":"La viabilidad técnica se centra en la capacidad de producción, tecnología y saber hacer necesario para materializar el proyecto.","text":"¿Es posible llevar a cabo la idea con los recursos y conocimientos disponibles?"},{"isCorrect":false,"rationale":"Esto forma parte del análisis de marketing y competencia.","text":"¿Cuántos seguidores tiene la competencia en redes sociales?"}],"hint":"Piense en el 'saber hacer' y los medios materiales para fabricar o prestar el servicio.","question":"En el contexto de la 'Viabilidad Técnica y Económica', ¿qué pregunta es fundamental para evaluar la viabilidad técnica?"},{"answerOptions":[{"isCorrect":false,"rationale":"Los dividendos son reparto de beneficios, no pago de amortizaciones.","text":"Los socios deciden repartir dividendos al final del año."},{"isCorrect":true,"rationale":"Detalla cómo se devolverá el capital y los intereses a lo largo del tiempo.","text":"La inversión inicial incluye préstamos u otras formas de financiamiento ajeno."},{"isCorrect":false,"rationale":"La contratación es un gasto de personal, no una operación de deuda amortizable.","text":"La empresa decide contratar a más trabajadores fijos."},{"isCorrect":false,"rationale":"Eso es una transformación jurídica, no una devolución de deuda.","text":"Se necesita cambiar la forma jurídica de S.L. a S.A."}],"hint":"Se relaciona con el calendario de pagos de una deuda bancaria.","question":"Un 'Plan de Amortización' es una herramienta necesaria cuando:"},{"answerOptions":[{"isCorrect":false,"rationale":"Esos elementos son líquidos o se convertirán en líquido pronto, al contrario que los activos no corrientes.","text":"Activos No Corrientes"},{"isCorrect":false,"rationale":"El patrimonio neto es la diferencia entre el total de activos y el total de pasivos.","text":"Patrimonio Neto"},{"isCorrect":true,"rationale":"Representan los recursos que se pueden convertir en efectivo en el corto plazo (menos de un año).","text":"Activos Corrientes"},{"isCorrect":false,"rationale":"Esas partidas son derechos y bienes (activos), no deudas (pasivos).","text":"Pasivo Circulante"}],"hint":"Son los elementos del balance que tienen mayor 'fluidez' o capacidad de convertirse en dinero rápido.","question":"Al analizar un balance, si sumamos 'Efectivo', 'Cuentas por cobrar' e 'Inventarios', estamos calculando el total de:"}];
+        let currentIndex = 0;
+                const originalQuizData = quizData.slice();
+                (function() {
+                  var key = 'wrong:' + window.location.pathname.split('/').pop();
+                  try {
+                    var stored = localStorage.getItem(key);
+                    if (stored) {
+                      var wrongSet = new Set(JSON.parse(stored));
+                      if (wrongSet.size > 0) {
+                        var filtered = originalQuizData.filter(function(q){ return wrongSet.has(q.question); });
+                        if (filtered.length > 0) quizData = filtered;
+                      }
+                    }
+                  } catch(e) {}
+                })();
+        let mode = 'quiz';
+        let state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+
+        function getStats() {
+            const answered = state.filter((s) => s.selectedIndex !== null).length;
+            const correct = state.filter((s, i) => s.selectedIndex !== null && quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const wrong = state.filter((s, i) => s.selectedIndex !== null && !quizData[i].answerOptions[s.selectedIndex].isCorrect).length;
+            const skipped = quizData.length - answered;
+            const accuracy = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+            return { answered, correct, wrong, skipped, accuracy };
+        }
+
+        function shuffleAnswers() {
+            quizData.forEach((q) => {
+                for (let i = q.answerOptions.length - 1; i > 0; i -= 1) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [q.answerOptions[i], q.answerOptions[j]] = [q.answerOptions[j], q.answerOptions[i]];
+                }
+            });
+        }
+
+        function shuffleQuestions() {
+            for (let i = quizData.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [quizData[i], quizData[j]] = [quizData[j], quizData[i]];
+            }
+        }
+
+        function resetState() {
+            state = quizData.map(() => ({ selectedIndex: null, hintVisible: false }));
+        }
+
+
+        function fmt(str) {
+          if (!str) return str;
+          return str
+            .replace(/\$\$(.*?)\$\$/gs, function(_,m){return m;})
+            .replace(/\$([^$<>]+?)\$/g, function(_,m){return m;})
+            .replace(/\*\*(.*?)\*\*/g, function(_,m){return "<strong>"+m+"</strong>";})
+            .replace(/\*(.*?)\*/g, function(_,m){return "<em>"+m+"</em>";})
+            .replace(/`(.*?)`/g, function(_,m){return "<code>"+m+"</code>";})
+        }
+        function renderQuestion() {
+            const q = quizData[currentIndex];
+            const s = state[currentIndex];
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+
+            let optionsHtml = '';
+            const correctIndex = q.answerOptions.findIndex((o) => o.isCorrect);
+            const selectedCorrect = s.selectedIndex !== null && q.answerOptions[s.selectedIndex].isCorrect;
+            q.answerOptions.forEach((opt, idx) => {
+                const isSelected = s.selectedIndex === idx;
+                const statusClass = isSelected ? (opt.isCorrect ? 'correct' : 'incorrect') : '';
+                const selectedClass = isSelected ? 'selected' : '';
+                const revealCorrect = (s.selectedIndex !== null && !selectedCorrect && opt.isCorrect) || (mode === 'review' && opt.isCorrect);
+                const revealClass = revealCorrect ? 'revealed-correct' : '';
+
+                optionsHtml += `
+                    <li class="option-item ${selectedClass} ${statusClass} ${revealClass}" onclick="selectOption(${idx})">
+                        <div class="option-label">
+                            <span>${String.fromCharCode(65 + idx)}. ${fmt(opt.text)}</span>
+                        </div>
+                        <div class="feedback-state">
+                            ${opt.isCorrect ? '✓ Correcto' : '✕ Incorrecto'}
+                        </div>
+                        ${opt.rationale ? '<div class="rationale">' + fmt(opt.rationale) + '</div>' : ''}
+                    </li>
+                `;
+            });
+
+            const stats = getStats();
+
+            content.innerHTML = `
+                <div class="progress-container">
+                    <div class="progress-text">${currentIndex + 1} / ${quizData.length}</div>
+                    <div class="status-bar">
+                        <div class="status-item status-correct">
+                            <span>✓</span>
+                            <span>${stats.correct}</span>
+                        </div>
+                        <div class="status-item status-wrong">
+                            <span>✕</span>
+                            <span>${stats.wrong}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="question-text">${fmt(q.question)}</div>
+                <ul class="options-list">
+                    ${optionsHtml}
+                </ul>
+            `;
+
+            // Update Pista Box
+            const hintText = document.getElementById('hint-text');
+            hintText.innerText = fmt(q.hint) || 'No hay pista disponible para esta pregunta.';
+            if (s.hintVisible) {
+                hintBox.classList.add('active');
+            } else {
+                hintBox.classList.remove('active');
+            }
+
+            results.classList.add('hidden');
+            content.classList.remove('hidden');
+            hintBox.classList.remove('hidden');
+            nav.classList.remove('hidden');
+
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = false;
+            if (mode === 'review') {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Volver a resultados' : 'Siguiente';
+            } else {
+                nextBtn.innerText = currentIndex === quizData.length - 1 ? 'Finalizar' : 'Siguiente';
+            }
+            document.getElementById('hint-icon-arrow').innerText = s.hintVisible ? '▲' : '▼';
+        }
+
+        function selectOption(idx) {
+            if (mode !== 'quiz') return;
+            if (state[currentIndex].selectedIndex !== null) return; // Prevent re-selection
+            state[currentIndex].selectedIndex = idx;
+            renderQuestion();
+        }
+
+        function toggleHint() {
+            if (mode === 'results') return;
+            state[currentIndex].hintVisible = !state[currentIndex].hintVisible;
+            renderQuestion();
+        }
+
+
+        function saveWrongAnswers() {
+          var wrongQuestions = state
+            .map(function(s,i){return {s:s,i:i};})
+            .filter(function(x){return x.s.selectedIndex !== null && !quizData[x.i].answerOptions[x.s.selectedIndex].isCorrect;})
+            .map(function(x){return quizData[x.i].question;});
+          var key = 'wrong:' + window.location.pathname.split('/').pop();
+          if (wrongQuestions.length > 0) {
+            localStorage.setItem(key, JSON.stringify(wrongQuestions));
+          } else {
+            localStorage.removeItem(key);
+          }
+          return wrongQuestions;
+        }
+        function renderResults() {
+            const stats = getStats();
+            const content = document.getElementById('quiz-content');
+            const results = document.getElementById('results-content');
+            const hintBox = document.getElementById('hint-box');
+            const nav = document.querySelector('.navigation');
+
+            const score = `${stats.correct} / ${quizData.length}`;
+
+            results.innerHTML = `
+                <div class="results-screen">
+                    <div>
+                        <h1 class="results-title">¡Lo lograste! Quiz completado.</h1>
+                        <p class="results-subtitle">Revisa tu puntuación o inténtalo de nuevo.</p>
+                    </div>
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="result-label">Puntuación</div>
+                            <div class="result-value">${score}</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-label">Precisión</div>
+                            <div class="result-value">${stats.accuracy}%</div>
+                        </div>
+                        <div class="result-card">
+                            <div class="result-metrics">
+                                <div>Correctas <strong>${stats.correct}</strong></div>
+                                <div>Incorrectas <strong>${stats.wrong}</strong></div>
+                                <div>Omitidas <strong>${stats.skipped}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="results-actions"><button id="retake-wrong-btn" class="btn btn-ghost" style="display:none">Repasar errores (<span id="wrong-count">0</span>)</button>
+                        <button id="review-btn" class="btn btn-ghost">Revisar Quiz</button>
+                        <button id="retake-btn" class="btn btn-next">Repetir Quiz</button>
+                    </div>
+                </div>
+            `;
+
+            content.classList.add('hidden');
+            results.classList.remove('hidden');
+            hintBox.classList.add('hidden');
+            nav.classList.add('hidden');
+
+
+            var wrongQuestions = saveWrongAnswers();
+            var retakeWrongBtn = document.getElementById('retake-wrong-btn');
+            if (wrongQuestions.length > 0) {
+              document.getElementById('wrong-count').textContent = wrongQuestions.length;
+              retakeWrongBtn.style.display = '';
+            }
+            (function() {
+              var fname = window.location.pathname.split('/').pop();
+              var backLink = document.querySelector('.quiz-heading a[href*="index.html"]');
+              if (backLink) {
+                var h = '#wrong=' + fname + ':' + wrongQuestions.length;
+                backLink.href = backLink.href.split('#')[0] + h;
+              }
+            })();
+            document.getElementById('retake-wrong-btn').onclick = function() {
+              if (wrongQuestions.length === 0) return;
+              mode = 'quiz';
+              currentIndex = 0;
+              var wrongSet = new Set(wrongQuestions);
+              quizData = originalQuizData.filter(function(q){return wrongSet.has(q.question);});
+              shuffleAnswers();
+              resetState();
+              renderQuestion();
+            };
+
+            var wrongQuestions = saveWrongAnswers();
+            var retakeWrongBtn = document.getElementById('retake-wrong-btn');
+            if (wrongQuestions.length > 0) {
+              document.getElementById('wrong-count').textContent = wrongQuestions.length;
+              retakeWrongBtn.style.display = '';
+            }
+            (function() {
+              var fname = window.location.pathname.split('/').pop();
+              var backLink = document.querySelector('.quiz-heading a[href*="index.html"]');
+              if (backLink) {
+                var h = '#wrong=' + fname + ':' + wrongQuestions.length;
+                backLink.href = backLink.href.split('#')[0] + h;
+              }
+            })();
+            document.getElementById('retake-wrong-btn').onclick = function() {
+              if (wrongQuestions.length === 0) return;
+              mode = 'quiz';
+              currentIndex = 0;
+              var wrongSet = new Set(wrongQuestions);
+              quizData = originalQuizData.filter(function(q){return wrongSet.has(q.question);});
+              shuffleAnswers();
+              resetState();
+              renderQuestion();
+            };
+            document.getElementById('review-btn').onclick = () => {
+                mode = 'review';
+                currentIndex = 0;
+                renderQuestion();
+            };
+
+            document.getElementById('retake-btn').onclick = () => {
+                mode = 'quiz';
+                currentIndex = 0;
+                shuffleQuestions();
+                shuffleAnswers();
+                resetState();
+                renderQuestion();
+            };
+        }
+
+        document.getElementById('prev-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        };
+
+        document.getElementById('next-btn').onclick = () => {
+            if (mode === 'results') return;
+            if (mode === 'review') {
+                if (currentIndex < quizData.length - 1) {
+                    currentIndex++;
+                    renderQuestion();
+                } else {
+                    mode = 'results';
+                    renderResults();
+                }
+                return;
+            }
+            if (currentIndex < quizData.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            } else {
+                mode = 'results';
+                renderResults();
+            }
+        };
+
+        document.getElementById('hint-toggle').onclick = toggleHint;
+
+        renderQuestion();
+    </script>
+
+  <button id="theme-toggle" title="Cambiar tema" style="position:fixed;top:8px;right:8px;background:var(--card);border:1px solid var(--stroke);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,0.1);transition:transform 0.2s ease;z-index:100;">🌙</button>
+  <script>
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.getElementById('theme-toggle').textContent = '☀️';
+      }
+      document.getElementById('theme-toggle').addEventListener('click', function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        this.textContent = isDark ? '🌙' : '☀️';
+      });
+    })();
+  </script>
+</body>
+</html>
